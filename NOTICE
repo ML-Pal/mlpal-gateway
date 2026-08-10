@@ -1,0 +1,10 @@
+MLPal Gateway
+Copyright 2026 MLPal, Inc.
+
+This product includes software developed at MLPal, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); the core of this
+repository is open source. See LICENSE.
+
+The `enterprise/` directory is NOT covered by the Apache License and is provided
+under a separate commercial license. See enterprise/LICENSE.

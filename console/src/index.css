@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/* MLPal Design System v0.1.2 — "Obsidian Intelligence".
+   Dark precision with Norse warmth. Primary = Indigo, Accent = Amber.
+   Fonts: Darker Grotesque (display) · Outfit (body/UI) · JetBrains Mono (code). */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* neutral scale (50→950) */
+  --n50: #fafaf8; --n100: #f2f2ef; --n200: #e4e4e0; --n400: #a3a39e;
+  --n500: #737370; --n600: #55554f; --n800: #262622; --n900: #171714; --n950: #0b0b09;
+
+  --background: var(--n50);
+  --foreground: var(--n950);
+  --card: #ffffff;
+  --card-foreground: var(--n950);
+  --popover: #ffffff;
+  --popover-foreground: var(--n950);
+
+  --primary: #6366f1;              /* Indigo 500 */
+  --primary-foreground: #ffffff;
+  --accent: #f59e0b;               /* Amber 500 */
+  --accent-foreground: #451a03;
+  /* Amber as TEXT follows figma-frontend's step: 600 on the light bone ground
+     (500 washes out), 400 on dark. Fills/icons keep --accent. */
+  --link: #d97706;                 /* Amber 600 */
+
+  --secondary: var(--n100);
+  --secondary-foreground: var(--n800);
+  --muted: var(--n100);
+  --muted-foreground: var(--n600);
+
+  --success: #059669; --success-bg: #ecfdf5;
+  --warning: #b45309; --warning-bg: #fffbeb;
+  --destructive: #e11d48; --destructive-foreground: #ffffff; --destructive-bg: #fff1f2;
+  --info: #4f46e5; --info-bg: #eef2ff;
+
+  --border: var(--n200);
+  --input: var(--n200);
+  --ring: #f59e0b;
+  --radius: 0.75rem;               /* 12px — cards; md/sm derive down the 4px grid */
+}
+
+.dark {
+  --background: var(--n900);
+  --foreground: var(--n50);
+  --card: #1f1f1c;
+  --card-foreground: var(--n50);
+  --popover: #1f1f1c;
+  --popover-foreground: var(--n50);
+
+  --primary: #818cf8;              /* Indigo 400 */
+  --primary-foreground: var(--n950);
+  --accent: #fbbf24;               /* Amber 400 */
+  --accent-foreground: var(--n950);
+  --link: #fbbf24;                 /* Amber 400 */
+
+  --secondary: var(--n800);
+  --secondary-foreground: var(--n50);
+  --muted: var(--n800);
+  --muted-foreground: var(--n400);
+
+  --success: #34d399; --success-bg: #0c2a20;
+  --warning: #fbbf24; --warning-bg: #2a2007;
+  --destructive: #fb7185; --destructive-foreground: #2c1218; --destructive-bg: #2c1218;
+  --info: #818cf8; --info-bg: #191a33;
+
+  --border: #33332f;
+  --input: #33332f;
+  --ring: #fbbf24;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 8px);
+  /* MLPal type system (figma-frontend): Darker Grotesque (display) ·
+     Outfit (body/UI) · JetBrains Mono (code). @theme emits the vars AND the
+     Tailwind utilities (font-display / font-sans / font-mono). */
+  --font-display: "Darker Grotesque", system-ui, sans-serif;
+  --font-sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* { border-color: var(--border); }
+
+body {
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings in the display face. Page titles in the real MLPal dashboard are
+   LARGE and LIGHT — Darker Grotesque at weight 500 (see the "Assistants"
+   headline) — so .display is DG 500; generic h2s keep 700. */
+h1, h2 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; }
+.display { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; }
+
+/* The MLPal dashboard signature: METRIC NUMBERS in Darker Grotesque 500,
+   set big (the real dashboard runs ~2.5rem). */
+.metric {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+code, kbd, samp, pre { font-family: var(--font-mono); }
+
+/* ── Motion: one orchestrated page-load, staggered reveals ─────────────────
+   Applied generically: the Layout content wrapper (.page-anim) animates the
+   page's top-level sections with a small cascade. Respects reduced motion. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .page-anim > div > * { animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+  .page-anim > div > *:nth-child(1) { animation-delay: 0ms; }
+  .page-anim > div > *:nth-child(2) { animation-delay: 50ms; }
+  .page-anim > div > *:nth-child(3) { animation-delay: 100ms; }
+  .page-anim > div > *:nth-child(4) { animation-delay: 150ms; }
+  .page-anim > div > *:nth-child(5) { animation-delay: 200ms; }
+  .page-anim > div > *:nth-child(6) { animation-delay: 250ms; }
+}
+
+/* ── Atmosphere: a faint warm wash at the top of the content area — depth
+   without noise, tuned per theme via the accent/primary tokens. ─────────── */
+.atmos {
+  background-image:
+    radial-gradient(55% 32% at 88% -6%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%),
+    radial-gradient(45% 28% at 8% -8%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+/* Inline links: warm amber (the brand accent), not cold indigo — indigo stays
+   for primary buttons per the DS; links live in the warm register. */
+.link-accent { color: var(--link); font-weight: 500; }
+.link-accent:hover { text-decoration: underline; }

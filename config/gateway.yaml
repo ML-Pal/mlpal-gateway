@@ -1,0 +1,17 @@
+# MLPal Gateway — file configuration (defaults layer).
+#
+# Precedence for capture.enabled (most-recent human intent wins):
+#   1. runtime override set from the console/admin API   (stored in Redis)
+#   2. env var MLPAL_CAPTURE_PAYLOADS=true|false
+#   3. this file
+#   4. built-in default (false — privacy by default)
+
+capture:
+  # Store request/response bodies for the Traces debugger. OFF by default:
+  # nothing is captured unless the operator explicitly opts in here, via env,
+  # or with the console toggle. Auth headers are never stored either way.
+  enabled: true
+  # Per-body cap before truncation (request and response each).
+  max_body_kb: 256
+  # Payloads older than this are purged by a daily background task.
+  retention_days: 7

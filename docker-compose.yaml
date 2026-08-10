@@ -1,0 +1,119 @@
+# Self-hosted (OSS) MLPal Assistants Gateway.
+#
+#   cp .env.oss.example .env    # set at least one provider key
+#   docker compose up --build
+#
+# Brings up: Postgres + Redis + one-shot migrate + one-shot seed (model registry,
+# pricing, bootstrap admin key) + the gateway. Runs in LOCAL mode — no MLPal
+# platform: billing/auth are self-contained, no wallet, no Cognito. The bootstrap
+# admin key secret is printed in the `seed` container logs (see below).
+
+x-gateway-env: &gateway-env
+  MLPAL_DB_HOST: db
+  MLPAL_DB_PORT: "5432"
+  MLPAL_DB_NAME: postgres
+  MLPAL_DB_USER: postgres
+  MLPAL_DB_PASSWORD: postgres
+  MLPAL_DB_SCHEMA: assistants
+  MLPAL_REDIS_HOST: redis
+  MLPAL_REDIS_PORT: "6379"
+  MLPAL_REDIS_SSL: "false"
+  MLPAL_ENVIRONMENT: local
+  TRACING_ENABLED: "false"
+  # Swagger UI at /docs + ReDoc at /redoc for the self-hosted operator.
+  MLPAL_DEBUG: "true"
+  # --- open-core seams: self-hosted, no MLPal-platform callouts ---
+  MLPAL_BILLING_BACKEND: local
+  MLPAL_AUTH_BACKEND: local
+  MLPAL_ENABLE_BEDROCK: "${MLPAL_ENABLE_BEDROCK:-false}"
+  # Universal translating core IS the canonical /v1/messages; no Bedrock-mantle
+  # passthrough and no /v2 surface in the self-hosted build.
+  MLPAL_ENABLE_BEDROCK_MANTLE_MESSAGES: "false"
+  # --- provider keys from .env (adapters enable per key present) ---
+  OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+  ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+  GOOGLE_API_KEY: "${GOOGLE_API_KEY:-}"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db-oss.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment: *gateway-env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    build: .
+    # Idempotent: reconcile registry + pricing from the bundled catalog feed,
+    # then mint a bootstrap admin key (secret printed once). Re-running is safe.
+    command:
+      - sh
+      - -c
+      - >-
+        python scripts/reconcile_catalog.py &&
+        python scripts/bootstrap_admin_key.py --name oss-admin
+    environment: *gateway-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  gateway:
+    build: .
+    # Host port for the gateway (override with GATEWAY_PORT if 8000 is taken).
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+    environment: *gateway-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  # Admin console (static SPA served by nginx). Point it at the gateway from its
+  # Setup screen using the host URL (default http://localhost:8000) + an
+  # admin-scoped key. Optional — the gateway is fully usable via the API/SDK
+  # without it. `docker compose up console` to run just this + its deps.
+  console:
+    build: ./console
+    ports:
+      - "${CONSOLE_PORT:-8080}:80"
+    depends_on:
+      - gateway
+
+volumes:
+  pgdata:
+  redisdata:

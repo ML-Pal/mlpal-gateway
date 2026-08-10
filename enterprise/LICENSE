@@ -1,0 +1,16 @@
+MLPal Enterprise License
+
+Copyright 2026 MLPal, Inc. All rights reserved.
+
+The contents of this `enterprise/` directory (the "Enterprise Software") are NOT
+licensed under the Apache License that governs the rest of this repository. The
+Enterprise Software is proprietary and is made available only under a separate
+commercial agreement with MLPal, Inc.
+
+Without a valid commercial license from MLPal, Inc., you may NOT use, copy,
+modify, merge, publish, distribute, sublicense, or sell the Enterprise Software,
+in whole or in part, except to view the source for evaluation.
+
+To obtain a commercial license, contact sales@mlpal.ai.
+
+THE ENTERPRISE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

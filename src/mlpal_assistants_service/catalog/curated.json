@@ -1,0 +1,138 @@
+{
+  "schema": 3,
+  "updated": "2026-07-28",
+  "_note": "Declared, deterministic curation only. Objective axes (cost, context, caps, throughput) merge live and are never here. THREE declared blocks: (1) `lineage` = (provider, generation, tier, tier_rank) — structural, stable, placed once per model; powers deterministic 'provider best' resolution and same-tier version ordering. tier_rank is 1=flagship WITHIN a provider (not cross-provider). (2) `cards` = the deterministic model card: a short `summary` + published `benchmarks` (sourced + dated). The card is NEVER mutated by feedback. (3) MEASURED quality (the feedback loop, see model_feedback) is served ORTHOGONALLY as `measured`, alongside — never merged into — the card. A model absent here is still fully routable on the objective axes.",
+
+  "lineage": {
+    "claude-fable-5":              {"generation": 5.0, "tier": "fable",  "tier_rank": 1},
+    "claude-opus-5":               {"generation": 5.0, "tier": "opus",   "tier_rank": 2},
+    "claude-opus-4-8":             {"generation": 4.8, "tier": "opus",   "tier_rank": 2},
+    "claude-opus-4-7":             {"generation": 4.7, "tier": "opus",   "tier_rank": 2},
+    "claude-opus-4-6":             {"generation": 4.6, "tier": "opus",   "tier_rank": 2},
+    "claude-opus-4-5-20251101":    {"generation": 4.5, "tier": "opus",   "tier_rank": 2},
+    "claude-opus-4-1-20250805":    {"generation": 4.1, "tier": "opus",   "tier_rank": 2},
+    "claude-opus-4-20250514":      {"generation": 4.0, "tier": "opus",   "tier_rank": 2},
+    "claude-sonnet-5":             {"generation": 5.0, "tier": "sonnet", "tier_rank": 3},
+    "claude-sonnet-4-6":           {"generation": 4.6, "tier": "sonnet", "tier_rank": 3},
+    "claude-sonnet-4-5-20250929":  {"generation": 4.5, "tier": "sonnet", "tier_rank": 3},
+    "claude-sonnet-4-20250514":    {"generation": 4.0, "tier": "sonnet", "tier_rank": 3},
+    "claude-haiku-4-5-20251001":   {"generation": 4.5, "tier": "haiku",  "tier_rank": 4},
+    "claude-3-5-haiku-20241022":   {"generation": 3.5, "tier": "haiku",  "tier_rank": 4},
+
+    "gpt-5.6-sol":                 {"generation": 5.6, "tier": "sol",    "tier_rank": 1},
+    "gpt-5.6-terra":               {"generation": 5.6, "tier": "terra",  "tier_rank": 2},
+    "gpt-5.6-luna":                {"generation": 5.6, "tier": "luna",   "tier_rank": 3},
+    "gpt-5.5-pro":                 {"generation": 5.5, "tier": "pro",    "tier_rank": 1},
+    "gpt-5.5":                     {"generation": 5.5, "tier": "base",   "tier_rank": 2},
+    "gpt-5.4":                     {"generation": 5.4, "tier": "base",   "tier_rank": 2},
+    "gpt-5.4-mini":                {"generation": 5.4, "tier": "mini",   "tier_rank": 3},
+    "gpt-5.4-nano":                {"generation": 5.4, "tier": "nano",   "tier_rank": 4},
+    "gpt-5.2-pro":                 {"generation": 5.2, "tier": "pro",    "tier_rank": 1},
+    "gpt-5.2":                     {"generation": 5.2, "tier": "base",   "tier_rank": 2},
+    "gpt-5.2-codex":               {"generation": 5.2, "tier": "codex",  "tier_rank": 2},
+    "gpt-5.1":                     {"generation": 5.1, "tier": "base",   "tier_rank": 2},
+    "gpt-5.1-codex":               {"generation": 5.1, "tier": "codex",  "tier_rank": 2},
+    "gpt-5-pro":                   {"generation": 5.0, "tier": "pro",    "tier_rank": 1},
+    "gpt-5":                       {"generation": 5.0, "tier": "base",   "tier_rank": 2},
+    "gpt-5-mini":                  {"generation": 5.0, "tier": "mini",   "tier_rank": 3},
+    "gpt-5-nano":                  {"generation": 5.0, "tier": "nano",   "tier_rank": 4},
+
+    "gemini-3.1-pro-preview":      {"generation": 3.1, "tier": "pro",        "tier_rank": 1},
+    "gemini-3.6-flash":            {"generation": 3.6, "tier": "flash",      "tier_rank": 2},
+    "gemini-3.5-flash":            {"generation": 3.5, "tier": "flash",      "tier_rank": 2},
+    "gemini-3-flash-preview":      {"generation": 3.0, "tier": "flash",      "tier_rank": 2},
+    "gemini-3.5-flash-lite":       {"generation": 3.5, "tier": "flash-lite", "tier_rank": 3},
+    "gemini-3.1-flash-lite":       {"generation": 3.1, "tier": "flash-lite", "tier_rank": 3},
+    "gemini-2.5-pro":              {"generation": 2.5, "tier": "pro",        "tier_rank": 1},
+    "gemini-2.5-flash":            {"generation": 2.5, "tier": "flash",      "tier_rank": 2},
+    "gemini-2.5-flash-lite":       {"generation": 2.5, "tier": "flash-lite", "tier_rank": 3}
+  },
+
+  "cards": {
+    "claude-opus-5": {
+      "summary": "Anthropic Opus-tier flagship (supersedes Opus 4.8 at the same $5/$25 price); approaches Fable 5. Leads on repo-level coding (SWE-bench Verified ~96) and reasoning (GPQA Diamond 94.1); wins Frontier-Bench v0.1. 1M context, 128k output."
+    },
+    "claude-fable-5": {
+      "summary": "Anthropic's top-tier flagship (above Opus); strongest coding and agentic tool use, 1M context.",
+      "benchmarks": {
+        "coding":   {"score": 95.0, "source": "SWE-bench Verified", "as_of": "2026-07"},
+        "tool_use": {"score": 98.5, "source": "tau2-bench",         "as_of": "2026-07"}
+      }
+    },
+    "claude-opus-4-8": {
+      "summary": "Anthropic Opus 4.8 — frontier reasoning and coding, 1M context, 128k output.",
+      "benchmarks": {
+        "coding":    {"score": 88.6, "source": "SWE-bench Verified", "as_of": "2026-07"},
+        "reasoning": {"score": 93.6, "source": "GPQA Diamond",       "as_of": "2026-07"},
+        "tool_use":  {"score": 94.4, "source": "tau2-bench",         "as_of": "2026-07"}
+      }
+    },
+    "claude-opus-4-7": {
+      "summary": "Anthropic Opus 4.7 — prior Opus flagship, 1M context."
+    },
+    "claude-sonnet-5": {
+      "summary": "Anthropic Sonnet 5 — balanced mid tier for everyday coding and agents, 1M context by default."
+    },
+    "claude-haiku-4-5-20251001": {
+      "summary": "Anthropic's fast, low-cost tier — extraction, classification and quick edits."
+    },
+    "gpt-5.6-sol": {
+      "summary": "OpenAI GPT-5.6 flagship (Sol) — SOTA on Terminal-Bench 2.1 (88.8; 91.9 Ultra) and DeepSWE for terminal/tool-heavy agent coding; very fast (~750 tok/s), token-efficient. 1.05M context. Frontier alternate: preferred over the Opus 5 primary for terminal long-horizon / max-throughput coding-agent work. (No public SWE-bench Verified / GPQA figure.)"
+    },
+    "gpt-5.6-terra": {
+      "summary": "OpenAI GPT-5.6 mid tier (Terra) — GPT-5.5-class quality at roughly half the cost."
+    },
+    "gpt-5.6-luna": {
+      "summary": "OpenAI GPT-5.6 fast/cheap tier (Luna) — high-volume, cost-sensitive work."
+    },
+    "gpt-5.5": {
+      "summary": "OpenAI GPT-5.5 — the widely-benchmarked full model; strong coding, 1M context.",
+      "benchmarks": {
+        "coding":    {"score": 88.7, "source": "SWE-bench Verified", "as_of": "2026-07"},
+        "reasoning": {"score": 93.6, "source": "GPQA Diamond",       "as_of": "2026-07"}
+      }
+    },
+    "gpt-5.5-pro": {
+      "summary": "OpenAI GPT-5.5 Pro — extra test-time compute for the hardest problems."
+    },
+    "gemini-3.1-pro-preview": {
+      "summary": "Google Gemini 3.1 Pro — flagship reasoning with very long context (1M+) and multimodal input."
+    },
+    "gemini-3.6-flash": {
+      "summary": "Google Gemini 3.6 Flash — newest Flash generation; 1M context, strong multimodal, higher-tier Flash pricing."
+    },
+    "gemini-3.5-flash": {
+      "summary": "Google Gemini 3.5 Flash — fast and cheap, 1M context, strong multimodal and extraction."
+    },
+    "gemini-3.5-flash-lite": {
+      "summary": "Google Gemini 3.5 Flash-Lite — cheapest current Gemini tier; high-throughput extraction/classification, 1M context."
+    }
+  },
+
+  "profiles": {
+    "coding": {
+      "tiers": {
+        "max": {
+          "model": "claude-fable-5",
+          "alternates": ["claude-opus-5", "gpt-5.6-sol"],
+          "good_for": "hardest reasoning, architecture, deep repo-level engineering - quality-first"
+        },
+        "frontier": {
+          "model": "claude-opus-5",
+          "alternates": ["gpt-5.6-sol", "claude-fable-5"],
+          "good_for": "hard bounded coding + reasoning subtasks - frontier quality (leads most coding/reasoning benchmarks) at lower cost; gpt-5.6-sol alternate for terminal long-horizon / max throughput"
+        },
+        "mid": {
+          "model": "gpt-5.6-terra",
+          "alternates": ["claude-sonnet-5", "gpt-5.5"],
+          "good_for": "most implementation, moderate reasoning, everyday agent work"
+        },
+        "cheap": {
+          "model": "gpt-5.6-luna",
+          "alternates": ["gemini-3.5-flash", "claude-haiku-4-5-20251001"],
+          "good_for": "mechanical edits, extraction, search, summaries, classification - near-mid quality at a fraction of mid cost"
+        }
+      }
+    }
+  }
+}
