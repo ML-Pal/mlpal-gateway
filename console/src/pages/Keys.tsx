@@ -1,4 +1,4 @@
-import { Copy, KeyRound, Plus, Trash2 } from "lucide-react";
+import { Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -34,9 +34,7 @@ const BLANK_FORM = {
   permissions: "messages",
   allow: "*",
   deny: "",
-  budgetAmount: "",
-  budgetUnit: "usd" as BudgetUnit,
-  budgetWindow: "monthly" as BudgetWindow,
+  budgets: [{ amount: "", unit: "usd" as BudgetUnit, window: "monthly" as BudgetWindow }],
 };
 
 export function Keys() {
@@ -82,10 +80,11 @@ export function Keys() {
       permissions: csv(form.permissions),
       model_policy: { allow: csv(form.allow), deny: csv(form.deny) },
     };
-    const amount = parseFloat(form.budgetAmount);
-    if (!Number.isNaN(amount) && amount > 0) {
-      input.budgets = [{ unit: form.budgetUnit, amount, window: form.budgetWindow }];
-    }
+    const budgets = form.budgets
+      .map((b) => ({ ...b, amount: parseFloat(b.amount) }))
+      .filter((b) => !Number.isNaN(b.amount) && b.amount > 0)
+      .map((b) => ({ unit: b.unit, amount: b.amount, window: b.window }));
+    if (budgets.length > 0) input.budgets = budgets;
     setCreating(true);
     try {
       const created = await client.createKey(input);
@@ -175,61 +174,119 @@ export function Keys() {
           </CardHeader>
           <CardContent>
             <form className="grid grid-cols-2 gap-4" onSubmit={onCreate}>
-              <Field label="Name" className="col-span-2">
+              <Field
+                label="Name"
+                className="col-span-2"
+                hint="Anything you'll recognize later — e.g. team-web, staging-agent, ci-smoke."
+              >
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="team-web"
                 />
               </Field>
-              <Field label="Permissions (comma-separated)">
+              <Field
+                label="Permissions (comma-separated)"
+                hint="What this key may call: messages (native /v1/messages), chat (OpenAI-wire chat), embedding, image_generation, tts, transcription, admin (control plane), or * for everything."
+              >
                 <Input
                   value={form.permissions}
                   onChange={(e) => setForm({ ...form, permissions: e.target.value })}
-                  placeholder="messages, embeddings"
+                  placeholder="messages, chat"
                 />
               </Field>
-              <Field label="Allow models (globs)">
+              <Field
+                label="Allow models (globs)"
+                hint="Comma-separated globs: * = all, claude-* = every Claude, mlpal* = the router tags. Allowing a router tag also allows whatever it routes to."
+              >
                 <Input
                   value={form.allow}
                   onChange={(e) => setForm({ ...form, allow: e.target.value })}
                   placeholder="claude-*, mlpal*"
                 />
               </Field>
-              <Field label="Deny models (globs)">
+              <Field
+                label="Deny models (globs)"
+                hint="Deny beats allow — and follows aliases, so denying claude-opus-5 also blocks mlpal whenever it would route there. e.g. *-pro, gpt-5.6-*"
+              >
                 <Input
                   value={form.deny}
                   onChange={(e) => setForm({ ...form, deny: e.target.value })}
                   placeholder="(optional)"
                 />
               </Field>
-              <Field label="Budget">
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={form.budgetAmount}
-                    onChange={(e) => setForm({ ...form, budgetAmount: e.target.value })}
-                    placeholder="amount"
-                  />
-                  <Select
-                    value={form.budgetUnit}
-                    onChange={(v) => setForm({ ...form, budgetUnit: v as BudgetUnit })}
-                    options={["usd", "cu"]}
-                  />
-                  <Select
-                    value={form.budgetWindow}
-                    onChange={(v) => setForm({ ...form, budgetWindow: v as BudgetWindow })}
-                    options={["daily", "weekly", "monthly", "lifetime"]}
-                  />
+              <Field
+                label="Budgets"
+                className="col-span-2"
+                hint="Spend caps per calendar window, checked BEFORE each request — a running agent is never cut off mid-request. usd and cu are equivalent (1 CU = $10). Stack windows to cap bursts and totals together (e.g. 5 usd daily + 50 usd monthly)."
+              >
+                <div className="flex flex-col gap-2">
+                  {form.budgets.map((b, i) => (
+                    <div key={i} className="flex gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={b.amount}
+                        onChange={(e) => {
+                          const budgets = [...form.budgets];
+                          budgets[i] = { ...b, amount: e.target.value };
+                          setForm({ ...form, budgets });
+                        }}
+                        placeholder="amount"
+                      />
+                      <Select
+                        value={b.unit}
+                        onChange={(v) => {
+                          const budgets = [...form.budgets];
+                          budgets[i] = { ...b, unit: v as BudgetUnit };
+                          setForm({ ...form, budgets });
+                        }}
+                        options={["usd", "cu"]}
+                      />
+                      <Select
+                        value={b.window}
+                        onChange={(v) => {
+                          const budgets = [...form.budgets];
+                          budgets[i] = { ...b, window: v as BudgetWindow };
+                          setForm({ ...form, budgets });
+                        }}
+                        options={["daily", "weekly", "monthly", "lifetime"]}
+                      />
+                      {form.budgets.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remove budget"
+                          onClick={() =>
+                            setForm({ ...form, budgets: form.budgets.filter((_, j) => j !== i) })
+                          }
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="self-start text-xs link-accent"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        budgets: [...form.budgets, { amount: "", unit: "usd", window: "daily" }],
+                      })
+                    }
+                  >
+                    + add another window
+                  </button>
                 </div>
               </Field>
               <div className="col-span-2 flex justify-end gap-2">
                 <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={creating}>
+                <Button type="submit" variant="accent" disabled={creating}>
                   {creating ? "Creating…" : "Create key"}
                 </Button>
               </div>
@@ -250,16 +307,23 @@ export function Keys() {
 function Field({
   label,
   className,
+  hint,
   children,
 }: {
   label: string;
   className?: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
+    <div className={`group flex flex-col gap-1.5 ${className ?? ""}`}>
       <Label>{label}</Label>
       {children}
+      {hint && (
+        <p className="hidden text-xs leading-relaxed text-muted-foreground group-focus-within:block">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
