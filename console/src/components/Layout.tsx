@@ -5,7 +5,6 @@ import {
   Boxes,
   Home,
   KeyRound,
-  LayoutGrid,
   LogOut,
   Moon,
   PanelLeftClose,
@@ -14,6 +13,7 @@ import {
   Settings as SettingsIcon,
   Terminal,
   Sun,
+  Waypoints,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router";
@@ -32,7 +32,7 @@ const NAV = [
   { to: "/providers", label: "Providers", icon: Plug },
   { to: "/keys", label: "Keys", icon: KeyRound },
   { to: "/models", label: "Models", icon: Boxes },
-  { to: "/catalog", label: "Catalog", icon: LayoutGrid },
+  { to: "/catalog", label: "Routing", icon: Waypoints },
   { to: "/usage", label: "Usage", icon: BarChart3 },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];

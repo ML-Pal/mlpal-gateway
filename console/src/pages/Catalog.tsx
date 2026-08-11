@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { Waypoints } from "lucide-react";
+
+import { RouterTags } from "@/components/RouterTags";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Catalog as CatalogT, GatewayError } from "@/lib/api";
@@ -45,7 +48,24 @@ export function Catalog() {
 
   return (
     <PageShell>
-      <div className="flex flex-col gap-2">
+      {/* Mode 1: the gateway decides */}
+      <section>
+        <h2 className="text-sm font-semibold">Let the gateway choose</h2>
+        <p className="mb-3 mt-0.5 text-sm text-muted-foreground">
+          The zero-decision path: use a router tag as the model name and never update it.
+        </p>
+        <RouterTags />
+      </section>
+
+      {/* Mode 2: the client decides */}
+      <section>
+        <h2 className="text-sm font-semibold">Choose yourself — the curated tier ladder</h2>
+        <p className="mb-3 mt-0.5 text-sm text-muted-foreground">
+          The same curated intelligence as a menu (<code className="text-xs">GET /v1/catalog</code>):
+          tiers from cheapest to most capable, filtered to what this gateway serves. This is what
+          agent clients (yodex) read to pick a concrete model per task.
+        </p>
+        <div className="flex flex-col gap-2">
         {ladder.map((tierName) => {
           const tier = catalog.tiers[tierName];
           if (!tier) return null;
@@ -84,7 +104,8 @@ export function Catalog() {
             </Card>
           );
         })}
-      </div>
+        </div>
+      </section>
     </PageShell>
   );
 }
@@ -93,9 +114,14 @@ function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="display text-4xl">Catalog</h1>
+        <h1 className="display flex items-center gap-2 text-4xl">
+          <Waypoints className="size-6" /> Routing
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Curated tier ladder (cheapest → most capable), filtered to the models your key can serve.
+          Which model should handle a request? Two ways to decide — let the gateway pick a served
+          model for you, or read the curated tiers and pick one yourself. Both are driven by the
+          same catalog feed. Browsing everything on the shelf instead? That's{" "}
+          <span className="font-medium">Models</span>.
         </p>
       </div>
       {children}

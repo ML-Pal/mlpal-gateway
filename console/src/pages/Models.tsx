@@ -1,11 +1,11 @@
 import { Boxes, ExternalLink, Search, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { type AdminModel, GatewayError, type RouterTag } from "@/lib/api";
+import { type AdminModel, GatewayError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useConnection } from "@/lib/connection";
 
@@ -47,7 +47,6 @@ function statusOf(m: AdminModel): { label: string; variant: "warning" | "muted" 
 export function Models() {
   const { client } = useConnection();
   const [models, setModels] = useState<AdminModel[] | null>(null);
-  const [routerTags, setRouterTags] = useState<RouterTag[] | null>(null);
   const [searchParams] = useSearchParams();
   const [q, setQ] = useState("");
   const [provider, setProvider] = useState<string | null>(searchParams.get("provider"));
@@ -63,10 +62,6 @@ export function Models() {
         toast.error((e as GatewayError).message);
         setModels([]);
       });
-    client
-      .listRouterTags()
-      .then((r) => setRouterTags(r.data))
-      .catch(() => setRouterTags([]));
   }, [client]);
 
   const providers = useMemo(
@@ -114,7 +109,12 @@ export function Models() {
         </div>
       </div>
 
-      {routerTags !== null && routerTags.length > 0 && <RouterTagSection tags={routerTags} />}
+      <p className="text-sm text-muted-foreground">
+        This is the shelf — every model with cards and pass-through pricing. Deciding{" "}
+        <em>which</em> model should handle a request (or just sending{" "}
+        <code className="text-xs">"model": "mlpal"</code>)? That lives in{" "}
+        <Link to="/catalog" className="link-accent">Routing</Link>.
+      </p>
 
       {/* filter bar */}
       <div className="flex flex-wrap items-center gap-3">
@@ -357,75 +357,5 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="mt-0.5 font-medium">{children}</dd>
     </div>
-  );
-}
-
-// ── Router tags ──────────────────────────────────────────────────────────────
-// The product's headline: pin `mlpal` once and never touch your code again —
-// the target upgrades behind the tag. Rendered as its own band, deliberately
-// distinct from provider models.
-
-const TAG_BLURB: Record<string, string> = {
-  mlpal: "best quality",
-  "mlpal-flash": "lowest latency",
-  "mlpal-lite": "most cost-effective",
-};
-
-function RouterTagSection({ tags }: { tags: RouterTag[] }) {
-  return (
-    <section className="rounded-xl border border-[var(--accent)]/25 bg-accent/[0.04] p-5">
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-4 text-[var(--link)]" />
-        <h2 className="text-sm font-semibold">Router tags</h2>
-      </div>
-      <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-        Not models — stable aliases. Send <code className="text-xs">"model": "mlpal"</code> and the
-        gateway picks the best model <em>this deployment serves</em> for that operation, falling
-        through a curated, provider-spanning candidate list. Targets upgrade behind the tag; your
-        code never changes. (The <span className="font-medium">Catalog</span> tab is the other way
-        around: the same curated data as a menu, for clients that want to choose per task.)
-      </p>
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {tags.map((t) => (
-          <div key={t.tag} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-baseline justify-between gap-2">
-              <code className="text-sm font-semibold">{t.tag}</code>
-              <span className="text-xs text-muted-foreground">{TAG_BLURB[t.tag] ?? "routing alias"}</span>
-            </div>
-            <div className="mt-3 flex flex-col gap-1.5">
-              {t.routes.map((r) => {
-                const fallbacks = (r.candidates ?? []).filter(
-                  (c) => c.model_tag !== r.resolved_model_tag,
-                );
-                const title = r.served
-                  ? `${r.reason ?? ""}${fallbacks.length ? `\nfallbacks: ${fallbacks.map((c) => `${c.model_tag}${c.served ? "" : ` (${c.unserved_reason})`}`).join(" → ")}` : ""}`
-                  : `${r.unserved_reason} — tried: ${(r.candidates ?? []).map((c) => `${c.model_tag} (${c.unserved_reason})`).join(", ")}`;
-                return (
-                  <div key={r.operation} className="flex items-center gap-2 text-xs" title={title}>
-                    <span
-                      className={cn(
-                        "size-1.5 shrink-0 rounded-full",
-                        r.served ? "bg-[var(--success)]" : "border border-muted-foreground/50",
-                      )}
-                    />
-                    <span className="w-20 shrink-0 text-muted-foreground">
-                      {r.operation.replace(/_/g, " ")}
-                    </span>
-                    <code className={cn("truncate", r.served ? "text-foreground" : "text-muted-foreground")}>
-                      {r.resolved_model_tag ?? "— none served"}
-                    </code>
-                    {fallbacks.length > 0 && r.served && (
-                      <span className="shrink-0 text-[10px] text-muted-foreground">
-                        +{fallbacks.length} fallback{fallbacks.length > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }

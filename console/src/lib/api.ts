@@ -355,6 +355,9 @@ export class GatewayClient {
           Accept: "application/json",
         },
         body: body === undefined ? undefined : JSON.stringify(body),
+        // An ops console must never render browser-cached state — a stale
+        // cached /v1/catalog once showed every tier as dark for an hour.
+        cache: "no-store",
       });
     } catch (e) {
       throw new GatewayError(

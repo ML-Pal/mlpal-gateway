@@ -50,7 +50,11 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-_CACHE_CONTROL = "public, max-age=3600"
+# no-cache ≠ don't-cache: clients keep the body but MUST revalidate (cheap 304
+# via the ETag). The catalog reflects LIVE availability — a provider key added
+# or a model paused must show up on the next fetch, not an hour later (a stale
+# max-age misled the console into rendering every tier as dark).
+_CACHE_CONTROL = "no-cache"
 _LATENCY_CACHE_KEY = "catalog:latency_stats"
 _FEEDBACK_CACHE_KEY = "catalog:feedback_quality"
 _STATS_CACHE_TTL = 900  # 15 min — these aggregates move slowly; keeps the
