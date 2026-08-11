@@ -3,7 +3,6 @@
 import logging
 import time
 from dataclasses import dataclass
-from typing import Literal
 
 import redis.asyncio as redis
 from redis.exceptions import RedisError

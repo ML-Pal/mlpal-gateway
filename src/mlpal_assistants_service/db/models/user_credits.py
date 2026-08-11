@@ -21,14 +21,13 @@ from enum import Enum
 from sqlalchemy import (
     Boolean,
     DateTime,
-    ForeignKey,
     Index,
     Integer,
     Numeric,
     String,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column, declared_attr
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
 from mlpal_assistants_service.core.config import get_settings
 from mlpal_assistants_service.db.models.base import Base

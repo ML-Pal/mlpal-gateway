@@ -3,7 +3,8 @@
 import json
 import logging
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from google import genai
 from google.genai import types
@@ -1002,6 +1003,7 @@ class GoogleAdapter(BaseAdapter):
     ) -> types.Part | None:
         """Build a Gemini Part from FileAttachment for binary data (image, audio, video, PDF)."""
         import base64 as b64_module
+
         import httpx
 
         mime = attachment.mime_type or "application/octet-stream"
@@ -1052,7 +1054,7 @@ class GoogleAdapter(BaseAdapter):
         import base64 as b64_module
 
         if attachment.source == FileSource.PATH:
-            with open(attachment.data, "r", encoding="utf-8") as f:
+            with open(attachment.data, encoding="utf-8") as f:
                 text_content = f.read()
         elif attachment.source == FileSource.BASE64:
             text_content = b64_module.b64decode(attachment.data).decode("utf-8")
@@ -1108,6 +1110,7 @@ class GoogleAdapter(BaseAdapter):
     def _build_document_part(self, doc: dict[str, Any]) -> types.Part | None:
         """Build document part for PDFs from legacy dict format."""
         import base64 as b64_module
+
         import httpx
 
         mime_type = doc.get("mime_type", "application/pdf")
@@ -1134,6 +1137,7 @@ class GoogleAdapter(BaseAdapter):
     def _build_audio_part(self, audio: dict[str, Any]) -> types.Part | None:
         """Build audio part from legacy dict format."""
         import base64 as b64_module
+
         import httpx
 
         mime_type = audio.get("mime_type", "audio/mpeg")
@@ -1160,6 +1164,7 @@ class GoogleAdapter(BaseAdapter):
     def _build_video_part(self, video: dict[str, Any]) -> types.Part | None:
         """Build video part from legacy dict format."""
         import base64 as b64_module
+
         import httpx
 
         mime_type = video.get("mime_type", "video/mp4")
@@ -1311,7 +1316,6 @@ class GoogleAdapter(BaseAdapter):
         try:
             # Google embedding API
             embeddings = []
-            total_tokens = 0
 
             for text in texts:
                 result = await self._client.aio.models.embed_content(

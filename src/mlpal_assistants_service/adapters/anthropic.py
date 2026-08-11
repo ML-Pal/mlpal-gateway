@@ -3,7 +3,8 @@
 import json
 import logging
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 from anthropic import AsyncAnthropic
@@ -932,7 +933,7 @@ class AnthropicAdapter(BaseAdapter):
         """Build text content block from code/text FileAttachment."""
         # For text/code files, we need to read and include as text
         if attachment.source == FileSource.PATH:
-            with open(attachment.data, "r", encoding="utf-8") as f:
+            with open(attachment.data, encoding="utf-8") as f:
                 text_content = f.read()
         elif attachment.source == FileSource.BASE64:
             import base64

@@ -1,14 +1,13 @@
 """Unit tests for rate limiter."""
 
-import pytest
-import time
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from mlpal_assistants_service.core.exceptions import RateLimitExceededError
 from mlpal_assistants_service.services.rate_limiter import (
     RATE_LIMIT_TIERS,
     RateLimiter,
-    RateLimitConfig,
 )
 
 

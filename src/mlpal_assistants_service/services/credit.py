@@ -11,12 +11,12 @@ import logging
 from decimal import Decimal
 
 import redis.asyncio as redis
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlpal_assistants_service.core.config import get_settings
 from mlpal_assistants_service.core.exceptions import QuotaExceededError
-from mlpal_assistants_service.db.models import CreditType, FREE_CREDITS_BY_ROLE, UserCredits
+from mlpal_assistants_service.db.models import FREE_CREDITS_BY_ROLE, CreditType, UserCredits
 from mlpal_assistants_service.repositories import CreditRepository
 
 logger = logging.getLogger(__name__)

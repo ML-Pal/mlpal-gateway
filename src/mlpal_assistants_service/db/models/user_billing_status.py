@@ -8,7 +8,7 @@ This table is:
 - READ by all API services (to check if user can make requests)
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -87,7 +87,7 @@ class UserBillingStatus(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        onupdate=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     def is_active(self) -> bool:

@@ -13,6 +13,7 @@ import base64
 import logging
 import time
 import uuid
+from datetime import UTC
 from decimal import Decimal
 from typing import Any
 
@@ -29,9 +30,7 @@ from mlpal_assistants_service.adapters.base import (
 from mlpal_assistants_service.adapters.base import GeneratedImage as AdapterGeneratedImage
 from mlpal_assistants_service.core.exceptions import ModelNotFoundError, QuotaExceededError
 from mlpal_assistants_service.core.storage import AssetStorageService
-from mlpal_assistants_service.seams.billing import build_billing_gate
 from mlpal_assistants_service.repositories.usage_repository import UsageRepository
-from mlpal_assistants_service.seams.billing import is_insufficient_wallet_error
 from mlpal_assistants_service.schemas.images import (
     GeneratedImage,
     ImageGenerationCost,
@@ -39,6 +38,7 @@ from mlpal_assistants_service.schemas.images import (
     ImageGenerationResponse,
     ReferenceImage,
 )
+from mlpal_assistants_service.seams.billing import build_billing_gate, is_insufficient_wallet_error
 from mlpal_assistants_service.services.policy import PolicyService
 from mlpal_assistants_service.services.pricing import PricingService
 from mlpal_assistants_service.services.router import ModelRouter
@@ -287,13 +287,13 @@ class ImageService:
                 "AssetStorageService not configured, returning base64 data",
                 trace_id=trace_id,
             )
-            from datetime import datetime, timedelta, timezone
+            from datetime import datetime, timedelta
 
             b64_data = img.base64 or base64.b64encode(image_bytes).decode("utf-8")
             data_url = f"data:{content_type};base64,{b64_data}"
             return GeneratedImage(
                 url=data_url,
-                expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+                expires_at=datetime.now(UTC) + timedelta(hours=24),
                 revised_prompt=img.revised_prompt,
                 content_type=content_type,
                 size_bytes=len(image_bytes),

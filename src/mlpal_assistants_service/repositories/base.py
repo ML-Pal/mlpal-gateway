@@ -2,7 +2,7 @@
 
 from typing import Any, Generic, TypeVar
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlpal_assistants_service.db.models.base import Base

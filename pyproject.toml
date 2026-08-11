@@ -97,10 +97,18 @@ select = [
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
-    "ARG", # flake8-unused-arguments
-    "SIM", # flake8-simplify
 ]
-ignore = ["E501", "B008", "B904"]
+# E402: module-level imports after code are deliberate here (env-before-import
+# in conftest, lazy composition-root imports). ARG/SIM dropped from select:
+# FastAPI handlers/deps take unused-by-design params.
+# UP042 (StrEnum) would change str(enum) semantics on serialized enums — keep
+# the explicit (str, Enum) pattern.
+ignore = ["E501", "B008", "B904", "E402", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]  # re-export modules
+# Dev/integration scripts: lint for correctness, not style.
+"scripts/**" = ["E702", "E731", "I001", "B007", "C401", "C408", "W291"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["mlpal_assistants_service"]

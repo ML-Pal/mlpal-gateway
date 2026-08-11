@@ -6,14 +6,10 @@ Provides utilities for working with trace context:
 - Creating child spans
 """
 
-from contextvars import ContextVar
 from typing import Any
 
 from opentelemetry import trace
-from opentelemetry.trace import Span, SpanKind, Status, StatusCode
-
-# Context variable for request-specific metadata
-request_context: ContextVar[dict[str, Any]] = ContextVar("request_context", default={})
+from opentelemetry.trace import Span, Status, StatusCode
 
 
 def get_trace_id() -> str | None:

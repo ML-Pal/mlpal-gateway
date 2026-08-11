@@ -9,12 +9,12 @@ import json
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 
+from mlpal_assistants_service.adapters.base import UnsupportedModalityError
 from mlpal_assistants_service.api.deps import (
     ChatServiceDep,
     CurrentAPIKey,
     RateLimitCheck,
 )
-from mlpal_assistants_service.adapters.base import UnsupportedModalityError
 from mlpal_assistants_service.core.exceptions import (
     ModelNotAvailableError,
     ModelNotFoundError,
@@ -199,7 +199,7 @@ async def create_chat_completion_stream(
                     kind, payload = await asyncio.wait_for(
                         queue.get(), timeout=_STREAM_HEARTBEAT_INTERVAL
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # SSE comment line: ignored by SSE/JSON clients, but it's
                     # bytes on the wire that reset client/ALB idle timers.
                     yield ": ping\n\n"

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 import redis.asyncio as aioredis
 
@@ -41,7 +42,7 @@ class APIKeyService:
         self,
         session: AsyncSession,
         redis_client: aioredis.Redis | None = None,
-        cache_invalidator: "CacheInvalidator | None" = None,
+        cache_invalidator: CacheInvalidator | None = None,
     ) -> None:
         self.session = session
         self.redis = redis_client
@@ -143,8 +144,8 @@ class APIKeyService:
         expires_at = key_record.expires_at
         if expires_at is not None:
             if expires_at.tzinfo is None:
-                expires_at = expires_at.replace(tzinfo=timezone.utc)
-            if expires_at < datetime.now(timezone.utc):
+                expires_at = expires_at.replace(tzinfo=UTC)
+            if expires_at < datetime.now(UTC):
                 raise InvalidAPIKeyError("API key has expired")
 
         # Cache in Redis

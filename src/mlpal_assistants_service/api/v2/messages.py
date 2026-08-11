@@ -20,8 +20,6 @@ from mlpal_assistants_service.core.config import get_settings
 from mlpal_assistants_service.core.security import generate_trace_id
 from mlpal_assistants_service.repositories import UsageRepository
 from mlpal_assistants_service.seams.billing import build_billing_gate
-from mlpal_assistants_service.services.policy import PolicyService
-from mlpal_assistants_service.services.rate_limiter import RateLimiter
 from mlpal_assistants_service.services.messages_v2.core import (
     ALLOWLIST_WILDCARD,
     SERVED_PROVIDERS,
@@ -33,6 +31,8 @@ from mlpal_assistants_service.services.messages_v2.schemas import (
     InvalidMessagesRequest,
     validate,
 )
+from mlpal_assistants_service.services.policy import PolicyService
+from mlpal_assistants_service.services.rate_limiter import RateLimiter
 
 router = APIRouter()
 

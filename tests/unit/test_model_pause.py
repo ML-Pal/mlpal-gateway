@@ -23,7 +23,7 @@ def _router() -> ModelRouter:
 
 
 def _model(**kw) -> ModelRegistry:
-    base = dict(
+    base = dict(  # noqa: C408 — kwargs-style keeps the field list diffable
         model_tag="m",
         provider="anthropic",
         provider_model_id="m",

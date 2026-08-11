@@ -11,11 +11,12 @@ Provides a unified abstraction for:
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 
 def provider_status_code(exc: Exception) -> int | None:
@@ -615,11 +616,6 @@ class ImageSizeResolver:
     @classmethod
     def _calculate_aspect_ratio(cls, width: int, height: int) -> str:
         """Calculate simplified aspect ratio from dimensions."""
-        from math import gcd
-        divisor = gcd(width, height)
-        w_ratio = width // divisor
-        h_ratio = height // divisor
-
         # Map to common aspect ratios
         ratio = width / height
         common_ratios = [

@@ -21,7 +21,6 @@ from mlpal_assistants_service.api.deps import (
 )
 from mlpal_assistants_service.db.models import MetaModelRouting, ModelRegistry
 from mlpal_assistants_service.db.models.model_pricing import ModelPricing
-from mlpal_assistants_service.db.models.usage_log import UsageLog
 from mlpal_assistants_service.services.catalog import load_curated
 from mlpal_assistants_service.services.traces import query_traces
 

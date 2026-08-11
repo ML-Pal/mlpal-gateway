@@ -1,8 +1,9 @@
 """Unit tests for API key service."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from mlpal_assistants_service.core.exceptions import InvalidAPIKeyError
 from mlpal_assistants_service.schemas.api_key import APIKeyCreate

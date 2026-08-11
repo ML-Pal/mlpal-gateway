@@ -3,7 +3,8 @@
 import json
 import logging
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import aioboto3
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -833,6 +834,7 @@ class BedrockAdapter(BaseAdapter):
     ) -> dict[str, Any] | None:
         """Build image content block from FileAttachment."""
         import base64 as b64_module
+
         import httpx
 
         mime = attachment.mime_type or "image/png"
@@ -884,6 +886,7 @@ class BedrockAdapter(BaseAdapter):
     ) -> dict[str, Any] | None:
         """Build document content block from FileAttachment (for PDFs)."""
         import base64 as b64_module
+
         import httpx
 
         mime = attachment.mime_type or "application/pdf"
@@ -937,7 +940,7 @@ class BedrockAdapter(BaseAdapter):
         import base64 as b64_module
 
         if attachment.source == FileSource.PATH:
-            with open(attachment.data, "r", encoding="utf-8") as f:
+            with open(attachment.data, encoding="utf-8") as f:
                 text_content = f.read()
         elif attachment.source == FileSource.BASE64:
             text_content = b64_module.b64decode(attachment.data).decode("utf-8")
@@ -988,6 +991,7 @@ class BedrockAdapter(BaseAdapter):
     def _build_document_block(self, doc: dict[str, Any]) -> dict[str, Any] | None:
         """Build document content block for PDFs from legacy dict format."""
         import base64 as b64_module
+
         import httpx
 
         mime_type = doc.get("mime_type", "application/pdf")
@@ -1148,7 +1152,6 @@ class BedrockAdapter(BaseAdapter):
             - cohere.embed-english-v3: Cohere English (1024 dims)
             - cohere.embed-multilingual-v3: Cohere 100+ languages (1024 dims)
         """
-        import base64 as b64_module
 
         model = model or self.DEFAULT_EMBEDDING_MODEL
         start_time = time.perf_counter()
@@ -1252,7 +1255,6 @@ class BedrockAdapter(BaseAdapter):
             - stability.stable-image-core-v1:0: Stability AI Core
             - amazon.titan-image-generator-v2:0: AWS Titan Image
         """
-        import base64 as b64_module
 
         model = model or self.DEFAULT_IMAGE_MODEL
         start_time = time.perf_counter()

@@ -10,7 +10,6 @@ from mlpal_assistants_service.api.deps import (
     PricingServiceDep,
 )
 from mlpal_assistants_service.core.exceptions import ModelNotFoundError
-from mlpal_assistants_service.services.policy import PolicyService
 from mlpal_assistants_service.schemas.model import (
     MetaModelInfo,
     MetaModelListResponse,
@@ -20,6 +19,7 @@ from mlpal_assistants_service.schemas.model import (
     ModelListResponse,
     ModelPricingInfo,
 )
+from mlpal_assistants_service.services.policy import PolicyService
 
 router = APIRouter()
 

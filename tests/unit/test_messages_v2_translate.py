@@ -19,11 +19,6 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 import mlpal_assistants_service.services.messages_v2.core as core_mod
-from mlpal_assistants_service.services.messages_v2.core import is_served_chat_model
-from mlpal_assistants_service.services.messages_v2.translate_in import (
-    sanitize_google_tool_schema,
-    to_common,
-)
 from mlpal_assistants_service.adapters.base import (
     AdapterResponse,
     FileAttachment,
@@ -34,9 +29,13 @@ from mlpal_assistants_service.adapters.base import (
 )
 from mlpal_assistants_service.core.exceptions import ProviderError
 from mlpal_assistants_service.services.messages_v2 import emit
-from mlpal_assistants_service.services.messages_v2.core import MessagesV2Core
+from mlpal_assistants_service.services.messages_v2.core import MessagesV2Core, is_served_chat_model
 from mlpal_assistants_service.services.messages_v2.reasoning import effort_from_thinking
 from mlpal_assistants_service.services.messages_v2.schemas import validate
+from mlpal_assistants_service.services.messages_v2.translate_in import (
+    sanitize_google_tool_schema,
+    to_common,
+)
 
 GPT = "gpt-5.5"
 
@@ -331,7 +330,9 @@ def _openai_core(monkeypatch, adapter):
         input_cu_rate=Decimal("1.0"), output_cu_rate=Decimal("4.0"), rate_unit="per_1m_tokens",
         markup_multiplier=Decimal("3.0"),
     ))
-    usage = MagicMock(); usage.record_usage = AsyncMock(); usage.redis = None
+    usage = MagicMock()
+    usage.record_usage = AsyncMock()
+    usage.redis = None
     billing = MagicMock()
     billing.can_make_request_cached = AsyncMock(return_value=(True, None, True))
     billing.is_wallet_debit_active = AsyncMock(return_value=True)
@@ -357,7 +358,8 @@ async def test_core_openai_nonstreaming(monkeypatch):
         usage=TokenUsage(input_tokens=100, output_tokens=20, cached_tokens=80),
         finish_reason="stop",
     ))
-    core, usage, billing = _openai_core(monkeypatch, adapter); _stub_post_billing(core)
+    core, usage, billing = _openai_core(monkeypatch, adapter)
+    _stub_post_billing(core)
     req = validate(json.dumps({"model": GPT, "messages": [{"role": "user", "content": "hi"}]}).encode())
 
     resp = await core.handle(req, _api_key(), {}, "trace-o1")
@@ -390,7 +392,8 @@ async def test_core_openai_nonstreaming_empty_completion_flagged(monkeypatch):
         usage=TokenUsage(input_tokens=19, output_tokens=16, cached_tokens=0),
         finish_reason="length",
     ))
-    core, usage, billing = _openai_core(monkeypatch, adapter); _stub_post_billing(core)
+    core, usage, billing = _openai_core(monkeypatch, adapter)
+    _stub_post_billing(core)
     req = validate(json.dumps({"model": GPT, "messages": [{"role": "user", "content": "hi"}],
                                "max_tokens": 16}).encode())
 
@@ -549,12 +552,16 @@ async def test_google_edge_sanitizes_tool_schema(monkeypatch):
     adapter = _CapturingAdapter()
     model = SimpleNamespace(model_tag="gemini-3.5-flash", provider="google", provider_model_id="gemini-3.5-flash",
                             display_name="Gemini", capabilities={"operation": "chat"}, max_output_tokens=8192)
-    router = MagicMock(); router.get_model = AsyncMock(return_value=model)
+    router = MagicMock()
+    router.get_model = AsyncMock(return_value=model)
     router.resolve_meta_model = AsyncMock(side_effect=lambda tag, op: (tag, None))
-    pricing = MagicMock(); pricing.get_pricing = AsyncMock(return_value=SimpleNamespace(
+    pricing = MagicMock()
+    pricing.get_pricing = AsyncMock(return_value=SimpleNamespace(
         input_cu_rate=Decimal("1.0"), output_cu_rate=Decimal("4.0"), rate_unit="per_1m_tokens",
         markup_multiplier=Decimal("3.0")))
-    usage = MagicMock(); usage.record_usage = AsyncMock(); usage.redis = None
+    usage = MagicMock()
+    usage.record_usage = AsyncMock()
+    usage.redis = None
     billing = MagicMock()
     billing.can_make_request_cached = AsyncMock(return_value=(True, None, True))
     billing.is_wallet_debit_active = AsyncMock(return_value=True)
@@ -601,7 +608,8 @@ async def test_core_resolves_meta_model(monkeypatch):
 @pytest.mark.asyncio
 async def test_core_openai_provider_error_maps_to_envelope(monkeypatch):
     adapter = _FakeAdapter(error=ProviderError(message="bad input", provider="openai", status_code=400))
-    core, usage, billing = _openai_core(monkeypatch, adapter); _stub_post_billing(core)
+    core, usage, billing = _openai_core(monkeypatch, adapter)
+    _stub_post_billing(core)
     req = validate(json.dumps({"model": GPT, "messages": [{"role": "user", "content": "hi"}]}).encode())
 
     resp = await core.handle(req, _api_key(), {}, "trace-o3")

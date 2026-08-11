@@ -2,11 +2,11 @@
 
 import asyncio
 import os
-import structlog
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import redis.asyncio as redis
+import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,12 +21,12 @@ from mlpal_assistants_service.adapters import (
 from mlpal_assistants_service.api.mounting import mount_api
 from mlpal_assistants_service.core.cache import CacheInvalidator
 from mlpal_assistants_service.core.config import get_settings
-from mlpal_assistants_service.core.storage import AssetStorageService
 from mlpal_assistants_service.core.exceptions import (
     AssistantsServiceError,
     ProviderError,
     http_status_for_provider_error,
 )
+from mlpal_assistants_service.core.storage import AssetStorageService
 from mlpal_assistants_service.core.telemetry import (
     instrument_app,
     setup_tracing,
@@ -54,9 +54,8 @@ def _run_migrations() -> None:
     the missing column, which is the signal to investigate.
     """
     try:
-        from alembic.config import Config as AlembicConfig
-
         from alembic import command as alembic_command
+        from alembic.config import Config as AlembicConfig
 
         alembic_cfg = AlembicConfig(
             os.path.join(
@@ -330,8 +329,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             """
             import json
             from decimal import Decimal
-            from mlpal_assistants_service.db.session import async_session_factory
+
             from mlpal_assistants_service.db.models import UsageLog
+            from mlpal_assistants_service.db.session import async_session_factory
 
             batch_size = min(settings.sqs_usage_batch_size, 10)  # SQS max is 10
             wait_time = min(settings.sqs_long_poll_wait, 20)  # SQS max is 20
@@ -739,7 +739,7 @@ async def ready(request: Request) -> HealthResponse:
             try:
                 result = await asyncio.wait_for(adapter.health_check(), timeout=2.0)
                 return (name, result)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(f"Provider health check timed out: {name}")
                 return (name, False)
             except Exception as e:
@@ -755,7 +755,6 @@ async def ready(request: Request) -> HealthResponse:
     # Core services must be healthy (db, redis)
     # Providers can be degraded without failing readiness
     core_healthy = checks.get("database", False) and checks.get("redis", False)
-    all_healthy = all(checks.values())
 
     return HealthResponse(
         status="ready" if core_healthy else "not_ready",

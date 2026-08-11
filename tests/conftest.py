@@ -12,8 +12,7 @@ for _k, _v in {
 }.items():
     os.environ.setdefault(_k, _v)
 
-import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -21,7 +20,7 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from mlpal_assistants_service.core.config import Settings
 from mlpal_assistants_service.db.models import Base

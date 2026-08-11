@@ -20,7 +20,6 @@ from mlpal_assistants_service.db.models import MetaModelRouting, ModelRegistry
 from mlpal_assistants_service.services.catalog_sync import plan_routing
 from mlpal_assistants_service.services.router import ModelRouter
 
-
 # ── plan_routing (feed → table convergence) ──────────────────────────────────
 
 

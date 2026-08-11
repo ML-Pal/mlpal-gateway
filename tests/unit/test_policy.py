@@ -16,7 +16,6 @@ from mlpal_assistants_service.core.exceptions import (
     BudgetExceededError,
     ModelAccessDeniedError,
 )
-from mlpal_assistants_service.services import policy as pol
 from mlpal_assistants_service.services.policy import PolicyService, window_bounds, window_id
 
 UTC = ZoneInfo("UTC")

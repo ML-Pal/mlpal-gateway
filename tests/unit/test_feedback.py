@@ -45,8 +45,9 @@ async def test_get_quality_nests_and_scores_from_rows():
 
 @pytest.mark.asyncio
 async def test_feedback_endpoint_rejects_bad_outcome_but_accepts_valid():
-    from mlpal_assistants_service.api.v2.feedback import FeedbackRequest, post_feedback
     from fastapi import HTTPException
+
+    from mlpal_assistants_service.api.v2.feedback import FeedbackRequest, post_feedback
 
     api_key = SimpleNamespace(user_id=1, id=2, has_permission=lambda p: p in ("messages", "chat"))
     session = MagicMock()

@@ -23,28 +23,23 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import AsyncIterator
 from decimal import Decimal
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlpal_assistants_service.adapters import (
-    AdapterResponse,
     CircuitBreakerOpen,
 )
-from mlpal_assistants_service.adapters.base import StreamChunk as AdapterStreamChunk
 from mlpal_assistants_service.core.exceptions import (
     ModelNotFoundError,
     ProviderError,
     QuotaExceededError,
     UnsupportedCapabilityError,
 )
-from mlpal_assistants_service.seams.billing import build_billing_gate
 from mlpal_assistants_service.repositories.usage_repository import UsageRepository
-from mlpal_assistants_service.services.policy import PolicyService
-from mlpal_assistants_service.seams.billing import is_insufficient_wallet_error
-from mlpal_assistants_service.services.capture import capture_payload, capture_state
 from mlpal_assistants_service.schemas.chat import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -52,11 +47,18 @@ from mlpal_assistants_service.schemas.chat import (
     CostInfo,
     FunctionCallSchema,
     StreamChunk,
-    ToolCallSchema,
     TokenUsage,
+    ToolCallSchema,
 )
+from mlpal_assistants_service.seams.billing import build_billing_gate, is_insufficient_wallet_error
+from mlpal_assistants_service.services.capture import capture_payload, capture_state
+from mlpal_assistants_service.services.policy import PolicyService
 from mlpal_assistants_service.services.pricing import PricingService
 from mlpal_assistants_service.services.rate_limiter import RateLimiter
+
+if TYPE_CHECKING:
+    from mlpal_assistants_service.adapters.base import ToolDefinition
+    from mlpal_assistants_service.schemas.chat import ToolDefinitionSchema
 from mlpal_assistants_service.services.router import ModelRouter
 from mlpal_assistants_service.services.usage import UsageService
 

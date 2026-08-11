@@ -15,7 +15,6 @@ from contextlib import asynccontextmanager
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
-
 import pytest
 
 from mlpal_assistants_service.adapters.base import StreamChunk as AdapterStreamChunk

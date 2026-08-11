@@ -4,11 +4,10 @@ NOTE: The user_credits table lives in the USER schema (MLPAL_USER_SCHEMA)
 since credits are universal across all MLpal services.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import func, or_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlpal_assistants_service.db.models import CreditType, UserCredits
 from mlpal_assistants_service.repositories.base import BaseRepository
@@ -16,7 +15,7 @@ from mlpal_assistants_service.repositories.base import BaseRepository
 
 def utcnow() -> datetime:
     """Get current UTC time as timezone-aware datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class CreditRepository(BaseRepository[UserCredits]):

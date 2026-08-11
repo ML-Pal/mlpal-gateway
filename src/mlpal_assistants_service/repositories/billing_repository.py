@@ -8,8 +8,8 @@ This repository is READ-ONLY for API services. The payment service owns writes.
 
 import json
 import logging
+from datetime import UTC, datetime
 from decimal import Decimal
-from datetime import datetime, timezone
 
 import httpx
 import redis.asyncio as redis
@@ -53,7 +53,7 @@ def _service_auth_headers(settings) -> dict[str, str]:
 
 def utcnow() -> datetime:
     """Get current UTC time as timezone-aware datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class BillingRepository(BaseRepository[UserBillingStatus]):

@@ -7,7 +7,6 @@ from pydantic import ConfigDict, Field, field_validator
 from mlpal_assistants_service.schemas.common import BaseSchema
 from mlpal_assistants_service.schemas.routing import RoutingMetadata
 
-
 # =============================================================================
 # File Attachments
 # =============================================================================

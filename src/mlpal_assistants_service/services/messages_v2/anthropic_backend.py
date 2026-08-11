@@ -12,7 +12,7 @@ the mantle quirk-filter does not apply).
 
 from __future__ import annotations
 
-from typing import Mapping
+from collections.abc import Mapping
 
 from mlpal_assistants_service.core.config import Settings
 

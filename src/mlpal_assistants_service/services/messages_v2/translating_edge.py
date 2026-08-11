@@ -10,18 +10,18 @@ passthrough); this edge is exactly the converging seam the architecture promised
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from mlpal_assistants_service.adapters.base import (
     BaseAdapter,
+    ToolDefinition,
     UnsupportedModalityError,
 )
 from mlpal_assistants_service.core.config import get_settings
 from mlpal_assistants_service.core.exceptions import (
-    ProviderError,
     UnsupportedCapabilityError,
 )
-from mlpal_assistants_service.adapters.base import ToolDefinition
 from mlpal_assistants_service.services.messages_v2 import emit
 from mlpal_assistants_service.services.messages_v2.edges import EdgeResult, RequestContext
 from mlpal_assistants_service.services.messages_v2.errors import error_body

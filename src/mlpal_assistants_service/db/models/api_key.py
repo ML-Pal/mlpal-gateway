@@ -1,6 +1,6 @@
 """API Key model for storing user API keys."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, Index, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
@@ -153,7 +153,7 @@ class APIKey(Base, TimestampMixin):
         """Check if the key is currently valid (active and not expired)."""
         if not self.is_active or self.revoked_at is not None:
             return False
-        if self.expires_at is not None and self.expires_at < datetime.now(timezone.utc):
+        if self.expires_at is not None and self.expires_at < datetime.now(UTC):
             return False
         return True
 

@@ -14,8 +14,7 @@ import json
 import logging
 import time
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 
 from mlpal_assistants_service.core.config import get_settings
 
@@ -68,7 +67,7 @@ class MetricsEmitter:
     ) -> None:
         """Emit metric to console as JSON (for local development)."""
         metric_data = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "metric": metric_name,
             "value": value,
             "unit": unit,

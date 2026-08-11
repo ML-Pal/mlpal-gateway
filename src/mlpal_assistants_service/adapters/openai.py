@@ -7,10 +7,10 @@ Production-grade implementation following LangChain patterns:
 - Retry mechanisms for validation failures
 """
 
-import json
 import logging
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 from openai import AsyncOpenAI
@@ -1011,8 +1011,8 @@ class OpenAIAdapter(BaseAdapter):
             }
         elif attachment.source == FileSource.BASE64:
             import base64
-            import tempfile
             import os
+            import tempfile
 
             file_data = base64.b64decode(attachment.data)
             filename = attachment.filename or "document.pdf"
@@ -1047,7 +1047,6 @@ class OpenAIAdapter(BaseAdapter):
         Returns:
             The file_id of the uploaded file
         """
-        import asyncio
         from pathlib import Path
 
         # Use synchronous client for file upload within async context
@@ -1118,7 +1117,7 @@ class OpenAIAdapter(BaseAdapter):
         """Build text content block from code/text FileAttachment."""
         # For text/code files, we need to read and include as text
         if attachment.source == FileSource.PATH:
-            with open(attachment.data, "r", encoding="utf-8") as f:
+            with open(attachment.data, encoding="utf-8") as f:
                 text_content = f.read()
         elif attachment.source == FileSource.BASE64:
             import base64
@@ -1169,8 +1168,8 @@ class OpenAIAdapter(BaseAdapter):
             }
         elif doc.get("base64"):
             import base64 as b64_module
-            import tempfile
             import os
+            import tempfile
 
             file_data = b64_module.b64decode(doc["base64"])
             filename = doc.get("filename", "document.pdf")
@@ -1489,8 +1488,8 @@ class OpenAIAdapter(BaseAdapter):
         Pass reference images via the 'image' parameter.
         """
         import base64
+
         import httpx
-        from io import BytesIO
 
         start_time = time.perf_counter()
 

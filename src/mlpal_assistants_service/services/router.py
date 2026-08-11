@@ -17,7 +17,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlpal_assistants_service.adapters.circuit_breaker import (
     CircuitBreaker,
-    CircuitBreakerOpen,
     CircuitBreakerRegistry,
 )
 from mlpal_assistants_service.adapters.factory import AdapterFactory, get_adapter_factory
@@ -26,7 +25,6 @@ from mlpal_assistants_service.core.config import get_settings
 from mlpal_assistants_service.core.exceptions import (
     ModelNotAvailableError,
     ModelNotFoundError,
-    ProviderUnavailableError,
 )
 from mlpal_assistants_service.db.models import MetaModelRouting, ModelRegistry
 from mlpal_assistants_service.repositories import MetaRoutingRepository, ModelRepository

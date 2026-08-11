@@ -1,6 +1,6 @@
 """Repository for APIKey access."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -35,7 +35,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
             return None
 
         # Check expiration
-        if api_key.expires_at and api_key.expires_at < datetime.now(timezone.utc):
+        if api_key.expires_at and api_key.expires_at < datetime.now(UTC):
             return None
 
         return api_key
@@ -89,7 +89,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
             return None
 
         api_key.is_active = False
-        api_key.revoked_at = datetime.now(timezone.utc)
+        api_key.revoked_at = datetime.now(UTC)
         await self.session.flush()
         return api_key
 
@@ -100,7 +100,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
             return None
 
         api_key.is_active = False
-        api_key.revoked_at = datetime.now(timezone.utc)
+        api_key.revoked_at = datetime.now(UTC)
         await self.session.flush()
         return api_key
 
@@ -108,7 +108,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         """Update the last_used_at timestamp for an API key."""
         api_key = await self.get_by_id(key_id)
         if api_key:
-            api_key.last_used_at = datetime.now(timezone.utc)
+            api_key.last_used_at = datetime.now(UTC)
             await self.session.flush()
 
     async def update_permissions(

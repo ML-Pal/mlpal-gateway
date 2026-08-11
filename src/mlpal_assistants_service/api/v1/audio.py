@@ -12,7 +12,6 @@ from mlpal_assistants_service.schemas.audio import (
     TranscriptionRequest,
     TranscriptionResponse,
     TTSRequest,
-    TTSResponse,
 )
 
 router = APIRouter()

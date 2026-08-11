@@ -22,9 +22,7 @@ from mlpal_assistants_service.core.exceptions import (
     ModelNotFoundError,
     QuotaExceededError,
 )
-from mlpal_assistants_service.seams.billing import build_billing_gate
 from mlpal_assistants_service.repositories.usage_repository import UsageRepository
-from mlpal_assistants_service.seams.billing import is_insufficient_wallet_error
 from mlpal_assistants_service.schemas.embeddings import (
     EmbeddingCost,
     EmbeddingData,
@@ -32,6 +30,7 @@ from mlpal_assistants_service.schemas.embeddings import (
     EmbeddingResponse,
     EmbeddingUsage,
 )
+from mlpal_assistants_service.seams.billing import build_billing_gate, is_insufficient_wallet_error
 from mlpal_assistants_service.services.policy import PolicyService
 from mlpal_assistants_service.services.pricing import PricingService
 from mlpal_assistants_service.services.rate_limiter import RateLimiter

@@ -10,14 +10,14 @@ Revision ID: 20260811_2000
 Revises: 20260811_1200
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
 revision: str = "20260811_2000"
-down_revision: Union[str, Sequence[str], None] = "20260811_1200"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = "20260811_1200"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

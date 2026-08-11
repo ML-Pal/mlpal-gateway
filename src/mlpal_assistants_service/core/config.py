@@ -1,11 +1,10 @@
 """Application configuration using pydantic-settings."""
 
+from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 
-from decimal import Decimal
-
-from pydantic import Field, PostgresDsn, RedisDsn, computed_field
+from pydantic import Field, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

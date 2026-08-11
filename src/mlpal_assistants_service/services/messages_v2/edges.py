@@ -15,8 +15,9 @@ architecture rather than three snowflakes.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Mapping, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from mlpal_assistants_service.services.messages_v2.schemas import ValidatedRequest
 from mlpal_assistants_service.services.messages_v2.usage import CanonicalUsage

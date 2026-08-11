@@ -62,7 +62,9 @@ def _core():
         input_cu_rate=Decimal("1.5"), output_cu_rate=Decimal("7.5"), rate_unit="per_1m_tokens",
         markup_multiplier=Decimal("3.0"),
     ))
-    usage = MagicMock(); usage.record_usage = AsyncMock(); usage.redis = None
+    usage = MagicMock()
+    usage.record_usage = AsyncMock()
+    usage.redis = None
     billing = MagicMock()
     billing.can_make_request_cached = AsyncMock(return_value=(True, None, True))
     billing.is_wallet_debit_active = AsyncMock(return_value=True)

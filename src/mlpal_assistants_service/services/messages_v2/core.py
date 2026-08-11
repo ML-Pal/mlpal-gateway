@@ -12,8 +12,9 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import AsyncIterator, Mapping
 from decimal import Decimal
-from typing import Any, AsyncIterator, Mapping
+from typing import Any
 
 from fastapi.responses import Response, StreamingResponse
 
@@ -26,8 +27,8 @@ from mlpal_assistants_service.core.exceptions import (
     ModelNotFoundError,
     RateLimitExceededError,
 )
-from mlpal_assistants_service.seams.billing import build_billing_gate, is_insufficient_wallet_error
 from mlpal_assistants_service.core.metrics import get_metrics
+from mlpal_assistants_service.seams.billing import build_billing_gate, is_insufficient_wallet_error
 from mlpal_assistants_service.services.messages_v2.anthropic_backend import get_anthropic_backend
 from mlpal_assistants_service.services.messages_v2.anthropic_edge import AnthropicEdge
 from mlpal_assistants_service.services.messages_v2.edges import ProviderEdge, RequestContext
@@ -242,7 +243,7 @@ class MessagesV2Core:
             while True:
                 try:
                     kind, payload = await asyncio.wait_for(queue.get(), timeout=interval)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield b": ping\n\n"
                     continue
                 if kind == "chunk":

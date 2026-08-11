@@ -13,6 +13,7 @@ import base64
 import logging
 import time
 import uuid
+from datetime import UTC
 from decimal import Decimal
 from typing import Any
 
@@ -22,9 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mlpal_assistants_service.adapters.base import FileAttachment, FileSource, FileType
 from mlpal_assistants_service.core.exceptions import ModelNotFoundError, QuotaExceededError
 from mlpal_assistants_service.core.storage import AssetStorageService
-from mlpal_assistants_service.seams.billing import build_billing_gate
 from mlpal_assistants_service.repositories.usage_repository import UsageRepository
-from mlpal_assistants_service.seams.billing import is_insufficient_wallet_error
 from mlpal_assistants_service.schemas.audio import (
     TranscriptionCost,
     TranscriptionRequest,
@@ -33,6 +32,7 @@ from mlpal_assistants_service.schemas.audio import (
     TTSRequest,
     TTSResponse,
 )
+from mlpal_assistants_service.seams.billing import build_billing_gate, is_insufficient_wallet_error
 from mlpal_assistants_service.services.policy import PolicyService
 from mlpal_assistants_service.services.pricing import PricingService
 from mlpal_assistants_service.services.router import ModelRouter
@@ -345,14 +345,14 @@ class AudioService:
                     "AssetStorageService not configured, returning data URL",
                     trace_id=trace_id,
                 )
-                from datetime import datetime, timedelta, timezone
+                from datetime import datetime, timedelta
 
                 b64_data = base64.b64encode(audio_bytes).decode("utf-8")
                 data_url = f"data:{content_type};base64,{b64_data}"
 
                 tts_response = TTSResponse(
                     url=data_url,
-                    expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+                    expires_at=datetime.now(UTC) + timedelta(hours=24),
                     content_type=content_type,
                     size_bytes=len(audio_bytes),
                     cost=TTSCost(

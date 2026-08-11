@@ -1,6 +1,5 @@
 """Unit tests for security utilities."""
 
-import pytest
 
 from mlpal_assistants_service.core.security import (
     generate_api_key,

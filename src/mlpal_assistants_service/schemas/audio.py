@@ -8,7 +8,6 @@ from pydantic import Field
 from mlpal_assistants_service.schemas.common import BaseSchema
 from mlpal_assistants_service.schemas.routing import RoutingMetadata
 
-
 # ============================================================================
 # Text-to-Speech (TTS)
 # ============================================================================

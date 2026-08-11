@@ -11,7 +11,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlpal_assistants_service.core.auth import (
-    JWTUser,
     JWTValidationError,
     get_cognito_validator,
 )

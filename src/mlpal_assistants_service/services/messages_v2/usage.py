@@ -45,7 +45,7 @@ class CanonicalUsage:
     raw: dict[str, Any] | None = None
 
     @classmethod
-    def from_anthropic(cls, usage: dict[str, Any]) -> "CanonicalUsage":
+    def from_anthropic(cls, usage: dict[str, Any]) -> CanonicalUsage:
         """Build canonical usage from an Anthropic Messages `usage` object.
 
         `cache_creation_input_tokens` is the flat total; the tiered breakdown
@@ -68,7 +68,7 @@ class CanonicalUsage:
         )
 
     @classmethod
-    def from_openai(cls, usage: Any) -> "CanonicalUsage":
+    def from_openai(cls, usage: Any) -> CanonicalUsage:
         """Build canonical usage from an adapter ``TokenUsage`` (OpenAI/Google).
 
         ``input_tokens`` from these providers already includes the cached prefix

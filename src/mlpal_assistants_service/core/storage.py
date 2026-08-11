@@ -27,11 +27,12 @@ Example:
 """
 
 import mimetypes
-import structlog
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from typing import TYPE_CHECKING
 from uuid import uuid4
+
+import structlog
 
 if TYPE_CHECKING:
     from types_aiobotocore_s3 import S3Client
@@ -92,7 +93,7 @@ class AssetStorageService:
         self.region = region
         self.url_expiration = url_expiration
         self._session = None
-        self._client: "S3Client | None" = None
+        self._client: S3Client | None = None
         self._logger = logger.bind(service="asset_storage", bucket=bucket)
 
     async def _get_client(self) -> "S3Client":
@@ -266,7 +267,7 @@ class AssetStorageService:
             )
 
             # Calculate expiration time
-            expires_at = datetime.now(timezone.utc) + timedelta(seconds=self.url_expiration)
+            expires_at = datetime.now(UTC) + timedelta(seconds=self.url_expiration)
 
             self._logger.info(
                 "Asset uploaded successfully",

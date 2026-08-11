@@ -6,7 +6,6 @@ from datetime import datetime
 
 from mlpal_assistants_service.core.config import get_settings
 
-
 CDE_API_KEY_PREFIX = "cde_sk_"
 
 

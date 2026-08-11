@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import fnmatch
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -88,7 +88,7 @@ def window_bounds(window: str, now_local: datetime) -> tuple[datetime | None, da
         end = (start + timedelta(days=32)).replace(day=1)
     else:  # defensive; validated upstream
         return None, None
-    return start.astimezone(timezone.utc), end.astimezone(timezone.utc)
+    return start.astimezone(UTC), end.astimezone(UTC)
 
 
 class PolicyService:
@@ -177,7 +177,7 @@ class PolicyService:
         _, end_utc = window_bounds(window, now_local)
         if end_utc is None:
             return None
-        secs = int((end_utc - datetime.now(timezone.utc)).total_seconds()) + _TTL_GRACE
+        secs = int((end_utc - datetime.now(UTC)).total_seconds()) + _TTL_GRACE
         return max(secs, _TTL_GRACE)
 
     async def _window_spend_cu(self, api_key_id: int, window: str, now_local: datetime) -> Decimal:

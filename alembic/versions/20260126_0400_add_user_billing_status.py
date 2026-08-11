@@ -18,18 +18,18 @@ Status values:
 - blocked: Permanently blocked (e.g., TOS violation)
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 from mlpal_assistants_service.core.config import get_settings
 
 # revision identifiers, used by Alembic.
 revision: str = '3b4c5d6e7f8a'
-down_revision: Union[str, None] = '2a3b4c5d6e7f'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '2a3b4c5d6e7f'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def get_user_schema() -> str:

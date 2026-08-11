@@ -18,7 +18,8 @@ so OpenAI and Google share exactly one translation of the output surface.
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable
+from typing import Any
 
 from mlpal_assistants_service.adapters.base import AdapterResponse, StreamChunk, TokenUsage
 
