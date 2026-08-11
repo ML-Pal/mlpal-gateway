@@ -108,8 +108,11 @@ class UsageLog(Base):
     )
 
     # Cost in compute units
+    # 24,12: pass-through CU for a cheap-model request can be ~1e-7 — 12,6
+    # truncated those to zero at persistence (caught 2026-08-11; the response
+    # figure was always exact). Matches payments' wallet-column resolution.
     compute_units: Mapped[Decimal] = mapped_column(
-        Numeric(12, 6),
+        Numeric(24, 12),
         default=Decimal("0"),
         server_default="0",
         nullable=False,
