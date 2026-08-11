@@ -29,10 +29,13 @@ class MetaModelRouting(Base, TimestampMixin):
             "operation",
             "is_active",
         ),
+        # One active row per (tag, operation, priority) — candidate LISTS are
+        # the model now (priority-ordered, availability-resolved at request time).
         Index(
             "idx_meta_routing_unique_active",
             "meta_model_tag",
             "operation",
+            "priority",
             unique=True,
             postgresql_where="is_active = true",
         ),

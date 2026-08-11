@@ -38,9 +38,12 @@ def _load(name: str, url: str | None) -> list[dict]:
 async def _run(args: argparse.Namespace) -> None:
     registry = _load("registry.json", args.registry_url)
     pricing = _load("pricing.json", args.pricing_url)
-    print(f"[reconcile] feed: {len(registry)} models, {len(pricing)} prices")
+    routing_doc = _load("routing.json", args.routing_url)
+    routing = routing_doc["routes"] if isinstance(routing_doc, dict) else routing_doc
+    print(f"[reconcile] feed: {len(registry)} models, {len(pricing)} prices, "
+          f"{len(routing)} router-tag routes")
     async with session_context() as session:
-        summary = await reconcile(session, registry, pricing)
+        summary = await reconcile(session, registry, pricing, routing)
     print(f"[reconcile] {summary}")
 
 
@@ -48,6 +51,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Reconcile model registry + pricing from the feed.")
     p.add_argument("--registry-url", help="Fetch registry.json from a URL instead of the bundled copy.")
     p.add_argument("--pricing-url", help="Fetch pricing.json from a URL instead of the bundled copy.")
+    p.add_argument("--routing-url", help="Fetch routing.json from a URL instead of the bundled copy.")
     asyncio.run(_run(p.parse_args()))
 
 

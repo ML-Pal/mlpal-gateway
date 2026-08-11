@@ -30,6 +30,19 @@ any explicit model, register your own adapter, and self-host any provider.
 Full thesis, the auto-router, and an honest ✅/🟡/⬜ feature matrix vs
 OpenRouter / LiteLLM / Portkey: **[docs/POSITIONING.md](docs/POSITIONING.md)**.
 
+## Catalog vs. router tags — which do I use?
+
+Two surfaces expose the same curated model intelligence; they differ in **who
+decides**:
+
+| | **Router tags** (`mlpal`, `mlpal-flash`, `mlpal-lite`) | **Catalog** (`GET /v1/catalog`) |
+|---|---|---|
+| Who picks the model | **The gateway.** Send the tag as `model`; it resolves to the best model *your deployment serves* for that operation, walking a curated provider-spanning candidate list. | **You (or your agent).** A ranked menu — tier ladder, capabilities, costs — for clients that choose a concrete model per task (this is what yodex does for subtask routing). |
+| When to use | You just want a good answer and never want to update model names. | You're building routing logic and want the data to decide yourself. |
+| Single-provider box | Still works — resolution falls through to whatever your key serves. | Tiers whose candidates aren't served are marked; your client picks among what is. |
+
+Both are driven by the same feed (`catalog/*.json`) and update as data, not code.
+
 ## Quick start
 
 ```bash

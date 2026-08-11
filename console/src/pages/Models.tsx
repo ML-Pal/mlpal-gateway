@@ -380,8 +380,10 @@ function RouterTagSection({ tags }: { tags: RouterTag[] }) {
       </div>
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
         Not models — stable aliases. Send <code className="text-xs">"model": "mlpal"</code> and the
-        gateway routes each request to the current best model for that operation. Targets upgrade
-        behind the tag; your code never changes.
+        gateway picks the best model <em>this deployment serves</em> for that operation, falling
+        through a curated, provider-spanning candidate list. Targets upgrade behind the tag; your
+        code never changes. (The <span className="font-medium">Catalog</span> tab is the other way
+        around: the same curated data as a menu, for clients that want to choose per task.)
       </p>
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
         {tags.map((t) => (
@@ -391,31 +393,35 @@ function RouterTagSection({ tags }: { tags: RouterTag[] }) {
               <span className="text-xs text-muted-foreground">{TAG_BLURB[t.tag] ?? "routing alias"}</span>
             </div>
             <div className="mt-3 flex flex-col gap-1.5">
-              {t.routes.map((r) => (
-                <div
-                  key={r.operation}
-                  className="flex items-center gap-2 text-xs"
-                  title={r.served ? (r.reason ?? undefined) : `${r.unserved_reason} — requests fall back or fail until it's served`}
-                >
-                  <span
-                    className={cn(
-                      "size-1.5 shrink-0 rounded-full",
-                      r.served ? "bg-[var(--success)]" : "border border-muted-foreground/50",
+              {t.routes.map((r) => {
+                const fallbacks = (r.candidates ?? []).filter(
+                  (c) => c.model_tag !== r.resolved_model_tag,
+                );
+                const title = r.served
+                  ? `${r.reason ?? ""}${fallbacks.length ? `\nfallbacks: ${fallbacks.map((c) => `${c.model_tag}${c.served ? "" : ` (${c.unserved_reason})`}`).join(" → ")}` : ""}`
+                  : `${r.unserved_reason} — tried: ${(r.candidates ?? []).map((c) => `${c.model_tag} (${c.unserved_reason})`).join(", ")}`;
+                return (
+                  <div key={r.operation} className="flex items-center gap-2 text-xs" title={title}>
+                    <span
+                      className={cn(
+                        "size-1.5 shrink-0 rounded-full",
+                        r.served ? "bg-[var(--success)]" : "border border-muted-foreground/50",
+                      )}
+                    />
+                    <span className="w-20 shrink-0 text-muted-foreground">
+                      {r.operation.replace(/_/g, " ")}
+                    </span>
+                    <code className={cn("truncate", r.served ? "text-foreground" : "text-muted-foreground")}>
+                      {r.resolved_model_tag ?? "— none served"}
+                    </code>
+                    {fallbacks.length > 0 && r.served && (
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                        +{fallbacks.length} fallback{fallbacks.length > 1 ? "s" : ""}
+                      </span>
                     )}
-                  />
-                  <span className="w-20 shrink-0 text-muted-foreground">
-                    {r.operation.replace(/_/g, " ")}
-                  </span>
-                  <code
-                    className={cn(
-                      "truncate",
-                      r.served ? "text-foreground" : "text-muted-foreground line-through decoration-muted-foreground/40",
-                    )}
-                  >
-                    {r.resolved_model_tag}
-                  </code>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}

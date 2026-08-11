@@ -369,25 +369,48 @@ class ModelRouter:
         if not is_meta_model(model_tag):
             return model_tag, None
 
-        # Check routing cache (lock-free read via TTLCache)
+        # Candidate list from cache (lock-free read via TTLCache) or DB. The
+        # SERVED check runs per call, not at cache time — pause state and the
+        # model cache change independently of the routing rows.
         cache_key = f"{model_tag}:{operation}"
-        cached_routing = self._routing_cache.get(cache_key)
-        if cached_routing is not None:
-            return self._build_routing_result(model_tag, operation, cached_routing)
+        candidates = self._routing_cache.get(cache_key)
+        if candidates is None:
+            rows = await self._meta_routing_repo.get_candidates(model_tag, operation)
+            if not rows:
+                raise ModelNotFoundError(
+                    f"No routing rule for {model_tag}/{operation}. "
+                    f"Meta-model '{model_tag}' does not support operation '{operation}'."
+                )
+            candidates = [self._detached_routing(r) for r in rows]
+            await self._routing_cache.set(cache_key, candidates)
 
-        # Query database for routing rule
-        routing = await self._meta_routing_repo.get_routing(model_tag, operation)
+        # Availability-aware resolution: first candidate this deployment can
+        # actually serve wins (model registered + active + not paused, provider
+        # configured). This is what makes router tags work on a one-provider
+        # box: the list deliberately spans providers.
+        factory = self._adapter_factory
+        tried: list[str] = []
+        for routing in candidates:
+            tag = routing.resolved_model_tag
+            try:
+                model = await self.get_model(tag)
+            except (ModelNotFoundError, ModelNotAvailableError):
+                tried.append(f"{tag} (not served)")
+                continue
+            if getattr(model, "is_paused", False):
+                tried.append(f"{tag} (paused)")
+                continue
+            if not factory.is_enabled(model.provider):
+                tried.append(f"{tag} (provider '{model.provider}' not configured)")
+                continue
+            return self._build_routing_result(model_tag, operation, routing)
 
-        if routing is None:
-            raise ModelNotFoundError(
-                f"No routing rule for {model_tag}/{operation}. "
-                f"Meta-model '{model_tag}' does not support operation '{operation}'."
-            )
-
-        # Cache a session-independent copy with TTL (never the live ORM row).
-        await self._routing_cache.set(cache_key, self._detached_routing(routing))
-
-        return self._build_routing_result(model_tag, operation, routing)
+        raise ModelNotAvailableError(
+            model_tag,
+            f"no served model for '{model_tag}'/{operation} on this deployment — "
+            f"tried: {', '.join(tried)}. Configure a provider key that serves one "
+            f"of these, or request a concrete model tag.",
+        )
 
     def _build_routing_result(
         self,
@@ -492,10 +515,14 @@ class ModelRouter:
             count = 0
             for meta_model_tag in meta_models:
                 routings = await self._meta_routing_repo.get_all_routings_for_model(meta_model_tag)
-                for routing in routings:
-                    cache_key = f"{routing.meta_model_tag}:{routing.operation}"
-                    await self._routing_cache.set(cache_key, self._detached_routing(routing))
-                    count += 1
+                # Group into priority-ordered candidate LISTS — the same shape
+                # resolve_meta_model caches and consumes.
+                by_op: dict[str, list] = {}
+                for routing in sorted(routings, key=lambda x: x.priority):
+                    by_op.setdefault(routing.operation, []).append(self._detached_routing(routing))
+                for operation, candidates in by_op.items():
+                    await self._routing_cache.set(f"{meta_model_tag}:{operation}", candidates)
+                    count += len(candidates)
             logger.info(f"Loaded {count} meta-model routing rules into cache")
             return count
         except Exception as e:

@@ -31,6 +31,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mlpal_assistants_service.db.models.meta_routing import MetaModelRouting
 from mlpal_assistants_service.db.models.model_pricing import ModelPricing
 from mlpal_assistants_service.db.models.model_registry import ModelRegistry
 
@@ -159,6 +160,49 @@ def plan_pricing(existing_active: list[dict], feed: list[dict]) -> PricingPlan:
     return plan
 
 
+# ── routing (router-tag candidate lists) ─────────────────────────────────────
+
+
+@dataclass
+class RoutingPlan:
+    """Desired rows per (meta_model_tag, operation, priority); anything active
+    in the DB beyond the desired shape is deactivated."""
+
+    upsert: list[dict] = field(default_factory=list)   # {tag, op, priority, resolved, reason}
+    deactivate: list[int] = field(default_factory=list)  # row ids
+
+
+def plan_routing(existing_active: list[dict], feed_routes: list[dict]) -> RoutingPlan:
+    """Converge meta_model_routing to the feed's ordered candidate lists.
+
+    existing_active rows: {id, meta_model_tag, operation, resolved_model_tag,
+    priority, reason}. Feed routes: {meta_model_tag, operation,
+    candidates: [{model_tag, reason}, ...]} — index in the list IS the priority.
+    """
+    plan = RoutingPlan()
+    desired: dict[tuple[str, str, int], dict] = {}
+    for route in feed_routes:
+        for prio, cand in enumerate(route["candidates"]):
+            desired[(route["meta_model_tag"], route["operation"], prio)] = {
+                "meta_model_tag": route["meta_model_tag"],
+                "operation": route["operation"],
+                "priority": prio,
+                "resolved_model_tag": cand["model_tag"],
+                "reason": cand.get("reason"),
+            }
+
+    ex_by_key = {(r["meta_model_tag"], r["operation"], r["priority"]): r for r in existing_active}
+    for key, want in desired.items():
+        have = ex_by_key.get(key)
+        if have is None or have["resolved_model_tag"] != want["resolved_model_tag"] \
+                or (have.get("reason") or None) != (want.get("reason") or None):
+            plan.upsert.append(want)
+    for key, have in ex_by_key.items():
+        if key not in desired:
+            plan.deactivate.append(have["id"])
+    return plan
+
+
 # ── summary + async apply ────────────────────────────────────────────────────
 
 
@@ -169,11 +213,14 @@ class ReconcileSummary:
     retired: int = 0
     prices_activated: int = 0
     prices_deactivated: int = 0
+    routes_upserted: int = 0
+    routes_deactivated: int = 0
 
     def __str__(self) -> str:
         return (
             f"registry: +{self.inserted} ~{self.updated} retired {self.retired} | "
-            f"pricing: +{self.prices_activated} superseded {self.prices_deactivated}"
+            f"pricing: +{self.prices_activated} superseded {self.prices_deactivated} | "
+            f"routing: ~{self.routes_upserted} -{self.routes_deactivated}"
         )
 
 
@@ -194,6 +241,7 @@ async def reconcile(
     session: AsyncSession,
     registry_feed: list[dict],
     pricing_feed: list[dict],
+    routing_feed: list[dict] | None = None,
     *,
     retire_message: str | None = None,
 ) -> ReconcileSummary:
@@ -238,6 +286,32 @@ async def reconcile(
     for row in price_plan.activate:
         session.add(ModelPricing(is_active=True, effective_date=date.today(), **_pricing_kwargs(row)))
         summary.prices_activated += 1
+
+    if routing_feed is not None:
+        active_routes = (
+            await session.execute(
+                select(MetaModelRouting).where(MetaModelRouting.is_active.is_(True))
+            )
+        ).scalars().all()
+        route_by_key = {(r.meta_model_tag, r.operation, r.priority): r for r in active_routes}
+        route_plan = plan_routing(
+            [{"id": r.id, "meta_model_tag": r.meta_model_tag, "operation": r.operation,
+              "resolved_model_tag": r.resolved_model_tag, "priority": r.priority,
+              "reason": r.reason} for r in active_routes],
+            routing_feed,
+        )
+        for want in route_plan.upsert:
+            have = route_by_key.get((want["meta_model_tag"], want["operation"], want["priority"]))
+            if have is not None:
+                have.resolved_model_tag = want["resolved_model_tag"]
+                have.reason = want["reason"]
+            else:
+                session.add(MetaModelRouting(is_active=True, **want))
+            summary.routes_upserted += 1
+        by_id = {r.id: r for r in active_routes}
+        for rid in route_plan.deactivate:
+            by_id[rid].is_active = False
+            summary.routes_deactivated += 1
 
     await session.commit()
     return summary

@@ -105,13 +105,23 @@ export interface ModelCardMeta {
 }
 
 /** A full registry row + pricing + curated card, from /admin/v1/models. */
-export interface RouterRoute {
-  operation: string;
-  resolved_model_tag: string;
+export interface RouterCandidate {
+  model_tag: string;
   provider: string | null;
   reason: string | null;
   served: boolean;
   unserved_reason: string | null;
+}
+
+export interface RouterRoute {
+  operation: string;
+  /** What a request to this tag resolves to RIGHT NOW (null = would 503). */
+  resolved_model_tag: string | null;
+  provider: string | null;
+  reason: string | null;
+  served: boolean;
+  unserved_reason: string | null;
+  candidates: RouterCandidate[];
 }
 
 export interface RouterTag {

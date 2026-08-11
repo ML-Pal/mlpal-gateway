@@ -316,13 +316,7 @@ async def router_tags(
         )
     ).scalars().all()
 
-    # The router takes the lowest-priority active rule per (tag, operation) —
-    # mirror that here so the console shows what actually resolves.
-    chosen: dict[tuple[str, str], MetaModelRouting] = {}
-    for r in rows:
-        chosen.setdefault((r.meta_model_tag, r.operation), r)
-
-    targets = {r.resolved_model_tag for r in chosen.values()}
+    targets = {r.resolved_model_tag for r in rows}
     registry = {
         m.model_tag: m
         for m in (
@@ -344,18 +338,46 @@ async def router_tags(
             return "model retired"
         return None
 
+    # Full candidate chain per (tag, operation) — resolution semantics mirror
+    # the router: the FIRST served candidate is what a request actually gets.
+    grouped: dict[tuple[str, str], list[MetaModelRouting]] = {}
+    for r in rows:
+        grouped.setdefault((r.meta_model_tag, r.operation), []).append(r)
+
     by_tag: dict[str, list[dict]] = {}
-    for (tag, _op), r in sorted(chosen.items()):
-        m = registry.get(r.resolved_model_tag)
-        reason = _unserved_reason(m)
+    for (tag, op), cands in sorted(grouped.items()):
+        chain = []
+        resolves_to = None
+        for r in cands:
+            m = registry.get(r.resolved_model_tag)
+            reason = _unserved_reason(m)
+            served = reason is None
+            if served and resolves_to is None:
+                resolves_to = r.resolved_model_tag
+            chain.append(
+                {
+                    "model_tag": r.resolved_model_tag,
+                    "provider": m.provider if m else None,
+                    "reason": r.reason,
+                    "served": served,
+                    "unserved_reason": reason,
+                }
+            )
         by_tag.setdefault(tag, []).append(
             {
-                "operation": r.operation,
-                "resolved_model_tag": r.resolved_model_tag,
-                "provider": m.provider if m else None,
-                "reason": r.reason,
-                "served": reason is None,
-                "unserved_reason": reason,
+                "operation": op,
+                # what a request to this tag gets RIGHT NOW (None = would 503)
+                "resolved_model_tag": resolves_to,
+                "provider": next(
+                    (c["provider"] for c in chain if c["model_tag"] == resolves_to), None
+                ),
+                "reason": next(
+                    (c["reason"] for c in chain if c["model_tag"] == resolves_to), None
+                ),
+                "served": resolves_to is not None,
+                "unserved_reason": None if resolves_to is not None
+                else "no candidate served on this deployment",
+                "candidates": chain,
             }
         )
 

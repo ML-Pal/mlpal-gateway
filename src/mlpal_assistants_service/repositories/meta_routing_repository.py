@@ -16,16 +16,18 @@ class MetaRoutingRepository(BaseRepository[MetaModelRouting]):
         meta_model_tag: str,
         operation: str,
     ) -> MetaModelRouting | None:
-        """
-        Get routing rule for a meta-model and operation.
+        """First (highest-priority) routing rule — availability-blind. Prefer
+        get_candidates + a served-check for actual resolution."""
+        rows = await self.get_candidates(meta_model_tag, operation)
+        return rows[0] if rows else None
 
-        Args:
-            meta_model_tag: Meta model (mlpal, mlpal-flash, mlpal-lite)
-            operation: Operation type (chat, image_generation, etc.)
-
-        Returns:
-            MetaModelRouting if found, None otherwise
-        """
+    async def get_candidates(
+        self,
+        meta_model_tag: str,
+        operation: str,
+    ) -> list[MetaModelRouting]:
+        """ALL active candidates for (tag, operation), priority-ordered. The
+        resolver walks these and picks the first one this deployment serves."""
         stmt = (
             select(MetaModelRouting)
             .where(
@@ -34,11 +36,9 @@ class MetaRoutingRepository(BaseRepository[MetaModelRouting]):
                 MetaModelRouting.is_active == True,  # noqa: E712
             )
             .order_by(MetaModelRouting.priority)
-            .limit(1)
         )
-
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return list(result.scalars().all())
 
     async def get_all_routings_for_model(
         self,
