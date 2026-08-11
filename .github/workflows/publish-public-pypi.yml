@@ -1,0 +1,61 @@
+# Publish to PUBLIC PyPI via Trusted Publishing (OIDC — no API token stored).
+#
+# Trigger: pushing a version tag (v0.2.0, v1.0.0, …). The tag must match the
+# version in pyproject.toml — the workflow fails closed if they disagree.
+#
+# One-time PyPI setup (account → Publishing → "Add a new pending publisher"):
+#   PyPI project name: mlpal-gateway
+#   Owner:             mlpalOld
+#   Repository:        mlpal-gateway
+#   Workflow:          publish-public-pypi.yml
+#   Environment:       pypi
+name: Publish to Public PyPI
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches pyproject version
+        run: |
+          PKG_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME != pyproject version $PKG_VERSION" >&2
+            exit 1
+          fi
+
+      - uses: astral-sh/setup-uv@v3
+
+      - name: Run tests
+        run: |
+          uv sync --all-extras
+          uv run python -m pytest tests/ -q
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # OIDC for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

@@ -71,7 +71,12 @@ Or point an existing OpenAI SDK at `http://localhost:8000/v1` and use
 `/v1/chat/completions`, `/v1/embeddings`, `/v1/images/generations`, `/v1/audio/*`.
 
 The official Python SDK (`MLPal` / `AsyncMLPal`) is
-[`mlpal-assistants`](https://github.com/mlpal/mlpal-assistants-sdk).
+[`mlpal-assistants`](https://pypi.org/project/mlpal-assistants/)
+([source](https://github.com/mlpalOld/mlpal-assistants-sdk)):
+
+```bash
+pip install mlpal-assistants
+```
 
 ## API surface
 
@@ -101,6 +106,25 @@ Open-core seams (`src/.../seams/`, `src/.../api/mounting.py`) let a managed
 deployment swap in billing/auth/messages backends; the open-source defaults run
 standalone (`MLPAL_BILLING_BACKEND=local`, `MLPAL_AUTH_BACKEND=local`). `core`
 never imports from `enterprise/`.
+
+## Pair it with a coding agent
+
+The gateway is the best backend for a coding agent: one key, every provider,
+router tags that survive model retirements, and per-request cost on the wire.
+Our agent is **[Yodex](https://www.npmjs.com/package/@mlpal/yodex)** — a
+provider-agnostic coding CLI that works with the self-hosted gateway out of the
+box (it speaks the Anthropic wire and uses `GET /v1/catalog` to pick models per
+subtask):
+
+```bash
+npm install -g @mlpal/yodex
+export YODEX_GATEWAY_URL=http://localhost:8000   # your gateway
+export YODEX_API_KEY=mlpal_sk_...                # a key you minted in the console
+yodex
+```
+
+Harness design, benchmarks vs other agents, and feature requests:
+[github.com/mlpalOld/yodex](https://github.com/mlpalOld/yodex).
 
 ## Self-host vs managed
 

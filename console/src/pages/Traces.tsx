@@ -1,5 +1,6 @@
 import { Activity, Copy, Pause, Play, ScrollText, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +61,23 @@ export function Traces() {
   const [status, setStatus] = useState<"" | "success" | "error">("");
   const [hours, setHours] = useState<number>(24);
   const [keys, setKeys] = useState<ManagedKey[]>([]);
-  const [keyId, setKeyId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const keyParam = searchParams.get("key");
+  const keyId = keyParam !== null && keyParam !== "" ? Number(keyParam) : null;
+  const setKeyId = useCallback(
+    (id: number | null) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (id == null) next.delete("key");
+          else next.set("key", String(id));
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
   const [q, setQ] = useState("");
   const [live, setLive] = useState(true);
   const [selected, setSelected] = useState<TraceRecord | null>(null);

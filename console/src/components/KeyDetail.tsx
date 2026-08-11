@@ -105,11 +105,9 @@ export function KeyDetail({
                 : undefined}
             />
             <MiniStat
-              label="Latency p50 / p95"
-              value={usage
-                ? `${usage.latency_p50_ms ?? "—"} / ${usage.latency_p95_ms ?? "—"} ms`
-                : "…"}
-              small
+              label="Latency p95"
+              value={usage ? (usage.latency_p95_ms != null ? `${usage.latency_p95_ms} ms` : "—") : "…"}
+              sub={usage && usage.latency_p50_ms != null ? `p50 ${usage.latency_p50_ms} ms` : undefined}
             />
             <MiniStat
               label="TTFT p50"
@@ -225,7 +223,7 @@ export function KeyDetail({
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">Recent requests (7d)</span>
-              <Link to="/traces" className="text-xs link-accent">
+              <Link to={`/traces?key=${k.id}`} className="text-xs link-accent">
                 all traces →
               </Link>
             </div>

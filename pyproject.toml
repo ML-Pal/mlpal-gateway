@@ -1,11 +1,22 @@
 [project]
-name = "mlpal-assistants-service"
-version = "0.1.2"
-description = "MLpal Assistants API Service - Unified AI Gateway"
+name = "mlpal-gateway"
+version = "0.2.0"
+description = "MLPal Gateway — curated, self-hostable AI gateway (Anthropic-wire core, router tags, CU metering, admin console)"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
-authors = [{ name = "MLpal", email = "contact@mlpal.ai" }]
+license = { text = "Apache-2.0" }
+authors = [{ name = "MLPal", email = "contact@mlpal.ai" }]
+keywords = ["ai", "gateway", "llm", "anthropic", "openai", "gemini", "bedrock", "router"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Framework :: FastAPI",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 
 dependencies = [
     # Web framework
@@ -61,6 +72,11 @@ dependencies = [
     "numpy>=2.4.1",
     "psycopg2-binary>=2.9.11",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mlpalOld/mlpal-gateway"
+Repository = "https://github.com/mlpalOld/mlpal-gateway"
+Issues = "https://github.com/mlpalOld/mlpal-gateway/issues"
 
 [project.optional-dependencies]
 dev = [

@@ -52,17 +52,9 @@ async def get_usage_summary(
         end_date=end_date,
     )
 
-    return UsageSummary(
-        period_start=summary["period_start"],
-        period_end=summary["period_end"],
-        total_requests=summary["total_requests"],
-        total_input_tokens=summary["total_input_tokens"],
-        total_output_tokens=summary["total_output_tokens"],
-        total_compute_units=summary["total_compute_units"],
-        quota_limit=summary["quota_limit"],
-        quota_remaining=summary["quota_remaining"],
-        by_model=summary["by_model"],
-    )
+    # The service dict mirrors the schema — construct with ** so additive
+    # fields (free-tier progress etc.) can never be silently dropped here.
+    return UsageSummary(**summary)
 
 
 @router.get(
