@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 import redis.asyncio as redis
-from sqlalchemy import func, select
+from sqlalchemy import Numeric, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mlpal_assistants_service.core.config import get_settings
@@ -328,6 +328,17 @@ class UsageService:
             end_date = datetime.utcnow()
 
         success_filter = UsageLog.status == "success"
+        # Observability metadata (nullable — older rows predate these fields):
+        cache_read = func.cast(
+            func.coalesce(UsageLog.cc_metadata["cache_read_input_tokens"].as_string(), "0"),
+            Numeric,
+        )
+        cache_write = func.cast(
+            func.coalesce(UsageLog.cc_metadata["cache_creation_input_tokens"].as_string(), "0"),
+            Numeric,
+        )
+        ttft = func.cast(UsageLog.cc_metadata["ttft_ms"].as_string(), Numeric)
+        is_stream = UsageLog.cc_metadata["stream"].as_string() == "true"
 
         result = await self.session.execute(
             select(
@@ -339,6 +350,16 @@ class UsageService:
                 func.coalesce(func.sum(UsageLog.output_tokens), 0).label("total_output_tokens"),
                 func.coalesce(func.sum(UsageLog.compute_units), 0).label("total_compute_units"),
                 func.max(UsageLog.created_at).label("last_used_at"),
+                func.coalesce(func.sum(cache_read), 0).label("cache_read_tokens"),
+                func.coalesce(func.sum(cache_write), 0).label("cache_write_tokens"),
+                func.count(UsageLog.id).filter(is_stream).label("stream_requests"),
+                func.percentile_cont(0.5)
+                .within_group(UsageLog.latency_ms)
+                .label("latency_p50_ms"),
+                func.percentile_cont(0.95)
+                .within_group(UsageLog.latency_ms)
+                .label("latency_p95_ms"),
+                func.percentile_cont(0.5).within_group(ttft).label("ttft_p50_ms"),
             ).where(
                 UsageLog.api_key_id == api_key_id,
                 UsageLog.created_at >= start_date,
@@ -350,8 +371,21 @@ class UsageService:
         total = int(row.total_requests)
         success = int(row.success_requests)
 
+        total_input = int(row.total_input_tokens)
+        cache_read_tokens = int(row.cache_read_tokens)
         return {
             "api_key_id": api_key_id,
+            "cache_read_tokens": cache_read_tokens,
+            "cache_write_tokens": int(row.cache_write_tokens),
+            # cached share of all input-side tokens (input_tokens CONTAINS the
+            # cached portion) — the "is prompt caching working" number.
+            "cache_hit_rate": (
+                round(cache_read_tokens / total_input, 4) if total_input else 0.0
+            ),
+            "stream_requests": int(row.stream_requests),
+            "latency_p50_ms": int(row.latency_p50_ms) if row.latency_p50_ms is not None else None,
+            "latency_p95_ms": int(row.latency_p95_ms) if row.latency_p95_ms is not None else None,
+            "ttft_p50_ms": int(row.ttft_p50_ms) if row.ttft_p50_ms is not None else None,
             "period_start": start_date,
             "period_end": end_date,
             "total_requests": total,

@@ -228,6 +228,13 @@ export interface KeyUsageSummary {
   total_output_tokens: number;
   total_compute_units: number;
   last_used_at: string | null;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+  cache_hit_rate: number;
+  stream_requests: number;
+  latency_p50_ms: number | null;
+  latency_p95_ms: number | null;
+  ttft_p50_ms: number | null;
 }
 
 /** Provider key status + live health from /admin/v1/providers. */

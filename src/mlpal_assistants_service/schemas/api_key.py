@@ -171,5 +171,15 @@ class KeyUsageSummary(BaseSchema):
     error_requests: int = Field(..., description="Requests with status<>'success'")
     total_input_tokens: int = Field(..., description="Sum of input tokens")
     total_output_tokens: int = Field(..., description="Sum of output tokens")
+    # Observability metrics (industry-canonical set: cache efficiency, tail
+    # latency, TTFT, streaming share). Nullable/zero where rows predate the
+    # underlying metadata (added 2026-08-11).
+    cache_read_tokens: int = Field(default=0, description="Prompt-cache read tokens (subset of input)")
+    cache_write_tokens: int = Field(default=0, description="Prompt-cache write tokens")
+    cache_hit_rate: float = Field(default=0.0, description="cache_read_tokens / total input-side tokens")
+    stream_requests: int = Field(default=0, description="Requests served as SSE streams")
+    latency_p50_ms: int | None = Field(default=None, description="Median request latency")
+    latency_p95_ms: int | None = Field(default=None, description="p95 request latency")
+    ttft_p50_ms: int | None = Field(default=None, description="Median time-to-first-token (streamed requests)")
     total_compute_units: float = Field(..., description="Sum of compute units consumed")
     last_used_at: datetime | None = Field(default=None, description="Most recent usage timestamp")

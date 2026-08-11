@@ -174,6 +174,7 @@ class MessagesV2Core:
             return Response(error_body(403, str(e)), 403, media_type="application/json")
 
         cc_metadata = _cc_metadata(headers, req.metadata)
+        cc_metadata["stream"] = bool(req.stream)
         if model.model_tag != req.model:  # served via a meta-model alias
             cc_metadata["requested_model"] = req.model
         ctx = RequestContext(
@@ -253,6 +254,8 @@ class MessagesV2Core:
                     yield b": ping\n\n"
                     continue
                 if kind == "chunk":
+                    if ctx.ttft_ms is None:
+                        ctx.ttft_ms = int((time.perf_counter() - t0) * 1000)
                     if len(capture_buf) < capture_cap:
                         capture_buf += payload[: capture_cap - len(capture_buf)]
                     yield payload
@@ -351,6 +354,7 @@ class MessagesV2Core:
                         if is_success and ctx.usage is not None
                         else {}
                     ),
+                    **({"ttft_ms": ctx.ttft_ms} if ctx.ttft_ms is not None else {}),
                     **({"empty_completion": True} if ctx.empty_completion else {}),
                 },
             )

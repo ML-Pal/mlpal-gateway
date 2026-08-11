@@ -40,6 +40,9 @@ class RequestContext:
     usage: CanonicalUsage | None = None
     status_code: int = 0
     provider_message_id: str | None = None
+    # Streaming only: ms from request start to the FIRST provider chunk —
+    # perceived latency for streaming clients (total latency_ms hides it).
+    ttft_ms: int | None = None
     # True when the provider spent the token budget without producing any visible
     # output (reasoning-model empty completion). Metered for observability.
     empty_completion: bool = False

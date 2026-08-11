@@ -95,6 +95,30 @@ export function KeyDetail({
             />
             <MiniStat label="CU (30d)" value={usage ? fmtCU(usage.total_compute_units) : "…"} />
           </div>
+          {/* observability row: cache efficiency, tail latency, TTFT */}
+          <div className="grid grid-cols-3 gap-3">
+            <MiniStat
+              label="Cache hit rate"
+              value={usage ? `${(usage.cache_hit_rate * 100).toFixed(0)}%` : "…"}
+              sub={usage && usage.cache_read_tokens > 0
+                ? `${usage.cache_read_tokens.toLocaleString()} tok read`
+                : undefined}
+            />
+            <MiniStat
+              label="Latency p50 / p95"
+              value={usage
+                ? `${usage.latency_p50_ms ?? "—"} / ${usage.latency_p95_ms ?? "—"} ms`
+                : "…"}
+              small
+            />
+            <MiniStat
+              label="TTFT p50"
+              value={usage ? (usage.ttft_p50_ms != null ? `${usage.ttft_p50_ms} ms` : "—") : "…"}
+              sub={usage && usage.total_requests > 0
+                ? `${Math.round((usage.stream_requests / usage.total_requests) * 100)}% streamed`
+                : undefined}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <MiniStat
               label="Tokens in / out"
@@ -245,11 +269,13 @@ function MiniStat({
   value,
   tone,
   small,
+  sub,
 }: {
   label: string;
   value: string;
   tone?: "bad";
   small?: boolean;
+  sub?: string;
 }) {
   return (
     <div className="rounded-lg border border-border p-3">
@@ -263,6 +289,7 @@ function MiniStat({
       >
         {value}
       </div>
+      {sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
