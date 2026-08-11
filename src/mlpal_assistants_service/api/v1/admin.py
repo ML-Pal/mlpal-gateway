@@ -23,6 +23,7 @@ from mlpal_assistants_service.db.models import MetaModelRouting, ModelRegistry
 from mlpal_assistants_service.db.models.model_pricing import ModelPricing
 from mlpal_assistants_service.db.models.usage_log import UsageLog
 from mlpal_assistants_service.services.catalog import load_curated
+from mlpal_assistants_service.services.traces import query_traces
 
 logger = logging.getLogger(__name__)
 
@@ -687,77 +688,27 @@ async def list_traces(
     status_filter: str | None = Query(default=None, alias="status", description="success | error"),
     model_tag: str | None = Query(default=None, description="Filter by resolved model tag"),
     operation: str | None = Query(default=None, description="chat | embedding | image_generation | tts | transcription"),
+    api: str | None = Query(default=None, description="Surface tag: v1_messages | v2_messages"),
     api_key_id: int | None = Query(default=None, description="Filter by API key id"),
     trace_id: str | None = Query(default=None, description="Exact trace id lookup"),
     hours: int = Query(default=24, ge=1, le=24 * 90, description="Look-back window in hours"),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> dict:
-    """Recent request traces, newest first."""
+    """Recent request traces, newest first (global — operator view)."""
     _require_admin(api_key)
-    session = model_router.session
-
-    since = datetime.now(UTC) - timedelta(hours=hours)
-    conditions = [UsageLog.created_at >= since]
-    if status_filter:
-        conditions.append(UsageLog.status == status_filter)
-    if model_tag:
-        conditions.append(UsageLog.model_tag == model_tag)
-    if operation:
-        conditions.append(UsageLog.operation == operation)
-    if api_key_id is not None:
-        conditions.append(UsageLog.api_key_id == api_key_id)
-    if trace_id:
-        conditions.append(UsageLog.trace_id == trace_id)
-
-    total = (
-        await session.execute(select(func.count()).select_from(UsageLog).where(*conditions))
-    ).scalar_one()
-    rows = (
-        await session.execute(
-            select(UsageLog)
-            .where(*conditions)
-            .order_by(UsageLog.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-    ).scalars().all()
-
-    # Resolve key names for display (operators think in key names, not ids).
-    key_names: dict[int, str] = {}
-    key_ids = {r.api_key_id for r in rows if r.api_key_id is not None}
-    if key_ids:
-        from mlpal_assistants_service.db.models import APIKey
-
-        for kid, name in (
-            await session.execute(
-                select(APIKey.id, APIKey.name).where(APIKey.id.in_(key_ids))
-            )
-        ).all():
-            key_names[kid] = name
-
-    return {
-        "data": [
-            {
-                "trace_id": r.trace_id,
-                "created_at": r.created_at.isoformat() if r.created_at else None,
-                "api_key_id": r.api_key_id,
-                "api_key_name": key_names.get(r.api_key_id),
-                "model_tag": r.model_tag,
-                "provider": r.provider,
-                "operation": r.operation,
-                "input_tokens": r.input_tokens,
-                "output_tokens": r.output_tokens,
-                "compute_units": float(r.compute_units) if r.compute_units is not None else 0.0,
-                "latency_ms": r.latency_ms,
-                "status": r.status,
-                "error_code": r.error_code,
-                "metadata": r.cc_metadata,
-            }
-            for r in rows
-        ],
-        "total": total,
-        "limit": limit,
-        "offset": offset,
-        "window_hours": hours,
-    }
+    out = await query_traces(
+        model_router.session,
+        user_id=None,  # admin surface: global
+        status=status_filter,
+        model_tag=model_tag,
+        operation=operation,
+        api=api,
+        api_key_id=api_key_id,
+        trace_id=trace_id,
+        since=datetime.now(UTC) - timedelta(hours=hours),
+        limit=limit,
+        offset=offset,
+    )
+    out["window_hours"] = hours
+    return out
