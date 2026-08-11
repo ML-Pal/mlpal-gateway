@@ -114,6 +114,7 @@ class UsageService:
 
         if wallet_debit_status == "pending":
             await self._write_usage_to_db(usage_record)
+            await self._accrue_platform_fee(usage_record)
             return
 
         if self._sqs_client and self.settings.sqs_usage_queue_url:
@@ -129,6 +130,29 @@ class UsageService:
         else:
             # Fall back to direct DB write (for dev/testing)
             await self._write_usage_to_db(usage_record)
+
+        # AFTER persistence so the DB-fallback month counter sees this row
+        # (Redis path is exact either way; SQS path undercounts by one in-flight
+        # request at most — negligible against a 300M threshold).
+        await self._accrue_platform_fee(usage_record)
+
+    async def _accrue_platform_fee(self, record: dict[str, Any]) -> None:
+        """Monthly free-tier accounting (managed only; see services/platform_fee).
+        Runs on the recording path — cheap Redis incr, rare insert, never raises."""
+        from mlpal_assistants_service.services.platform_fee import (
+            FEE_OPERATION,
+            maybe_charge_platform_fee,
+        )
+
+        if record.get("status") != "success" or record.get("operation") == FEE_OPERATION:
+            return
+        tokens = int(record.get("input_tokens") or 0) + int(record.get("output_tokens") or 0)
+        if tokens <= 0:
+            return
+        await maybe_charge_platform_fee(
+            self.session, self.redis, int(record["user_id"]), tokens,
+            api_key_id=int(record["api_key_id"]),
+        )
 
     async def _write_usage_to_db(self, record: dict[str, Any]) -> None:
         """Write usage record directly to database."""
@@ -247,6 +271,10 @@ class UsageService:
         if end_date is None:
             end_date = datetime.utcnow()
 
+        from mlpal_assistants_service.services.platform_fee import month_progress
+
+        progress = await month_progress(self.session, int(user_id))
+
         # Top-level aggregate.
         result = await self.session.execute(
             select(
@@ -304,6 +332,7 @@ class UsageService:
             "quota_limit": float(quota_limit),
             "quota_remaining": float(quota_limit - total_cu),
             "by_model": by_model,
+            **progress,
         }
 
     async def get_key_usage_summary(

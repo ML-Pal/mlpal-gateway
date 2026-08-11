@@ -46,6 +46,15 @@ class Settings(BaseSettings):
     serve_legacy_v2_aliases: bool = Field(
         default=False, alias="MLPAL_SERVE_LEGACY_V2_ALIASES"
     )
+    # Free-tier platform fee (managed only; locked pricing): when a user's
+    # calendar-month tokens cross the threshold, ONE flat fee (in CU) is
+    # charged via a synthetic usage row (services/platform_fee.py). 0 disables.
+    platform_fee_threshold_tokens: int = Field(
+        default=300_000_000, alias="MLPAL_PLATFORM_FEE_THRESHOLD_TOKENS"
+    )
+    platform_fee_cu: Decimal = Field(
+        default=Decimal("5"), alias="MLPAL_PLATFORM_FEE_CU"
+    )
     backend_base_url: str = Field(
         default="",
         alias="MLPAL_BACKEND_URL",

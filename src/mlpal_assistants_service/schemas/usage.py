@@ -37,6 +37,10 @@ class UsageSummary(BaseSchema):
         default_factory=dict,
         description="Usage breakdown by model",
     )
+    # Free-tier progress (managed platform fee; see services/platform_fee.py).
+    monthly_tokens: int = Field(default=0, description="Calendar-month tokens across all the user's keys")
+    monthly_token_limit: int | None = Field(default=None, description="Free-tier threshold (null when the fee is disabled)")
+    platform_fee_charged: bool = Field(default=False, description="True once this month's platform fee row exists")
 
 
 class ModelUsage(BaseSchema):
