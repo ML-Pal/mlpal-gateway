@@ -371,3 +371,51 @@ def test_surface_for_path():
     # No proxy prefix rewriting in prod (host-based ingress) — a rewritten
     # path would silently mistag; this documents the assumption.
     assert surface_for_path("/gateway/v2/messages") == "v1_messages"
+
+
+# ── streaming capture + cache observability (yodex gap, 2026-08-11) ──────────
+
+
+@pytest.mark.asyncio
+async def test_streaming_spawns_capture_with_accumulated_sse(monkeypatch):
+    """Streaming clients (yodex streams everything) must produce payloads when
+    capture is on — previously only the non-streaming path spawned capture."""
+    import mlpal_assistants_service.services.messages_v2.core as core_mod
+
+    captured = {}
+
+    async def fake_capture(trace_id, request_body, response_body, redis):
+        captured["trace_id"] = trace_id
+        captured["response"] = response_body
+
+    monkeypatch.setattr(core_mod, "_capture_v2", fake_capture)
+    _mock_backend(monkeypatch, STREAM_SSE, content_type="text/event-stream", streaming=True)
+    core, _, _ = _core()
+    core._post_billing = AsyncMock()
+    req = validate(json.dumps({"model": OPUS, "stream": True,
+                               "messages": [{"role": "user", "content": "hi"}]}).encode())
+
+    resp = await core.handle(req, _api_key(), {}, "trace-cap")
+    await _drain(resp)
+    await asyncio.sleep(0.05)  # let the fire-and-forget capture task run
+
+    assert captured.get("trace_id") == "trace-cap"
+    body = captured["response"]
+    assert b"message_start" in body and b"message_stop" in body
+    assert b": ping" not in body  # heartbeats are transport, not payload
+
+
+@pytest.mark.asyncio
+async def test_cache_stats_persisted_in_metadata(monkeypatch):
+    """cache_read/cache_write survive into the usage row so prompt-cache
+    effectiveness is queryable (they were previously computed then dropped)."""
+    _mock_backend(monkeypatch, NONSTREAM_JSON)
+    core, usage, _ = _core()
+    core._post_billing = AsyncMock()
+    req = validate(json.dumps({"model": OPUS, "messages": [{"role": "user", "content": "hi"}]}).encode())
+
+    await core.handle(req, _api_key(), {}, "trace-cache")
+
+    meta = usage.record_usage.await_args.kwargs["cc_metadata"]
+    assert meta["cache_read_input_tokens"] == 8404  # from the canned usage
+    assert meta["cache_creation_input_tokens"] == 0

@@ -228,6 +228,12 @@ class MessagesV2Core:
         the edge generator (same pattern as /v1/chat); meter after completion."""
         interval = self._settings.messages_v2_heartbeat_interval
         queue: asyncio.Queue = asyncio.Queue(maxsize=256)
+        # Accumulate the provider's SSE bytes for opt-in payload capture (the
+        # non-streaming path captures result.body; without this, streaming
+        # clients — yodex streams everything — never produce payloads). Hard
+        # cap bounds memory; capture_payload truncates to max_body_kb anyway.
+        capture_buf = bytearray()
+        capture_cap = 1024 * 1024
 
         async def _produce() -> None:
             try:
@@ -247,6 +253,8 @@ class MessagesV2Core:
                     yield b": ping\n\n"
                     continue
                 if kind == "chunk":
+                    if len(capture_buf) < capture_cap:
+                        capture_buf += payload[: capture_cap - len(capture_buf)]
                     yield payload
                 elif kind == "error":
                     logger.error(f"[v2.messages] stream error trace={ctx.trace_id}: {payload}")
@@ -262,6 +270,12 @@ class MessagesV2Core:
             except (asyncio.CancelledError, Exception):  # noqa: BLE001
                 pass
             await self._meter(ctx, int((time.perf_counter() - t0) * 1000))
+            _spawn(
+                _capture_v2(
+                    ctx.trace_id, req.body, bytes(capture_buf),
+                    getattr(self._usage, "redis", None),
+                )
+            )
 
     # -- telemetry + billing (never raises) ---------------------------------
     async def _meter(self, ctx: RequestContext, latency_ms: int) -> Decimal:
@@ -326,6 +340,17 @@ class MessagesV2Core:
                     **ctx.cc_metadata,
                     "api": getattr(self, "_surface", "v1_messages"),
                     "provider_message_id": ctx.provider_message_id,
+                    # Cache observability: input_tokens above CONTAINS the cached
+                    # portion; these make prompt-cache effectiveness queryable
+                    # (cc_metadata->>'cache_read_input_tokens') per trace.
+                    **(
+                        {
+                            "cache_read_input_tokens": ctx.usage.cache_read,
+                            "cache_creation_input_tokens": ctx.usage.cache_write,
+                        }
+                        if is_success and ctx.usage is not None
+                        else {}
+                    ),
                     **({"empty_completion": True} if ctx.empty_completion else {}),
                 },
             )
