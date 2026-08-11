@@ -37,6 +37,15 @@ from mlpal_assistants_service.services.messages_v2.schemas import (
 router = APIRouter()
 
 
+def surface_for_path(path: str) -> str:
+    """Which mount served this call: canonical /v1/messages vs the deprecated
+    /v2 alias. "v2_messages" matches historical usage_logs rows, so the
+    alias-drain query (migration Phase 3) is one WHERE clause. Assumes no
+    proxy path-prefix rewriting (prod ingress is host-based; documented in the
+    surface tests)."""
+    return "v2_messages" if path.startswith("/v2") else "v1_messages"
+
+
 def _require_messages_scope(api_key) -> None:
     # Same scopes as /v1/messages: route-specific "messages" or grandfathered "chat".
     if not (api_key.has_permission("messages") or api_key.has_permission("chat")):
@@ -81,10 +90,7 @@ async def create_messages_v2(
         rate_limiter=RateLimiter(redis) if redis else None,
         policy=PolicyService(redis, UsageRepository(session)),
     )
-    # Tag which mount served this call: canonical /v1/messages vs the
-    # deprecated /v2 alias. "v2_messages" matches historical rows, so the
-    # alias-drain query (migration Phase 3) is one WHERE clause.
-    surface = "v2_messages" if request.url.path.startswith("/v2") else "v1_messages"
+    surface = surface_for_path(request.url.path)
     return await core.handle(req, api_key, request.headers, generate_trace_id(), surface=surface)
 
 

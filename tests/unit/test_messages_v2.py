@@ -322,3 +322,50 @@ async def test_post_billing_failed_debit_is_retryable(monkeypatch):
     # failed debits enter the retryable state so DebitRetryWorker can replay them
     args = bg_usage.mark_wallet_debit_status.await_args
     assert args.args[0] == "tr-x" and args.args[1] == "failed_retryable"
+
+
+# ── backend-audit regression tests (2026-08-11) ──────────────────────────────
+# The backend ledger consumes usage_logs.compute_units verbatim and clients
+# read X-MLPal-Compute-Units — these pin that the two can never disagree, and
+# that the alias-drain tag actually distinguishes the mounts.
+
+
+@pytest.mark.asyncio
+async def test_cu_header_equals_logged_compute_units(monkeypatch):
+    """Invariant: the header a client reads IS the figure the ledger records."""
+    _mock_backend(monkeypatch, NONSTREAM_JSON)
+    core, usage, _ = _core()
+    core._post_billing = AsyncMock()
+    req = validate(json.dumps({"model": OPUS, "messages": [{"role": "user", "content": "hi"}]}).encode())
+
+    resp = await core.handle(req, _api_key(), {}, "trace-hdr")
+
+    header = resp.headers.get("x-mlpal-compute-units")
+    assert header is not None
+    logged = usage.record_usage.await_args.kwargs["compute_units"]
+    assert Decimal(header) == logged
+    assert logged > 0
+
+
+@pytest.mark.asyncio
+async def test_v2_alias_surface_tag_reaches_usage_row(monkeypatch):
+    """The deprecated-alias mount tags rows v2_messages — the drain query's
+    entire basis. (The v1_messages default is covered above.)"""
+    _mock_backend(monkeypatch, NONSTREAM_JSON)
+    core, usage, _ = _core()
+    core._post_billing = AsyncMock()
+    req = validate(json.dumps({"model": OPUS, "messages": [{"role": "user", "content": "hi"}]}).encode())
+
+    await core.handle(req, _api_key(), {}, "trace-alias", surface="v2_messages")
+
+    assert usage.record_usage.await_args.kwargs["cc_metadata"]["api"] == "v2_messages"
+
+
+def test_surface_for_path():
+    from mlpal_assistants_service.api.v2.messages import surface_for_path
+
+    assert surface_for_path("/v1/messages") == "v1_messages"
+    assert surface_for_path("/v2/messages") == "v2_messages"
+    # No proxy prefix rewriting in prod (host-based ingress) — a rewritten
+    # path would silently mistag; this documents the assumption.
+    assert surface_for_path("/gateway/v2/messages") == "v1_messages"
