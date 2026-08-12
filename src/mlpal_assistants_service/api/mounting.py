@@ -60,6 +60,10 @@ def mount_api(app: FastAPI, settings: Settings) -> None:
     app.include_router(feedback_router, prefix=v1, tags=["Feedback"])
     # Control plane, independently versioned.
     app.include_router(admin_v1_router, prefix="/admin/v1")
+    # Service-to-service (shared-secret auth; 404s when no secret configured).
+    from mlpal_assistants_service.api.internal import router as internal_router
+
+    app.include_router(internal_router, prefix="/internal", tags=["Internal"])
 
     if settings.serve_legacy_v2_aliases:
         # Same handlers at the historical paths — remove once alias traffic

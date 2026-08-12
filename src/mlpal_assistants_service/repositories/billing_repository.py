@@ -178,11 +178,14 @@ class BillingRepository(BaseRepository[UserBillingStatus]):
             "wallet_access_status": ("allowed" if balance > 0 else "insufficient_balance"),
             "wallet_balance_cu": str(balance),
         }
-        await self._cache_setex(
-            cache_key,
-            self._settings.wallet_cache_ttl_seconds,
-            json.dumps(snapshot),
-        )
+        # Low-balance hardening (gating design 2026-08-12): near-empty wallets
+        # get a short snapshot TTL so the stale-allow window shrinks exactly
+        # when the gate is about to close. Debit lag (~90s) + this TTL bounds
+        # the post-zero exposure.
+        ttl = self._settings.wallet_cache_ttl_seconds
+        if balance < Decimal("1"):
+            ttl = min(ttl, self._settings.wallet_low_balance_cache_ttl_seconds)
+        await self._cache_setex(cache_key, ttl, json.dumps(snapshot))
         return snapshot
 
     async def can_make_request_cached(

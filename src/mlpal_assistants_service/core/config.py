@@ -83,6 +83,12 @@ class Settings(BaseSettings):
         default=60,
         alias="MLPAL_WALLET_CACHE_TTL_SECONDS",
     )
+    # Near-empty wallets cache for less time: the stale-allow window shrinks
+    # exactly when the gate is about to close (gating design 2026-08-12).
+    wallet_low_balance_cache_ttl_seconds: int = Field(
+        default=10,
+        alias="MLPAL_WALLET_LOW_BALANCE_CACHE_TTL_SECONDS",
+    )
     wallet_retry_interval_seconds: int = Field(
         default=30,
         alias="MLPAL_WALLET_RETRY_INTERVAL_SECONDS",
