@@ -119,8 +119,27 @@ over billing components $c$ (input; output; cache-write at the provider's 1.25$\
 \head{Cache experiment (\S\ref{sec:fidelity}).} A $\sim$22k-token system prefix marked \texttt{cache\_control: ephemeral} (above haiku-4.5's 4{,}096-token minimum), distinct per system so systems cannot share provider cache entries; four sequential non-streaming trials per system against the real provider; usage fields read from the wire; metering fidelity verified by reading the CU header on a cache-write and cache-read call of the same prefix.
 
 \section{Results}
+Table~\ref{tab:matchups} orients the section: each comparison is like-for-like --- our open-source gateway against the open-source proxy a self-hoster would otherwise deploy, and our managed service against the managed gateway a team would otherwise buy --- plus the raw-provider floor that bounds what any gateway can achieve.
 
-\subsection{Gateway overhead: full admission, faster than a bare proxy}\label{sec:overhead}
+\begin{table}[t]
+\centering\small
+\caption{The comparisons in this report, like-for-like. Each row names the deployment class, the contender, and the headline result; details in the referenced sections.}
+\label{tab:matchups}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{2.9cm}p{3.3cm}p{6.4cm}}
+\toprule
+Matchup & Systems & Headline result \\
+\midrule
+Self-hosted vs.\ self-hosted (\S\ref{sec:overhead}) & MLPal Gateway (OSS) vs.\ LiteLLM proxy (OSS), bare and production configs & MLPal +8.5\,ms overhead with full admission vs.\ +13.2 (bare) / +15.3 (production); p95 33 vs.\ 58 / 41\,ms ($N{=}100$) \\[2pt]
+Managed vs.\ managed (\S\ref{sec:openrouter}) & \texttt{models.mlpal.ai} vs.\ OpenRouter, same model/night/vantage & MLPal 642\,ms median TTFT vs.\ 898; p95 957 vs.\ 1{,}424 ($N{=}15$); OpenRouter streams finer chunks (93 vs.\ 9) \\[2pt]
+Managed vs.\ raw provider (\S\ref{sec:client},\S\ref{sec:openrouter}) & \texttt{models.mlpal.ai} vs.\ direct \texttt{api.anthropic.com} & +99\,ms at the median (642 vs.\ 543) buys routing, metering, policy, and observability \\[2pt]
+Semantics fidelity (\S\ref{sec:fidelity}) & MLPal, LiteLLM, direct & prompt caching byte-faithful on all three; MLPal's meter reproduces list price to five decimals \\[2pt]
+Broader managed study [17] & MLPal vs.\ OpenRouter, 11 model pairs (July 2026) & MLPal won median TTFT 8/11 with tighter tails; OpenRouter won throughput and fast/cheap models; neither dominated \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Self-hosted head-to-head: MLPal Gateway vs.\ LiteLLM (gateway overhead)}\label{sec:overhead}
 
 \begin{figure}[t]
 \centering
@@ -175,7 +194,7 @@ Host & TCP (ms) & TLS done (ms) & \texttt{/health} TTFB (ms) \\
 
 From this vantage, the managed service's latency gap over direct provider access was dominated by geography, not software: a single-region ALB cost $\sim$75\,ms TCP and $\sim$250\,ms TLS per cold connection, against a CDN edge $\sim$12/26\,ms away (Table~\ref{tab:network}); the service itself contributes $\sim$20\,ms (\S\ref{sec:engineering}). Our July report [17] predicted that edge termination would recover this tax; during this study we executed the cutover --- \texttt{models.mlpal.ai} now resolves to CloudFront in front of the same ALB, with streaming validated end-to-end before the DNS change (the gateway's 15\,s SSE heartbeat keeps long streams under CloudFront's 60\,s origin idle timeout). Measured effect on the full request path ($N{=}15$, same night): median TTFT \textbf{871\,ms $\rightarrow$ 642\,ms}, p95 1{,}357--2{,}613 $\rightarrow$ 957\,ms. Existing clients required no changes.
 
-\subsection{Same-night four-way comparison, including OpenRouter}\label{sec:openrouter}
+\subsection{Managed head-to-head: MLPal vs.\ OpenRouter, same night}\label{sec:openrouter}
 
 \begin{figure}[t]
 \centering
