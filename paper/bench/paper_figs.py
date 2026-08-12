@@ -72,7 +72,6 @@ def fig_vantage(p4way, ppost, out):
     for i, (label, vals, c) in enumerate(rows):
         vals = np.array(vals)
         med = np.median(vals)
-        p95 = np.percentile(vals, 95)
         jitter = (np.random.RandomState(5 + i).rand(len(vals)) - 0.5) * 0.3
         ax.scatter(vals, np.full(len(vals), i) + jitter, s=10, alpha=0.4, color=c, linewidths=0)
         ax.plot([med, med], [i - 0.3, i + 0.3], color=c, lw=2.4)
