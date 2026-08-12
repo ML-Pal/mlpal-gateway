@@ -125,6 +125,8 @@ ignore = ["E501", "B008", "B904", "E402", "UP042"]
 "**/__init__.py" = ["F401"]  # re-export modules
 # Dev/integration scripts: lint for correctness, not style.
 "scripts/**" = ["E702", "E731", "I001", "B007", "C401", "C408", "W291"]
+# Paper benchmark harness: measurement scripts, lint for correctness only.
+"paper/**" = ["E702", "E731", "I001", "B007", "B023", "B905", "C401", "C408", "W291"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["mlpal_assistants_service"]
