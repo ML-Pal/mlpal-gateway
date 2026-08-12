@@ -5,7 +5,7 @@
 #
 # One-time PyPI setup (account → Publishing → "Add a new pending publisher"):
 #   PyPI project name: mlpal-gateway
-#   Owner:             mlpalOld
+#   Owner:             ML-Pal
 #   Repository:        mlpal-gateway
 #   Workflow:          publish-public-pypi.yml
 #   Environment:       pypi

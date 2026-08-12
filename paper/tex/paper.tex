@@ -32,7 +32,7 @@
 
 \title{\bfseries Curation Over Breadth: Design and Measurement\\of a Self-Hostable, Availability-Aware AI Gateway}
 \author{Sai Vivek Peddi\\MLPal \and Claude\\\textit{benchmark harness \& analysis}}
-\date{Technical report v2 --- August 12, 2026\\[2pt]\small Measurements executed 11--12 August 2026 unless dated otherwise.\\\small Code, harness, and raw results: \href{https://github.com/mlpalOld/mlpal-gateway}{\texttt{github.com/mlpalOld/mlpal-gateway}} (Apache-2.0)}
+\date{Technical report v2 --- August 12, 2026\\[2pt]\small Measurements executed 11--12 August 2026 unless dated otherwise.\\\small Code, harness, and raw results: \href{https://github.com/ML-Pal/mlpal-gateway}{\texttt{github.com/ML-Pal/mlpal-gateway}} (Apache-2.0)}
 
 \begin{document}
 \maketitle
@@ -265,14 +265,14 @@ None of these systems dominates (Table~\ref{tab:features}). OpenRouter's multi-p
 All measurements come from one client machine across one evening; $N{=}15$ per cell for client-observed runs makes medians robust but p95 coarse; one prompt shape and one model family for the latency studies. Provider-side variance was elevated on the measurement evening (direct-call p95 ranged 634--944\,ms across sessions) and dominates client-observed deltas; the overhead study (\S\ref{sec:overhead}) exists precisely to factor it out, at the cost of using a synthetic upstream that understates payload sizes. The fake-upstream floor includes client and server scheduling, so absolute overheads are upper bounds. LiteLLM's production configuration enables virtual keys, budgets, rpm limits, and spend tracking but not logging callbacks; a callback-laden deployment would be slower, an untuned comparison in our favor we did not make. The Table~\ref{tab:fourway} edge row was measured $\sim$40 minutes after the other rows. Catalog counts across vendors are not directly comparable. Output quality was not evaluated --- only delivery, semantics preservation, and cost. This report is written by the system's authors; the harness, raw JSON, figure code, and the fake upstream ship in the repository so every number can be re-derived.
 
 \section{Conclusion}
-Breadth is the legible metric, but the substrate has changed under it: when models live $\sim$12 months and churn is contractual, a catalog's value decays at the rate its entries retire, while the properties that compound --- stable aliases that survive retirement, per-model tuning, faithful caching, verifiable metering, admission-time governance --- are per-model investments that favor curation. This report adds a second claim, measured rather than argued: \emph{governance is not a latency trade}. With every admission feature enabled, the gateway adds 8.5\,ms at the median --- less than a bare translation proxy --- and after an edge cutover executed mid-study, the managed deployment serves the same model $\sim$250\,ms faster than OpenRouter from the same vantage. The gateway, console, SDK, and this paper's full harness are open source at \href{https://github.com/mlpalOld/mlpal-gateway}{\texttt{github.com/mlpalOld/mlpal-gateway}}.
+Breadth is the legible metric, but the substrate has changed under it: when models live $\sim$12 months and churn is contractual, a catalog's value decays at the rate its entries retire, while the properties that compound --- stable aliases that survive retirement, per-model tuning, faithful caching, verifiable metering, admission-time governance --- are per-model investments that favor curation. This report adds a second claim, measured rather than argued: \emph{governance is not a latency trade}. With every admission feature enabled, the gateway adds 8.5\,ms at the median --- less than a bare translation proxy --- and after an edge cutover executed mid-study, the managed deployment serves the same model $\sim$250\,ms faster than OpenRouter from the same vantage. The gateway, console, SDK, and this paper's full harness are open source at \href{https://github.com/ML-Pal/mlpal-gateway}{\texttt{github.com/ML-Pal/mlpal-gateway}}.
 
 \section*{References}
 \begingroup\small
 \begin{enumerate}\itemsep1pt
 \item OpenRouter, ``Pricing.'' \url{openrouter.ai/pricing} (retrieved 2026-08-11).
 \item OpenRouter, ``Provider selection \& routing.'' \url{openrouter.ai/docs/guides/routing/provider-selection}.
-\item MLPal, \texttt{mlpal-gateway} source. \url{github.com/mlpalOld/mlpal-gateway}.
+\item MLPal, \texttt{mlpal-gateway} source. \url{github.com/ML-Pal/mlpal-gateway}.
 \item OpenRouter, ``Zero completion insurance.'' \url{openrouter.ai/docs/guides/features/zero-completion-insurance}.
 \item LiteLLM, proxy documentation: load balancing, routing, virtual keys. \url{docs.litellm.ai}.
 \item LiteLLM, ``/v1/messages (Anthropic unified endpoint).'' \url{docs.litellm.ai/docs/anthropic_unified}.
@@ -287,7 +287,7 @@ Breadth is the legible metric, but the substrate has changed under it: when mode
 \item Ars Technica, ``OpenAI brings back GPT-4o after user revolt'' (2025-08).
 \item TheRouter, ``Anthropic model deprecation cadence'' (third-party; key dates cross-checked against [11]). \url{therouter.ai}.
 \item Peddi \& Claude, ``When the Edge Isn't Enough: A Head-to-Head Latency and Capability Study of Two LLM Gateways.'' MLPal technical report, 2026-07-18.
-\item MLPal, ``Yodex vs Claude Code on claude-opus-5'' (2026-07-28). \url{github.com/mlpalOld/yodex}.
+\item MLPal, ``Yodex vs Claude Code on claude-opus-5'' (2026-07-28). \url{github.com/ML-Pal/yodex}.
 \item Anthropic, ``Prompt caching.'' \url{platform.claude.com/docs/en/build-with-claude/prompt-caching}.
 \end{enumerate}
 \endgroup

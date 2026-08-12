@@ -1,6 +1,6 @@
 [project]
 name = "mlpal-gateway"
-version = "0.2.0"
+version = "0.2.1"
 description = "MLPal Gateway — curated, self-hostable AI gateway (Anthropic-wire core, router tags, CU metering, admin console)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -74,9 +74,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mlpalOld/mlpal-gateway"
-Repository = "https://github.com/mlpalOld/mlpal-gateway"
-Issues = "https://github.com/mlpalOld/mlpal-gateway/issues"
+Homepage = "https://github.com/ML-Pal/mlpal-gateway"
+Repository = "https://github.com/ML-Pal/mlpal-gateway"
+Issues = "https://github.com/ML-Pal/mlpal-gateway/issues"
 
 [project.optional-dependencies]
 dev = [

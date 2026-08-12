@@ -7,7 +7,7 @@ Self-hosted. Model routing, per-request cost metering, per-key access control, a
 
 [![PyPI](https://img.shields.io/pypi/v/mlpal-gateway)](https://pypi.org/project/mlpal-gateway/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![CI](https://github.com/mlpalOld/mlpal-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/mlpalOld/mlpal-gateway/actions/workflows/ci.yml)
+[![CI](https://github.com/ML-Pal/mlpal-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/ML-Pal/mlpal-gateway/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/pypi/pyversions/mlpal-gateway)](https://pypi.org/project/mlpal-gateway/)
 
 </div>
@@ -159,10 +159,10 @@ Details: [docs/API_SURFACE.md](docs/API_SURFACE.md).
 
 ## Use it with a coding agent
 
-[Yodex](https://github.com/mlpalOld/yodex) is a coding CLI built on this
+[Yodex](https://github.com/ML-Pal/yodex) is a coding CLI built on this
 gateway — it speaks the Anthropic wire and uses `GET /v1/catalog` to route
 sub-tasks to cheaper models (~10× lower sub-agent cost in its
-[benchmarks](https://github.com/mlpalOld/yodex#benchmarks)):
+[benchmarks](https://github.com/ML-Pal/yodex#benchmarks)):
 
 ```bash
 npm install -g @mlpal/yodex
