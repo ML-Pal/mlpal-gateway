@@ -4,7 +4,7 @@
 
 Please do **not** open a public issue for security vulnerabilities.
 
-Email **security@mlpal.ai** with a description of the issue, steps to reproduce,
+Email **contact@mlpal.ai** with a description of the issue, steps to reproduce,
 and any relevant logs or proof-of-concept. We aim to acknowledge reports within
 3 business days and will keep you updated on remediation.
 

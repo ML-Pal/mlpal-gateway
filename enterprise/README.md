@@ -17,4 +17,4 @@ Planned/managed capabilities that live here (or in the managed deployment):
 - Bedrock-mantle Anthropic passthrough and other managed integrations
 - SSO, audit, and advanced governance
 
-Interested in the managed offering or a commercial license? **sales@mlpal.ai**.
+Interested in the managed offering or a commercial license? **contact@mlpal.ai**.
