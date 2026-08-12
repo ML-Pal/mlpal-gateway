@@ -85,22 +85,27 @@ print(msg.text, msg.compute_units)
 
 ## Measured
 
-Overhead of the hop, isolated by running client, gateway, and a LiteLLM proxy
-on the same machine against the same upstream and key
-(claude-haiku-4-5, N=15 per system — full methodology in the
-[technical report](paper/mlpal-gateway-technical-report.pdf), raw data in
-[`paper/bench/`](paper/bench/)):
+Gateway overhead isolated against a zero-latency fake upstream, so provider
+variance can't hide anything — MLPal with its **full admission pipeline**
+(auth, rate limit, billing, model policy, budgets, metering, capture) against
+LiteLLM in both its bare mode and a production configuration with
+database-backed virtual keys, budgets, and spend tracking (N=100 per system;
+methodology in the [technical report](paper/mlpal-gateway-technical-report.pdf),
+raw data and harness in [`paper/bench/`](paper/bench/)):
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/fig-overhead-dark.svg">
   <img alt="Gateway overhead benchmark" src="docs/fig-overhead-light.svg">
 </picture>
 
-+38 ms at the median for the full admission pipeline (auth, rate limit, policy,
-budgets, metering, persistence) on a ~3.1 s request — and a tighter p95 than
-the thin proxy (716 vs 754 ms). Prompt caching passes through byte-faithfully:
-a 22k-token cached prefix metered 0.002756 CU on write and 0.000224 CU on
-read (12.3×), matching Anthropic's list price to five decimals.
+**+8.5 ms with everything on — less than a bare proxy checks one static key
+for, and with the tightest tail (p95 33 ms vs 58/41 ms).** Admission-time
+governance is computationally free. Provider semantics survive the hop too:
+a 22k-token cached prefix passes through byte-faithfully and metered
+0.002756 CU on write, 0.000224 CU on read (12.3×) — matching Anthropic's
+list price to five decimals. The managed deployment of this same codebase,
+measured the same night from the same client, served claude-haiku-4.5 at
+642 ms median TTFT vs OpenRouter's 898 ms (report §5.3–5.4).
 
 ## Why a curated catalog
 
