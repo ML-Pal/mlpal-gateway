@@ -14,7 +14,7 @@ Self-hosted. Model routing, per-request cost metering, per-key access control, a
 
 <br>
 
-![Gateway console](docs/console.png)
+![Gateway console](https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/console.png)
 
 <br>
 
@@ -94,8 +94,8 @@ methodology in the [technical report](paper/mlpal-gateway-technical-report.pdf),
 raw data and harness in [`paper/bench/`](paper/bench/)):
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/fig-overhead-dark.svg">
-  <img alt="Gateway overhead benchmark" src="docs/fig-overhead-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-overhead-dark.svg">
+  <img alt="Gateway overhead benchmark" src="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-overhead-light.svg">
 </picture>
 
 **+8.5 ms with everything on — less than a bare proxy checks one static key
@@ -113,8 +113,8 @@ Production models retire on roughly a 12-month cycle now — from the providers'
 own deprecation ledgers:
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/fig-lifetimes-dark.svg">
-  <img alt="Model launch-to-retirement spans" src="docs/fig-lifetimes-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-lifetimes-dark.svg">
+  <img alt="Model launch-to-retirement spans" src="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-lifetimes-light.svg">
 </picture>
 
 Serving a model well — valid parameter ranges, per-model cache minimums,
