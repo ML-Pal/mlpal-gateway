@@ -35,3 +35,5 @@ class FeedInstall(Base):
     last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     gateway_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
     pull_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Optional, explicitly user-provided at subscribe time — never inferred.
+    email: Mapped[str | None] = mapped_column(String(320), nullable=True)

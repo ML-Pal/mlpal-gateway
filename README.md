@@ -37,9 +37,11 @@ only what your box can serve; a single-provider deployment works without any
 extra configuration.
 
 Don't want to run infrastructure? The managed deployment of this same codebase
-runs at **[mlpal.ai](https://mlpal.ai)** — create a key (**free up to 300M
-tokens/month**, tokens always at provider cost) and point the same SDK/CLI at
-`https://models.mlpal.ai` instead of localhost.
+runs at **[mlpal.ai](https://mlpal.ai)** — create a key and point the same
+SDK/CLI at `https://models.mlpal.ai` instead of localhost. Pricing is simple:
+**routing is free for your first 300M tokens each month**, then **$50 flat per
+month up to 5B tokens**; your tokens are always billed at provider list price,
+passed through with no markup, either way.
 
 Prebuilt multi-arch images are on GHCR if you'd rather not build from source:
 `ghcr.io/ml-pal/mlpal-gateway` and `ghcr.io/ml-pal/mlpal-gateway-console`
@@ -208,9 +210,11 @@ standalone with no external dependencies. `src/` never imports from
 
 None by default. If you opt in to the hosted catalog feed, each daily pull
 sends exactly two headers to `models.mlpal.ai`: a random per-install UUID and
-your gateway version — used to count active installs, nothing else. No keys,
-no payloads, no usage data, ever. Stay in `bundled` mode (the default) and the
-gateway makes zero calls home.
+your gateway version — used to count active installs, nothing else. If you
+also choose to leave a contact email at subscribe time (optional, for
+breaking-catalog-change notices), that address is sent too; leave it blank and
+it never exists. No keys, no payloads, no usage data, ever. Stay in `bundled`
+mode (the default) and the gateway makes zero calls home.
 
 ## License and contact
 

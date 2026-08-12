@@ -271,6 +271,7 @@ export interface FeedStatus {
   gateway_version: string;
   last_sync: FeedSync | null;
   instance_id: string | null;
+  contact_email: string | null;
 }
 
 export interface CaptureStatus {
@@ -465,8 +466,13 @@ export class GatewayClient {
     return this.request<FeedStatus>("GET", "/admin/v1/catalog/feed");
   }
 
-  setFeedMode(mode: "bundled" | "hosted"): Promise<{ mode: string; sync: FeedSync | null }> {
-    return this.request("PUT", "/admin/v1/catalog/feed", { mode });
+  setFeedMode(
+    mode: "bundled" | "hosted",
+    contactEmail?: string,
+  ): Promise<{ mode: string; sync: FeedSync | null }> {
+    const body: Record<string, unknown> = { mode };
+    if (contactEmail !== undefined) body.contact_email = contactEmail;
+    return this.request("PUT", "/admin/v1/catalog/feed", body);
   }
 
   getCaptureStatus(): Promise<CaptureStatus> {

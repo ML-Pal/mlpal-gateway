@@ -73,6 +73,42 @@ class _FakeRedis:
 
 
 @pytest.mark.asyncio
+async def test_record_install_email_optional_and_updatable(session_factory):
+    async with session_factory() as s:
+        await catalog_feed.record_install(s, "inst-9", "0.3.0")           # anonymous
+        await catalog_feed.record_install(s, "inst-9", "0.3.0", "a@b.co")  # adds email
+        await catalog_feed.record_install(s, "inst-9", "0.3.0")           # absent -> kept
+    async with session_factory() as s:
+        row = (await s.execute(select(FeedInstall))).scalars().one()
+    assert row.email == "a@b.co" and row.pull_count == 3
+
+
+@pytest.mark.asyncio
+async def test_pull_sends_contact_only_when_operator_set_one(session_factory, monkeypatch):
+    class _Resp:
+        status_code = 304
+        headers = {}
+
+    class _Client:
+        def __init__(self, *a, **k): ...
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *a):
+            return False
+        async def get(self, url, headers=None):
+            _Client.sent = headers
+            return _Resp()
+
+    monkeypatch.setattr(catalog_feed.httpx, "AsyncClient", _Client)
+    await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
+    assert "X-MLPal-Contact" not in _Client.sent
+    async with session_factory() as s:
+        await catalog_feed.set_meta(s, catalog_feed.CONTACT_META_KEY, "ops@corp.io")
+    await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
+    assert _Client.sent["X-MLPal-Contact"] == "ops@corp.io"
+
+
+@pytest.mark.asyncio
 async def test_effective_mode_precedence():
     redis = _FakeRedis()
     mode, source = await catalog_feed.effective_mode(redis)

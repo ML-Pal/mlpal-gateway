@@ -38,10 +38,10 @@ def _feed() -> dict:
     return _FEED_CACHE
 
 
-async def _track(instance_id: str, version: str | None) -> None:
+async def _track(instance_id: str, version: str | None, email: str | None) -> None:
     try:
         async with async_session_factory() as session:
-            await record_install(session, instance_id, version)
+            await record_install(session, instance_id, version, email)
     except Exception:  # noqa: BLE001 — tracking must never matter to the caller
         logger.debug("feed install upsert failed", exc_info=True)
 
@@ -60,12 +60,16 @@ async def catalog_feed(
     if_none_match: str | None = Header(default=None),
     x_mlpal_instance: str | None = Header(default=None),
     x_mlpal_version: str | None = Header(default=None),
+    x_mlpal_contact: str | None = Header(default=None),
 ) -> dict | Response:
     doc = _feed()
     etag = f'"{doc["feed_version"]}"'
     if x_mlpal_instance and len(x_mlpal_instance) <= 64:
+        email = (x_mlpal_contact or "").strip()[:320] or None
+        if email and "@" not in email:
+            email = None
         task = asyncio.get_running_loop().create_task(
-            _track(x_mlpal_instance, (x_mlpal_version or "")[:64] or None)
+            _track(x_mlpal_instance, (x_mlpal_version or "")[:64] or None, email)
         )
         _TASKS.add(task)
         task.add_done_callback(_TASKS.discard)

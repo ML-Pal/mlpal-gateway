@@ -38,6 +38,7 @@ MODE_KEY = "feed:mode"          # runtime override: "bundled" | "hosted"
 ETAG_KEY = "feed:etag"
 LAST_SYNC_KEY = "feed:last_sync"  # JSON blob for the console
 INSTANCE_META_KEY = "instance_id"
+CONTACT_META_KEY = "contact_email"
 
 _BACKGROUND: set[asyncio.Task] = set()
 
@@ -125,6 +126,7 @@ async def status(redis: Any, session: Any) -> dict[str, Any]:
         "gateway_version": gateway_version(),
         "last_sync": last_sync,
         "instance_id": await get_instance_id(session) if session is not None else None,
+        "contact_email": await get_meta(session, CONTACT_META_KEY) if session is not None else None,
     }
 
 
@@ -154,7 +156,38 @@ async def get_instance_id(session: Any) -> str:
     return value
 
 
-async def record_install(session: Any, instance_id: str, version: str | None) -> None:
+async def get_meta(session: Any, key: str) -> str | None:
+    from sqlalchemy import select
+
+    from mlpal_assistants_service.db.models.feed import GatewayMeta
+
+    row = (
+        await session.execute(select(GatewayMeta).where(GatewayMeta.key == key))
+    ).scalar_one_or_none()
+    return row.value if row else None
+
+
+async def set_meta(session: Any, key: str, value: str | None) -> None:
+    from sqlalchemy import select
+
+    from mlpal_assistants_service.db.models.feed import GatewayMeta
+
+    row = (
+        await session.execute(select(GatewayMeta).where(GatewayMeta.key == key))
+    ).scalar_one_or_none()
+    if value:
+        if row is None:
+            session.add(GatewayMeta(key=key, value=value))
+        else:
+            row.value = value
+    elif row is not None:
+        await session.delete(row)
+    await session.commit()
+
+
+async def record_install(
+    session: Any, instance_id: str, version: str | None, email: str | None = None
+) -> None:
     """Upsert a feed_installs row for a pulling instance (feed-server side)."""
     from sqlalchemy import select
 
@@ -168,13 +201,15 @@ async def record_install(session: Any, instance_id: str, version: str | None) ->
         session.add(
             FeedInstall(
                 instance_id=instance_id, first_seen=now, last_seen=now,
-                gateway_version=version, pull_count=1,
+                gateway_version=version, pull_count=1, email=email,
             )
         )
     else:
         row.last_seen = now
         row.gateway_version = version or row.gateway_version
         row.pull_count += 1
+        if email:
+            row.email = email
     await session.commit()
 
 
@@ -189,7 +224,11 @@ async def pull_and_reconcile(session_factory: Any, redis: Any) -> dict[str, Any]
         headers = {}
         async with session_factory() as session:
             headers["X-MLPal-Instance"] = await get_instance_id(session)
+            contact = await get_meta(session, CONTACT_META_KEY)
         headers["X-MLPal-Version"] = gateway_version()
+        if contact:
+            # Only ever an address the operator typed into the subscribe flow.
+            headers["X-MLPal-Contact"] = contact
         if redis is not None:
             etag = await redis.get(ETAG_KEY)
             if etag:

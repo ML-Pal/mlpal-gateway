@@ -48,6 +48,7 @@ function FeedCard() {
   const { client } = useConnection();
   const [feed, setFeed] = useState<FeedStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     if (!client) return;
@@ -59,7 +60,7 @@ function FeedCard() {
     const next = feed.mode === "hosted" ? "bundled" : "hosted";
     setBusy(true);
     try {
-      const res = await client.setFeedMode(next);
+      const res = await client.setFeedMode(next, next === "hosted" ? email.trim() : undefined);
       if (next === "hosted") {
         const sync = res.sync;
         if (sync?.result === "applied") {
@@ -100,6 +101,15 @@ function FeedCard() {
           </div>
         </div>
       </div>
+      <div className="flex items-center gap-2">
+        {!hosted && (
+          <Input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email (optional) — catalog-change notices"
+            className="h-8 w-64 text-xs"
+          />
+        )}
       <button
         onClick={toggle}
         disabled={busy}
@@ -113,6 +123,7 @@ function FeedCard() {
       >
         {busy ? "Syncing…" : hosted ? "Unsubscribe" : "Subscribe"}
       </button>
+      </div>
     </div>
   );
 }
