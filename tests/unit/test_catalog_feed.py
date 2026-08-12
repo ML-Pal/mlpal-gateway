@@ -171,3 +171,11 @@ async def test_pull_never_raises(session_factory, monkeypatch):
     monkeypatch.setattr(catalog_feed.httpx, "AsyncClient", _Client)
     out = await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
     assert out["result"] == "error"
+
+
+def test_feed_never_exposes_markup():
+    """The markup multiplier is deployment business config — the public feed
+    must serve pass-through pricing regardless of what the build bundles."""
+    doc = catalog_feed.load_bundled_feed()
+    for row in doc["pricing"]:
+        assert float(row.get("markup_multiplier", 1)) == 1.0, row["model_tag"]

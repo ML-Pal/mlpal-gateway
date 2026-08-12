@@ -45,11 +45,21 @@ _BACKGROUND: set[asyncio.Task] = set()
 # -- bundled feed ------------------------------------------------------------
 
 def load_bundled_feed() -> dict[str, Any]:
-    """The catalog this build ships, as a feed document with a content hash."""
+    """The catalog this build ships, as a feed document with a content hash.
+
+    Pricing is normalized to markup 1.00 before serving: the markup multiplier
+    is deployment-specific business config (the managed deployment bundles its
+    own values), never catalog data — the same scrub build-oss.sh applies to
+    the public repo. Subscribers always receive pass-through pricing.
+    """
     pkg = resources.files("mlpal_assistants_service") / "catalog"
     doc: dict[str, Any] = {}
     for name in ("registry", "pricing", "routing"):
         doc[name] = json.loads((pkg / f"{name}.json").read_text())
+    for row in doc["pricing"]:
+        if "markup_multiplier" in row:
+            old = row["markup_multiplier"]
+            row["markup_multiplier"] = "1.00" if isinstance(old, str) else 1.00
     canonical = json.dumps(doc, sort_keys=True, separators=(",", ":")).encode()
     doc["feed_version"] = hashlib.sha256(canonical).hexdigest()[:12]
     doc["generated_at"] = datetime.now(UTC).isoformat()
@@ -58,12 +68,26 @@ def load_bundled_feed() -> dict[str, Any]:
 
 
 def gateway_version() -> str:
-    try:
-        from importlib.metadata import version
+    from importlib.metadata import version
 
-        return version("mlpal-gateway")
-    except Exception:  # noqa: BLE001 — editable/dev installs under the old name
-        return "0.0.0-dev"
+    for dist in ("mlpal-gateway", "mlpal-assistants-service"):
+        try:
+            return version(dist)
+        except Exception:  # noqa: BLE001
+            continue
+    # Container images run from source without installing the project — read
+    # the version straight from the bundled pyproject.
+    try:
+        import pathlib
+        import tomllib
+
+        for parent in pathlib.Path(__file__).resolve().parents:
+            pp = parent / "pyproject.toml"
+            if pp.exists():
+                return tomllib.loads(pp.read_text())["project"]["version"]
+    except Exception:  # noqa: BLE001
+        pass
+    return "0.0.0-dev"
 
 
 # -- mode + status (Redis runtime override > env default) --------------------
