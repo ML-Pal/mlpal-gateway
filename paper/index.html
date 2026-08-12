@@ -305,6 +305,18 @@ despite the higher median — overhead that is constant is cheaper at the tail t
 variable. Third, <b>stream fidelity is preserved</b>: all three systems deliver the same median 9
 content chunks; neither gateway coalesces or buffers the provider's stream.
 </p>
+<p>
+<b>Decomposing the 38&nbsp;ms.</b> To separate compute from plumbing we measured the admission
+pipeline in isolation: a request that fails routing after full admission (auth, rate limit,
+billing gate, policy, routing lookup, error serialization; no provider call) completes in
+<b>2.7&nbsp;ms</b> median (N=20; bare <code>/health</code> round trip: 0.8&nbsp;ms). Gateway
+<i>compute</i> is therefore ~2&nbsp;ms of the 38; the remainder is transport — per-request client
+connections to the gateway, the relay's event-loop scheduling of SSE chunks, and container
+networking — plus estimation noise (with per-system σ≈70–80&nbsp;ms and N=15, the median delta
+itself carries roughly ±25&nbsp;ms of uncertainty). The practical reading: admission-time
+governance is computationally free; what a self-hoster pays for the hop is transport, and it is
+bounded by tens of milliseconds against a multi-second request.
+</p>
 
 <h3>5.2&nbsp;&nbsp;The managed service, and the July head-to-head with OpenRouter</h3>
 <p>
