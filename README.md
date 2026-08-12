@@ -37,8 +37,13 @@ only what your box can serve; a single-provider deployment works without any
 extra configuration.
 
 Don't want to run infrastructure? The managed deployment of this same codebase
-runs at **[mlpal.ai](https://mlpal.ai)** — create a key there and point the
-same SDK/CLI at `https://models.mlpal.ai` instead of localhost.
+runs at **[mlpal.ai](https://mlpal.ai)** — create a key (**free up to 300M
+tokens/month**, tokens always at provider cost) and point the same SDK/CLI at
+`https://models.mlpal.ai` instead of localhost.
+
+Prebuilt multi-arch images are on GHCR if you'd rather not build from source:
+`ghcr.io/ml-pal/mlpal-gateway` and `ghcr.io/ml-pal/mlpal-gateway-console`
+(tags: `latest`, version, commit SHA).
 
 ## Calling it
 
@@ -87,6 +92,12 @@ print(msg.text, msg.compute_units)
   (zlib-compressed, runtime toggle — your box, your data).
 - **Provider semantics preserved.** Prompt caching (`cache_control`), tools,
   structured output, and MCP config pass through untouched.
+- **Catalog that keeps itself current (opt-in).** By default your box ships
+  with the bundled model catalog, frozen at this version. Subscribe to the
+  hosted feed (one click on the Models page, or `MLPAL_CATALOG_FEED=hosted`)
+  and the gateway pulls the curated catalog daily — new models appear and
+  retired ones are absorbed with no upgrade. See [Telemetry](#telemetry) for
+  exactly what a feed pull sends.
 
 ## Measured
 
@@ -192,6 +203,14 @@ Auth and billing sit behind composition-root seams (`api/mounting.py`); the
 defaults (`MLPAL_AUTH_BACKEND=local`, `MLPAL_BILLING_BACKEND=local`) run fully
 standalone with no external dependencies. `src/` never imports from
 `enterprise/`.
+
+## Telemetry
+
+None by default. If you opt in to the hosted catalog feed, each daily pull
+sends exactly two headers to `models.mlpal.ai`: a random per-install UUID and
+your gateway version — used to count active installs, nothing else. No keys,
+no payloads, no usage data, ever. Stay in `bundled` mode (the default) and the
+gateway makes zero calls home.
 
 ## License and contact
 
