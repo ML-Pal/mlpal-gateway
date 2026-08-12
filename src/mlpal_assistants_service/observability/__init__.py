@@ -1,8 +1,7 @@
 """Observability package for metrics, tracing, and logging."""
 
 from mlpal_assistants_service.observability.middleware import (
-    MetricsMiddleware,
-    ModelTrackingMiddleware,
+    ObservabilityMiddleware,
 )
 
-__all__ = ["MetricsMiddleware", "ModelTrackingMiddleware"]
+__all__ = ["ObservabilityMiddleware"]

@@ -34,8 +34,7 @@ from mlpal_assistants_service.core.telemetry import (
 )
 from mlpal_assistants_service.db.session import check_database_connection, engine
 from mlpal_assistants_service.observability.middleware import (
-    MetricsMiddleware,
-    ModelTrackingMiddleware,
+    ObservabilityMiddleware,
 )
 from mlpal_assistants_service.schemas.common import ErrorDetail, ErrorResponse, HealthResponse
 
@@ -561,15 +560,13 @@ app = FastAPI(
 )
 
 # Middleware order matters: Starlette runs the LAST-added middleware as the
-# OUTERMOST layer. Observability is added first (inner layers); CORS is added
-# last so it wraps everything. If CORS were inner, the BaseHTTPMiddleware
-# observability stack would wrap it and could error on an OPTIONS preflight
-# before CORS runs — returning a 500 with no Access-Control-* headers, which
-# browsers reject ("No 'Access-Control-Allow-Origin' header").
+# OUTERMOST layer. Observability is added first (inner layer); CORS is added
+# last so it wraps everything and answers OPTIONS preflights before anything
+# else runs.
 
-# Observability middleware (inner layers)
-app.add_middleware(MetricsMiddleware)
-app.add_middleware(ModelTrackingMiddleware)
+# Observability (pure ASGI — no task-per-response, no body re-parse; see
+# observability/middleware.py for why BaseHTTPMiddleware is banned here)
+app.add_middleware(ObservabilityMiddleware)
 
 # CORS LAST = outermost: answers OPTIONS preflights up front and attaches CORS
 # headers to every response, including errors raised by inner middleware.

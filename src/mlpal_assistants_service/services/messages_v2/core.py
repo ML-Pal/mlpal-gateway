@@ -258,15 +258,28 @@ class MessagesV2Core:
             finally:
                 await queue.put(("end", None))
 
+        last_chunk = time.monotonic()
+
+        async def _keepalive() -> None:
+            # Idle-ping injector: replaces a wait_for timer per chunk (a timer
+            # handle + TimeoutError control flow on EVERY event) with one task
+            # that only wakes at the heartbeat interval.
+            while True:
+                await asyncio.sleep(interval)
+                if time.monotonic() - last_chunk >= interval:
+                    await queue.put(("ping", None))
+
         producer = asyncio.create_task(_produce())
+        keepalive = asyncio.create_task(_keepalive())
         try:
             while True:
-                try:
-                    kind, payload = await asyncio.wait_for(queue.get(), timeout=interval)
-                except TimeoutError:
-                    yield b": ping\n\n"
+                kind, payload = await queue.get()
+                if kind == "ping":
+                    if time.monotonic() - last_chunk >= interval:
+                        yield b": ping\n\n"
                     continue
                 if kind == "chunk":
+                    last_chunk = time.monotonic()
                     if ctx.ttft_ms is None:
                         ctx.ttft_ms = int((time.perf_counter() - t0) * 1000)
                     if len(capture_buf) < capture_cap:
@@ -280,6 +293,7 @@ class MessagesV2Core:
                 else:  # end
                     break
         finally:
+            keepalive.cancel()
             producer.cancel()
             try:
                 await producer

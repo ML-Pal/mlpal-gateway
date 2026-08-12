@@ -11,7 +11,9 @@ produces bytes and reports usage via ctx.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import weakref
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -27,6 +29,31 @@ from mlpal_assistants_service.services.messages_v2.anthropic_backend import (
 from mlpal_assistants_service.services.messages_v2.edges import EdgeResult, RequestContext
 from mlpal_assistants_service.services.messages_v2.schemas import ValidatedRequest
 from mlpal_assistants_service.services.messages_v2.usage import CanonicalUsage
+
+# Connection pool with the lifetime of the running event loop. A client per
+# request would pay a fresh TCP+TLS handshake to the provider on EVERY request —
+# connection reuse is the single largest per-request saving on this path.
+# Weak-keyed by loop (never reuse a client across loops; ids recycle, objects
+# don't) and invalidated when the AsyncClient constructor changes (tests
+# monkeypatch it per-test). In production: one loop, one constructor, one
+# cached client for the process lifetime.
+_clients: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
+
+
+def _shared_client() -> httpx.AsyncClient:
+    loop = asyncio.get_running_loop()
+    ctor = httpx.AsyncClient
+    cached = _clients.get(loop)
+    if cached is not None:
+        client, cached_ctor = cached
+        if cached_ctor is ctor and not client.is_closed:
+            return client
+    client = ctor(
+        timeout=None,
+        limits=httpx.Limits(max_connections=200, max_keepalive_connections=50),
+    )
+    _clients[loop] = (client, ctor)
+    return client
 
 
 class AnthropicEdge:
@@ -44,8 +71,9 @@ class AnthropicEdge:
 
     async def invoke(self, req: ValidatedRequest, ctx: RequestContext) -> EdgeResult:
         content, headers = self._outbound(req, ctx)
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            resp = await client.post(self._backend.url, content=content, headers=headers)
+        resp = await _shared_client().post(
+            self._backend.url, content=content, headers=headers, timeout=self._timeout
+        )
         usage_dict, msg_id = parse_non_streaming_usage(resp.content)
         ctx.report(
             CanonicalUsage.from_anthropic(usage_dict) if resp.status_code == 200 else None,
@@ -64,32 +92,32 @@ class AnthropicEdge:
         msg_id: str | None = None
         status_code = 0
         buf = b""
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            async with client.stream(
-                "POST", self._backend.url, content=content,
-                headers={**headers, "accept": "text/event-stream"},
-            ) as resp:
-                status_code = resp.status_code
-                # aiter_bytes (not aiter_raw): decode the transport Content-
-                # Encoding (Anthropic gzips the SSE stream) so the client gets
-                # plain SSE. Still event-faithful — we never parse/reserialize
-                # the events, only decompress the transport layer. (aiter_raw
-                # would forward compressed bytes with no Content-Encoding header
-                # -> the client sees garbage.)
-                async for chunk in resp.aiter_bytes():
-                    yield chunk  # event-faithful passthrough
-                    buf += chunk
-                    while b"\n\n" in buf:
-                        raw_event, buf = buf.split(b"\n\n", 1)
-                        event_type, data = parse_sse_event(raw_event)
-                        if not data:
-                            continue
-                        if event_type == "message_start":
-                            msg = data.get("message", {}) or {}
-                            msg_id = msg.get("id") or msg_id
-                            usage_dict.update(msg.get("usage") or {})
-                        elif event_type == "message_delta":
-                            usage_dict.update(data.get("usage") or {})
+        async with _shared_client().stream(
+            "POST", self._backend.url, content=content,
+            headers={**headers, "accept": "text/event-stream"},
+            timeout=self._timeout,
+        ) as resp:
+            status_code = resp.status_code
+            # aiter_bytes (not aiter_raw): decode the transport Content-
+            # Encoding (Anthropic gzips the SSE stream) so the client gets
+            # plain SSE. Still event-faithful — we never parse/reserialize
+            # the events, only decompress the transport layer. (aiter_raw
+            # would forward compressed bytes with no Content-Encoding header
+            # -> the client sees garbage.)
+            async for chunk in resp.aiter_bytes():
+                yield chunk  # event-faithful passthrough
+                buf += chunk
+                while b"\n\n" in buf:
+                    raw_event, buf = buf.split(b"\n\n", 1)
+                    event_type, data = parse_sse_event(raw_event)
+                    if not data:
+                        continue
+                    if event_type == "message_start":
+                        msg = data.get("message", {}) or {}
+                        msg_id = msg.get("id") or msg_id
+                        usage_dict.update(msg.get("usage") or {})
+                    elif event_type == "message_delta":
+                        usage_dict.update(data.get("usage") or {})
         ctx.report(
             CanonicalUsage.from_anthropic(usage_dict) if status_code == 200 else None,
             status_code,
