@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="252" viewBox="0 0 720 252" font-family="Helvetica Neue, Arial, sans-serif">
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#666"/>
+    </marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#D97706"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl { font-size:11px; fill:#222; }
+    .sub { font-size:9px; fill:#777; }
+    .mono { font-family:'SF Mono',Menlo,monospace; font-size:10.5px; }
+    .dead { opacity:0.45; }
+  </style>
+
+  <!-- request -->
+  <rect x="10" y="96" width="150" height="52" rx="4" fill="#fff" stroke="#999"/>
+  <text x="85" y="117" text-anchor="middle" class="mono" fill="#222">"model": "mlpal"</text>
+  <text x="85" y="134" text-anchor="middle" class="sub">router tag, stable for years</text>
+
+  <line x1="160" y1="122" x2="196" y2="122" stroke="#666" stroke-width="1.2" marker-end="url(#arr2)"/>
+
+  <!-- candidate list -->
+  <rect x="198" y="18" width="220" height="216" rx="6" fill="#FFFBF4" stroke="#E5C89B"/>
+  <text x="308" y="38" text-anchor="middle" font-size="10" fill="#92400E" font-weight="600" letter-spacing="0.4">CURATED CANDIDATE LIST (feed-driven)</text>
+
+  <g class="dead">
+    <rect x="212" y="50" width="192" height="30" rx="4" fill="#fff" stroke="#bbb"/>
+    <text x="222" y="63" class="mono" fill="#444">1. claude-opus-5</text>
+    <text x="222" y="75" class="sub">provider disabled on this box</text>
+    <line x1="212" y1="65" x2="404" y2="65" stroke="#c33" stroke-width="1" opacity="0.6"/>
+  </g>
+  <g class="dead">
+    <rect x="212" y="88" width="192" height="30" rx="4" fill="#fff" stroke="#bbb"/>
+    <text x="222" y="101" class="mono" fill="#444">2. gpt-5.2</text>
+    <text x="222" y="113" class="sub">paused in registry</text>
+    <line x1="212" y1="103" x2="404" y2="103" stroke="#c33" stroke-width="1" opacity="0.6"/>
+  </g>
+  <g>
+    <rect x="212" y="126" width="192" height="30" rx="4" fill="#fff" stroke="#D97706" stroke-width="1.6"/>
+    <text x="222" y="139" class="mono" fill="#222" font-weight="600">3. gemini-3.1-pro</text>
+    <text x="222" y="151" class="sub">active + provider enabled ✓</text>
+  </g>
+  <g class="dead">
+    <rect x="212" y="164" width="192" height="30" rx="4" fill="#fff" stroke="#bbb"/>
+    <text x="222" y="177" class="mono" fill="#444">4. claude-sonnet-5</text>
+    <text x="222" y="189" class="sub">not reached</text>
+  </g>
+  <text x="308" y="222" text-anchor="middle" class="sub">priority order · spans providers · updated by catalog feed, not client code</text>
+
+  <line x1="418" y1="141" x2="466" y2="141" stroke="#D97706" stroke-width="1.6" marker-end="url(#arrA)"/>
+
+  <!-- resolution -->
+  <rect x="468" y="112" width="140" height="58" rx="4" fill="#fff" stroke="#D97706" stroke-width="1.4"/>
+  <text x="538" y="134" text-anchor="middle" class="lbl" font-weight="600">first served wins</text>
+  <text x="538" y="149" text-anchor="middle" class="sub">resolution cached per box;</text>
+  <text x="538" y="160" text-anchor="middle" class="sub">warmed at startup</text>
+
+  <line x1="608" y1="141" x2="646" y2="141" stroke="#666" stroke-width="1.2" marker-end="url(#arr2)"/>
+
+  <rect x="648" y="112" width="64" height="58" rx="4" fill="#fff" stroke="#999"/>
+  <text x="680" y="138" text-anchor="middle" class="lbl">google</text>
+  <text x="680" y="152" text-anchor="middle" class="sub">adapter</text>
+
+  <!-- annotation: single-provider box -->
+  <text x="308" y="246" text-anchor="middle" class="sub" fill="#92400E">A single-provider deployment (e.g. only an Anthropic key) still resolves every tag: the walk falls through to the first model it can actually serve.</text>
+</svg>

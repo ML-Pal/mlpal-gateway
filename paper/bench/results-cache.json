@@ -1,0 +1,80 @@
+{
+ "direct": [
+  {
+   "latency_ms": 1465.6,
+   "input_tokens": 13,
+   "cache_creation": 21213,
+   "cache_read": 0
+  },
+  {
+   "latency_ms": 610.8,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 21213
+  },
+  {
+   "latency_ms": 686.8,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 21213
+  },
+  {
+   "latency_ms": 556.3,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 21213
+  }
+ ],
+ "mlpal": [
+  {
+   "latency_ms": 1028.3,
+   "input_tokens": 13,
+   "cache_creation": 21613,
+   "cache_read": 0
+  },
+  {
+   "latency_ms": 826.3,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 21613
+  },
+  {
+   "latency_ms": 828.7,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 21613
+  },
+  {
+   "latency_ms": 849.3,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 21613
+  }
+ ],
+ "litellm": [
+  {
+   "latency_ms": 862.6,
+   "input_tokens": 13,
+   "cache_creation": 22013,
+   "cache_read": 0
+  },
+  {
+   "latency_ms": 610.7,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 22013
+  },
+  {
+   "latency_ms": 637.9,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 22013
+  },
+  {
+   "latency_ms": 1342.3,
+   "input_tokens": 13,
+   "cache_creation": 0,
+   "cache_read": 22013
+  }
+ ]
+}

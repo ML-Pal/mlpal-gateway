@@ -30,6 +30,12 @@ any explicit model, register your own adapter, and self-host any provider.
 Full thesis, the auto-router, and an honest ✅/🟡/⬜ feature matrix vs
 OpenRouter / LiteLLM / Portkey: **[docs/POSITIONING.md](docs/POSITIONING.md)**.
 
+The measured version of the argument — model-retirement data, gateway-overhead
+benchmarks vs direct API + LiteLLM, cache/metering fidelity, and a feature
+comparison — is our technical report:
+**[Curation Over Breadth](paper/mlpal-gateway-technical-report.pdf)**
+([reproduction harness](paper/bench/)).
+
 ## Catalog vs. router tags — which do I use?
 
 Two surfaces expose the same curated model intelligence; they differ in **who
