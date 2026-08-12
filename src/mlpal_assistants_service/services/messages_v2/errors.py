@@ -13,6 +13,7 @@ import json
 _ERROR_TYPE_BY_STATUS = {
     400: "invalid_request_error",
     401: "authentication_error",
+    402: "billing_error",
     403: "permission_error",
     404: "not_found_error",
     413: "request_too_large",

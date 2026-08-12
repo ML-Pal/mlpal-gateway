@@ -28,6 +28,10 @@ from mlpal_assistants_service.seams.billing import is_insufficient_wallet_error 
 logger = logging.getLogger(__name__)
 
 BILLING_CACHE_TTL = 60  # seconds
+
+# Sentinel reason for wallet-empty blocks. Surfaces match on THIS constant to
+# map the block to HTTP 402 + the wallet_empty/billing_error wire envelopes.
+WALLET_EMPTY_MESSAGE = "Wallet balance exhausted — top up at https://mlpal.ai/billing"
 WALLET_CONFIG_CACHE_KEY = "wallet:config"
 
 
@@ -188,6 +192,15 @@ class BillingRepository(BaseRepository[UserBillingStatus]):
         await self._cache_setex(cache_key, ttl, json.dumps(snapshot))
         return snapshot
 
+    async def wallet_paused(self, user_id: int) -> bool:
+        """True when wallet gating is on and this user's balance is exhausted.
+        One cached snapshot read — cheap enough for the keys listing."""
+        snapshot = await self._get_wallet_gate_snapshot(user_id)
+        return bool(
+            snapshot.get("wallet_gating_enabled")
+            and snapshot.get("wallet_access_status") == "insufficient_balance"
+        )
+
     async def can_make_request_cached(
         self,
         user_id: int,
@@ -204,7 +217,7 @@ class BillingRepository(BaseRepository[UserBillingStatus]):
             if wallet_gate.get("wallet_access_status") == "allowed":
                 return True, None, True
             if wallet_gate.get("wallet_access_status") == "insufficient_balance":
-                return False, "Wallet balance is required", True
+                return False, WALLET_EMPTY_MESSAGE, True
 
         cache_key = f"billing:{user_id}"
         cached = await self._cache_get(cache_key)

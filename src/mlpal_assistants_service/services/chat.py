@@ -38,6 +38,7 @@ from mlpal_assistants_service.core.exceptions import (
     ProviderError,
     QuotaExceededError,
     UnsupportedCapabilityError,
+    WalletEmptyError,
 )
 from mlpal_assistants_service.repositories.usage_repository import UsageRepository
 from mlpal_assistants_service.schemas.chat import (
@@ -262,6 +263,12 @@ class ChatService:
                 billing_existed,
             ) = await self._billing.can_make_request_cached(user_id)
             if not can_request:
+                from mlpal_assistants_service.repositories.billing_repository import (
+                    WALLET_EMPTY_MESSAGE,
+                )
+
+                if block_reason == WALLET_EMPTY_MESSAGE:
+                    raise WalletEmptyError(block_reason)
                 raise QuotaExceededError(
                     message=block_reason or "API access blocked",
                     limit=0.0,
@@ -483,6 +490,12 @@ class ChatService:
                 billing_existed,
             ) = await self._billing.can_make_request_cached(user_id)
             if not can_request:
+                from mlpal_assistants_service.repositories.billing_repository import (
+                    WALLET_EMPTY_MESSAGE,
+                )
+
+                if block_reason == WALLET_EMPTY_MESSAGE:
+                    raise WalletEmptyError(block_reason)
                 raise QuotaExceededError(
                     message=block_reason or "API access blocked",
                     limit=0.0,

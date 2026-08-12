@@ -132,6 +132,13 @@ class APIKeyResponse(BaseSchema):
     created_at: datetime = Field(..., description="Creation timestamp")
     model_policy: dict | None = Field(default=None, description="Model access policy (null = unrestricted)")
     budgets: list[dict] | None = Field(default=None, description="Spend budgets (null = none)")
+    # Derived per-response from user-level billing state — never stored on the
+    # key. Orthogonal to `is_active`/lifecycle: all of a user's keys pause
+    # together when their wallet is exhausted and unpause on top-up.
+    paused: bool = Field(default=False, description="Paused by billing (user-level, derived)")
+    paused_reason: str | None = Field(
+        default=None, description='Why paused; currently only "insufficient_balance"'
+    )
 
 
 class APIKeyWithSecret(APIKeyResponse):

@@ -167,9 +167,16 @@ class MessagesV2Core:
                 raise billing_result
             can_request, block_reason, _billing_existed = billing_result
             if not can_request:
+                # Wallet-empty is actionable and distinct: 402 + billing_error,
+                # so clients can render a top-up prompt instead of a generic 403.
+                from mlpal_assistants_service.repositories.billing_repository import (
+                    WALLET_EMPTY_MESSAGE,
+                )
+
+                blocked_status = 402 if block_reason == WALLET_EMPTY_MESSAGE else 403
                 return Response(
-                    error_body(403, block_reason or "API access blocked"),
-                    403,
+                    error_body(blocked_status, block_reason or "API access blocked"),
+                    blocked_status,
                     media_type="application/json",
                 )
             if self._policy is not None:

@@ -18,6 +18,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from mlpal_assistants_service.api.deps import (
     APIKeyServiceDep,
+    BillingRepositoryDep,
     ManagementPrincipal,
     UsageServiceDep,
 )
@@ -91,9 +92,22 @@ async def create_api_key(
     summary="List API keys",
     description="List all API keys for the current user.",
 )
+async def _billing_paused(billing_repository, user_id: int) -> bool:
+    """User-level billing pause, derived per response. Fails open: a billing
+    lookup problem must never break key management."""
+    wallet_paused = getattr(billing_repository, "wallet_paused", None)
+    if wallet_paused is None:  # OSS local gate: no wallet, never paused
+        return False
+    try:
+        return bool(await wallet_paused(user_id))
+    except Exception:  # noqa: BLE001
+        return False
+
+
 async def list_api_keys(
     current_user: ManagementPrincipal,
     api_key_service: APIKeyServiceDep,
+    billing_repository: BillingRepositoryDep,
     include_revoked: bool = False,
     kind: Literal["user", "cde"] | None = Query(
         default=None,
@@ -111,6 +125,7 @@ async def list_api_keys(
         include_revoked=include_revoked,
         prefix_filter=prefix_filter,
     )
+    paused = await _billing_paused(billing_repository, current_user.id)
 
     return APIKeyList(
         items=[
@@ -127,6 +142,8 @@ async def list_api_keys(
                 created_at=k.created_at,
                 model_policy=k.model_policy,
                 budgets=k.budgets,
+                paused=paused,
+                paused_reason="insufficient_balance" if paused else None,
             )
             for k in keys
         ],
@@ -144,6 +161,7 @@ async def get_api_key(
     key_id: int,
     current_user: ManagementPrincipal,
     api_key_service: APIKeyServiceDep,
+    billing_repository: BillingRepositoryDep,
 ) -> APIKeyResponse:
     """Get details of a specific API key."""
     api_key = await api_key_service.get_key_by_id(key_id, current_user.id)
@@ -154,6 +172,7 @@ async def get_api_key(
             detail="API key not found",
         )
 
+    paused = await _billing_paused(billing_repository, current_user.id)
     return APIKeyResponse(
         id=api_key.id,
         name=api_key.name,
@@ -167,6 +186,8 @@ async def get_api_key(
         created_at=api_key.created_at,
         model_policy=api_key.model_policy,
         budgets=api_key.budgets,
+        paused=paused,
+        paused_reason="insufficient_balance" if paused else None,
     )
 
 

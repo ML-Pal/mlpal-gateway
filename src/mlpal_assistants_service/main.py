@@ -24,6 +24,7 @@ from mlpal_assistants_service.core.config import get_settings
 from mlpal_assistants_service.core.exceptions import (
     AssistantsServiceError,
     ProviderError,
+    WalletEmptyError,
     http_status_for_provider_error,
 )
 from mlpal_assistants_service.core.storage import AssetStorageService
@@ -591,6 +592,22 @@ instrument_app(app, engine)
 
 
 # Exception handlers
+@app.exception_handler(WalletEmptyError)
+async def wallet_empty_handler(request: Request, exc: WalletEmptyError) -> JSONResponse:
+    """OpenAI-wire 402: stable machine keys for clients to render a top-up
+    prompt (Anthropic-wire surfaces map this in messages_v2 instead)."""
+    return JSONResponse(
+        status_code=402,
+        content={
+            "error": {
+                "message": exc.message,
+                "type": "insufficient_quota",
+                "code": "wallet_empty",
+            }
+        },
+    )
+
+
 @app.exception_handler(AssistantsServiceError)
 async def service_exception_handler(
     request: Request,

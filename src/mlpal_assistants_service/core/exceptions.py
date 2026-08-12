@@ -52,6 +52,15 @@ class RateLimitExceededError(AssistantsServiceError):
         self.limit_type = limit_type
 
 
+class WalletEmptyError(AssistantsServiceError):
+    """Wallet balance exhausted — maps to HTTP 402 with the wallet_empty
+    envelope on the OpenAI wire (Anthropic wire handles it in messages_v2)."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+
 class QuotaExceededError(AssistantsServiceError):
     """Raised when user quota is exceeded."""
 
