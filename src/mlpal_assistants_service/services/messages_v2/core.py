@@ -146,13 +146,26 @@ class MessagesV2Core:
         # is the primary prod endpoint; a key blocked on /v1/chat must be
         # equally blocked here.
         try:
+            # Rate limit and billing gate are independent Redis reads — run them
+            # concurrently (the rate limiter never touches the SQL session, so
+            # this pair is safe even on the billing gate's DB-miss path).
+            # Evaluation order below is unchanged: 429 outranks 403.
+            billing_coro = self._billing.can_make_request_cached(api_key.user_id)
             if self._rate_limiter:
-                await self._rate_limiter.check_request_limit(
-                    str(api_key.user_id), getattr(api_key, "rate_limit_tier", None)
+                rate_result, billing_result = await asyncio.gather(
+                    self._rate_limiter.check_request_limit(
+                        str(api_key.user_id), getattr(api_key, "rate_limit_tier", None)
+                    ),
+                    billing_coro,
+                    return_exceptions=True,
                 )
-            can_request, block_reason, _billing_existed = (
-                await self._billing.can_make_request_cached(api_key.user_id)
-            )
+                if isinstance(rate_result, BaseException):
+                    raise rate_result
+            else:
+                billing_result = await billing_coro
+            if isinstance(billing_result, BaseException):
+                raise billing_result
+            can_request, block_reason, _billing_existed = billing_result
             if not can_request:
                 return Response(
                     error_body(403, block_reason or "API access blocked"),

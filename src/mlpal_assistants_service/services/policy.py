@@ -217,11 +217,27 @@ class PolicyService:
         if not budgets:
             return
         now_local = self._now_local()
+        # Hot path: read every window counter in ONE pipeline round trip; the
+        # per-window reseed path (_window_spend_cu) runs only on a cache miss.
+        windows = list({b["window"] for b in budgets})
+        spend: dict[str, Decimal] = {}
+        try:
+            pipe = self._redis.pipeline(transaction=False)
+            for window in windows:
+                pipe.get(self._counter_key(api_key_id, window, window_id(window, now_local)))
+            for window, raw in zip(windows, await pipe.execute(), strict=True):
+                if raw is not None:
+                    spend[window] = Decimal(raw.decode() if isinstance(raw, bytes) else raw)
+        except Exception:  # noqa: BLE001 — Redis down: reseed path handles it
+            logger.warning("policy: batched budget read failed for key %s", api_key_id, exc_info=True)
         for b in budgets:
             window, unit = b["window"], b["unit"]
             amount = Decimal(str(b["amount"]))
             limit_cu = self._to_cu(amount, unit)
-            spent_cu = await self._window_spend_cu(api_key_id, window, now_local)
+            spent_cu = spend.get(window)
+            if spent_cu is None:
+                spent_cu = await self._window_spend_cu(api_key_id, window, now_local)
+                spend[window] = spent_cu
             if spent_cu >= limit_cu:
                 _, end_utc = window_bounds(window, now_local)
                 raise BudgetExceededError(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from collections.abc import Sequence
@@ -29,6 +30,15 @@ from mlpal_assistants_service.db.models import APIKey
 from mlpal_assistants_service.schemas.api_key import APIKeyCreate
 
 logger = logging.getLogger(__name__)
+
+# Strong refs for fire-and-forget tasks (create_task alone is GC-collectable).
+_BACKGROUND_TASKS: set = set()
+
+
+def _spawn(coro) -> None:
+    task = asyncio.get_running_loop().create_task(coro)
+    _BACKGROUND_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_TASKS.discard)
 
 # Redis key prefixes
 AUTH_CACHE_PREFIX = "auth:"
@@ -120,8 +130,9 @@ class APIKeyService:
         if self.redis:
             cached = await self._get_cached_key(key_hash)
             if cached is not None:
-                # Track last_used_at in Redis (fire-and-forget)
-                await self._track_last_used(cached.id)
+                # Track last_used_at in Redis — genuinely fire-and-forget:
+                # off the hot path, one fewer awaited round trip per request.
+                _spawn(self._track_last_used(cached.id))
                 return cached
 
         # Cache miss - query database
@@ -154,7 +165,7 @@ class APIKeyService:
 
         # Track last_used_at in Redis instead of DB UPDATE
         if self.redis:
-            await self._track_last_used(key_record.id)
+            _spawn(self._track_last_used(key_record.id))
         else:
             # Fallback: direct DB update if no Redis
             await self.session.execute(
