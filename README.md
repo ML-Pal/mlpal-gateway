@@ -2,7 +2,8 @@
 
 # MLPal Gateway
 
-**One API for Anthropic, OpenAI, Google, and AWS Bedrock.**<br>
+**One API for every model provider.**<br>
+Anthropic, OpenAI, Google, and AWS Bedrock ship built in; new providers are an adapter away.<br>
 Self-hosted. Model routing, per-request cost metering, per-key access control, admin console.
 
 [![PyPI](https://img.shields.io/pypi/v/mlpal-gateway)](https://pypi.org/project/mlpal-gateway/)
@@ -34,6 +35,10 @@ docker compose up             # Postgres + Redis + gateway + admin console
 Adapters activate based on which provider keys you set. `GET /v1/models` lists
 only what your box can serve; a single-provider deployment works without any
 extra configuration.
+
+Don't want to run infrastructure? The managed deployment of this same codebase
+runs at **[mlpal.ai](https://mlpal.ai)** — create a key there and point the
+same SDK/CLI at `https://models.mlpal.ai` instead of localhost.
 
 ## Calling it
 
