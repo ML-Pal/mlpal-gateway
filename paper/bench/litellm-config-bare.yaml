@@ -1,0 +1,8 @@
+model_list:
+  - model_name: claude-haiku-4-5-20251001
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+      api_base: http://host.docker.internal:9999
+general_settings:
+  master_key: sk-bench

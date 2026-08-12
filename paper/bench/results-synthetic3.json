@@ -1,0 +1,2810 @@
+{
+ "fake": [
+  {
+   "ttfb_ms": 22.1,
+   "ttft_ms": 22.1,
+   "total_ms": 22.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 13.1,
+   "ttft_ms": 13.1,
+   "total_ms": 13.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.7,
+   "ttft_ms": 14.8,
+   "total_ms": 15.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 12.8,
+   "ttft_ms": 12.9,
+   "total_ms": 13.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.1,
+   "ttft_ms": 34.2,
+   "total_ms": 34.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.1,
+   "ttft_ms": 15.2,
+   "total_ms": 15.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 9.6,
+   "ttft_ms": 9.7,
+   "total_ms": 9.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.2,
+   "ttft_ms": 15.3,
+   "total_ms": 15.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.9,
+   "ttft_ms": 16.0,
+   "total_ms": 16.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 7.9,
+   "ttft_ms": 8.0,
+   "total_ms": 8.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.4,
+   "ttft_ms": 19.6,
+   "total_ms": 20.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 9.8,
+   "ttft_ms": 9.8,
+   "total_ms": 10.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 9.6,
+   "ttft_ms": 9.7,
+   "total_ms": 9.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.8,
+   "ttft_ms": 17.9,
+   "total_ms": 18.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.9,
+   "ttft_ms": 19.0,
+   "total_ms": 19.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.3,
+   "ttft_ms": 19.4,
+   "total_ms": 19.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 10.5,
+   "ttft_ms": 10.6,
+   "total_ms": 10.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.1,
+   "ttft_ms": 16.2,
+   "total_ms": 16.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.5,
+   "ttft_ms": 15.5,
+   "total_ms": 15.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.6,
+   "ttft_ms": 19.6,
+   "total_ms": 19.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.1,
+   "ttft_ms": 19.2,
+   "total_ms": 19.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 6.8,
+   "ttft_ms": 6.9,
+   "total_ms": 7.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.6,
+   "ttft_ms": 14.7,
+   "total_ms": 15.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 10.0,
+   "ttft_ms": 10.1,
+   "total_ms": 10.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.6,
+   "total_ms": 19.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 12.9,
+   "ttft_ms": 12.9,
+   "total_ms": 13.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.9,
+   "ttft_ms": 20.0,
+   "total_ms": 20.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.1,
+   "ttft_ms": 16.2,
+   "total_ms": 16.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 13.4,
+   "ttft_ms": 13.5,
+   "total_ms": 13.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 59.1,
+   "ttft_ms": 59.1,
+   "total_ms": 59.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.6,
+   "ttft_ms": 17.7,
+   "total_ms": 18.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.1,
+   "ttft_ms": 17.2,
+   "total_ms": 17.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.7,
+   "ttft_ms": 17.9,
+   "total_ms": 18.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.4,
+   "ttft_ms": 16.5,
+   "total_ms": 16.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.2,
+   "ttft_ms": 17.3,
+   "total_ms": 17.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 13.8,
+   "ttft_ms": 13.9,
+   "total_ms": 14.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.6,
+   "total_ms": 18.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.5,
+   "total_ms": 18.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.7,
+   "total_ms": 19.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 59.4,
+   "ttft_ms": 59.4,
+   "total_ms": 59.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 8.8,
+   "ttft_ms": 8.9,
+   "total_ms": 9.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.7,
+   "ttft_ms": 14.8,
+   "total_ms": 15.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.8,
+   "ttft_ms": 16.9,
+   "total_ms": 17.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.8,
+   "ttft_ms": 18.9,
+   "total_ms": 19.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.2,
+   "ttft_ms": 15.3,
+   "total_ms": 15.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.5,
+   "total_ms": 18.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 9.0,
+   "ttft_ms": 9.1,
+   "total_ms": 9.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.6,
+   "ttft_ms": 14.7,
+   "total_ms": 14.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.4,
+   "ttft_ms": 19.4,
+   "total_ms": 19.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 8.2,
+   "ttft_ms": 8.3,
+   "total_ms": 8.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.6,
+   "ttft_ms": 15.7,
+   "total_ms": 16.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.6,
+   "ttft_ms": 18.7,
+   "total_ms": 19.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 7.0,
+   "ttft_ms": 7.0,
+   "total_ms": 7.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.8,
+   "ttft_ms": 15.9,
+   "total_ms": 16.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.9,
+   "ttft_ms": 19.0,
+   "total_ms": 19.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.5,
+   "ttft_ms": 19.6,
+   "total_ms": 20.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.0,
+   "ttft_ms": 15.1,
+   "total_ms": 15.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.7,
+   "ttft_ms": 18.8,
+   "total_ms": 19.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 10.7,
+   "ttft_ms": 10.8,
+   "total_ms": 11.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.8,
+   "ttft_ms": 15.8,
+   "total_ms": 16.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.7,
+   "ttft_ms": 15.8,
+   "total_ms": 16.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.0,
+   "ttft_ms": 16.0,
+   "total_ms": 16.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 7.5,
+   "ttft_ms": 7.6,
+   "total_ms": 7.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.6,
+   "ttft_ms": 17.7,
+   "total_ms": 18.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.0,
+   "ttft_ms": 15.1,
+   "total_ms": 15.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.3,
+   "ttft_ms": 15.4,
+   "total_ms": 15.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.3,
+   "ttft_ms": 22.3,
+   "total_ms": 22.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 7.3,
+   "ttft_ms": 7.4,
+   "total_ms": 7.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 11.4,
+   "ttft_ms": 11.5,
+   "total_ms": 11.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.1,
+   "ttft_ms": 16.2,
+   "total_ms": 16.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.8,
+   "ttft_ms": 15.9,
+   "total_ms": 16.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 10.3,
+   "ttft_ms": 10.4,
+   "total_ms": 10.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.7,
+   "ttft_ms": 15.8,
+   "total_ms": 16.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.7,
+   "ttft_ms": 17.8,
+   "total_ms": 18.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.2,
+   "ttft_ms": 17.3,
+   "total_ms": 17.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.5,
+   "ttft_ms": 16.6,
+   "total_ms": 16.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.6,
+   "total_ms": 19.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.7,
+   "ttft_ms": 14.7,
+   "total_ms": 15.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.6,
+   "total_ms": 19.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.7,
+   "ttft_ms": 16.8,
+   "total_ms": 17.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.1,
+   "ttft_ms": 16.2,
+   "total_ms": 16.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.4,
+   "ttft_ms": 15.5,
+   "total_ms": 15.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 10.4,
+   "ttft_ms": 10.5,
+   "total_ms": 10.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.2,
+   "ttft_ms": 17.3,
+   "total_ms": 17.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 12.9,
+   "ttft_ms": 12.9,
+   "total_ms": 13.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.0,
+   "ttft_ms": 19.1,
+   "total_ms": 19.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.3,
+   "ttft_ms": 17.4,
+   "total_ms": 17.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.3,
+   "ttft_ms": 15.3,
+   "total_ms": 15.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.1,
+   "ttft_ms": 15.2,
+   "total_ms": 15.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 9.9,
+   "ttft_ms": 9.9,
+   "total_ms": 10.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.6,
+   "ttft_ms": 16.6,
+   "total_ms": 16.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.8,
+   "ttft_ms": 15.8,
+   "total_ms": 16.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.7,
+   "ttft_ms": 17.8,
+   "total_ms": 18.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.7,
+   "ttft_ms": 14.7,
+   "total_ms": 14.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 13.9,
+   "ttft_ms": 13.9,
+   "total_ms": 14.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.8,
+   "ttft_ms": 17.8,
+   "total_ms": 18.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 13.0,
+   "ttft_ms": 13.1,
+   "total_ms": 13.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 12.6,
+   "ttft_ms": 12.7,
+   "total_ms": 13.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.4,
+   "ttft_ms": 18.4,
+   "total_ms": 18.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 7.2,
+   "ttft_ms": 7.2,
+   "total_ms": 7.4,
+   "chunks": 9,
+   "output_tokens": 9
+  }
+ ],
+ "mlpal": [
+  {
+   "ttfb_ms": 23.2,
+   "ttft_ms": 23.2,
+   "total_ms": 33.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.5,
+   "ttft_ms": 23.6,
+   "total_ms": 28.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.9,
+   "ttft_ms": 23.0,
+   "total_ms": 26.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.6,
+   "ttft_ms": 24.7,
+   "total_ms": 31.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.4,
+   "ttft_ms": 20.6,
+   "total_ms": 24.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.1,
+   "ttft_ms": 22.6,
+   "total_ms": 26.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.3,
+   "ttft_ms": 22.4,
+   "total_ms": 27.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.4,
+   "ttft_ms": 30.5,
+   "total_ms": 35.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.0,
+   "ttft_ms": 24.0,
+   "total_ms": 44.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.6,
+   "ttft_ms": 24.1,
+   "total_ms": 27.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.0,
+   "ttft_ms": 33.0,
+   "total_ms": 95.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.5,
+   "ttft_ms": 22.6,
+   "total_ms": 25.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.8,
+   "ttft_ms": 15.8,
+   "total_ms": 20.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.7,
+   "ttft_ms": 20.8,
+   "total_ms": 23.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.1,
+   "ttft_ms": 23.3,
+   "total_ms": 26.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.0,
+   "ttft_ms": 36.2,
+   "total_ms": 40.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.4,
+   "ttft_ms": 28.5,
+   "total_ms": 33.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.3,
+   "ttft_ms": 24.4,
+   "total_ms": 31.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.2,
+   "ttft_ms": 30.3,
+   "total_ms": 35.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.0,
+   "ttft_ms": 25.1,
+   "total_ms": 30.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.6,
+   "ttft_ms": 25.6,
+   "total_ms": 32.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.7,
+   "ttft_ms": 25.8,
+   "total_ms": 29.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.4,
+   "ttft_ms": 24.5,
+   "total_ms": 30.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.0,
+   "ttft_ms": 26.1,
+   "total_ms": 30.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.2,
+   "ttft_ms": 32.0,
+   "total_ms": 37.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.2,
+   "ttft_ms": 31.4,
+   "total_ms": 37.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.7,
+   "ttft_ms": 22.8,
+   "total_ms": 30.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.5,
+   "ttft_ms": 28.6,
+   "total_ms": 35.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.5,
+   "ttft_ms": 30.5,
+   "total_ms": 37.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.6,
+   "ttft_ms": 23.6,
+   "total_ms": 28.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.7,
+   "ttft_ms": 29.9,
+   "total_ms": 37.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.9,
+   "ttft_ms": 36.0,
+   "total_ms": 42.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.8,
+   "ttft_ms": 28.9,
+   "total_ms": 35.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.7,
+   "ttft_ms": 23.8,
+   "total_ms": 33.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.2,
+   "ttft_ms": 29.3,
+   "total_ms": 41.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.7,
+   "ttft_ms": 37.9,
+   "total_ms": 50.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.2,
+   "ttft_ms": 26.5,
+   "total_ms": 41.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.2,
+   "ttft_ms": 19.2,
+   "total_ms": 22.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.9,
+   "ttft_ms": 30.1,
+   "total_ms": 37.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.9,
+   "ttft_ms": 22.0,
+   "total_ms": 27.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.2,
+   "ttft_ms": 20.3,
+   "total_ms": 25.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.1,
+   "ttft_ms": 23.1,
+   "total_ms": 28.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.2,
+   "ttft_ms": 30.3,
+   "total_ms": 37.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.1,
+   "ttft_ms": 32.3,
+   "total_ms": 38.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.9,
+   "ttft_ms": 25.0,
+   "total_ms": 31.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.0,
+   "ttft_ms": 22.1,
+   "total_ms": 24.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.0,
+   "ttft_ms": 23.3,
+   "total_ms": 27.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.0,
+   "ttft_ms": 29.2,
+   "total_ms": 34.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.1,
+   "ttft_ms": 23.1,
+   "total_ms": 25.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.8,
+   "ttft_ms": 20.8,
+   "total_ms": 25.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.5,
+   "ttft_ms": 29.0,
+   "total_ms": 38.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.1,
+   "ttft_ms": 20.1,
+   "total_ms": 26.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.9,
+   "ttft_ms": 23.0,
+   "total_ms": 26.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.0,
+   "ttft_ms": 23.1,
+   "total_ms": 26.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.3,
+   "ttft_ms": 29.4,
+   "total_ms": 33.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.8,
+   "ttft_ms": 27.1,
+   "total_ms": 31.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.9,
+   "ttft_ms": 23.9,
+   "total_ms": 30.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.2,
+   "ttft_ms": 19.9,
+   "total_ms": 22.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.1,
+   "ttft_ms": 29.2,
+   "total_ms": 34.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.2,
+   "ttft_ms": 31.3,
+   "total_ms": 42.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.5,
+   "ttft_ms": 26.6,
+   "total_ms": 35.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.5,
+   "ttft_ms": 23.6,
+   "total_ms": 26.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.1,
+   "ttft_ms": 18.2,
+   "total_ms": 23.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 13.5,
+   "ttft_ms": 13.5,
+   "total_ms": 16.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.4,
+   "ttft_ms": 23.5,
+   "total_ms": 26.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.8,
+   "ttft_ms": 31.9,
+   "total_ms": 37.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.4,
+   "ttft_ms": 23.6,
+   "total_ms": 25.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.2,
+   "ttft_ms": 16.3,
+   "total_ms": 21.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.5,
+   "ttft_ms": 26.5,
+   "total_ms": 33.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.5,
+   "ttft_ms": 29.5,
+   "total_ms": 35.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.1,
+   "ttft_ms": 33.3,
+   "total_ms": 40.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.2,
+   "ttft_ms": 21.3,
+   "total_ms": 26.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.6,
+   "ttft_ms": 16.7,
+   "total_ms": 18.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.9,
+   "ttft_ms": 23.0,
+   "total_ms": 25.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.0,
+   "ttft_ms": 25.0,
+   "total_ms": 30.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.2,
+   "ttft_ms": 31.3,
+   "total_ms": 37.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.2,
+   "ttft_ms": 30.4,
+   "total_ms": 37.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.3,
+   "ttft_ms": 24.4,
+   "total_ms": 27.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.6,
+   "ttft_ms": 23.7,
+   "total_ms": 26.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 13.3,
+   "ttft_ms": 13.3,
+   "total_ms": 15.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.6,
+   "ttft_ms": 19.6,
+   "total_ms": 22.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.0,
+   "ttft_ms": 22.1,
+   "total_ms": 25.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.6,
+   "ttft_ms": 16.6,
+   "total_ms": 19.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.5,
+   "ttft_ms": 30.6,
+   "total_ms": 35.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.1,
+   "ttft_ms": 23.2,
+   "total_ms": 28.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.2,
+   "ttft_ms": 30.3,
+   "total_ms": 36.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 56.7,
+   "ttft_ms": 56.8,
+   "total_ms": 62.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.9,
+   "ttft_ms": 29.0,
+   "total_ms": 34.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.4,
+   "ttft_ms": 25.5,
+   "total_ms": 29.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.3,
+   "ttft_ms": 29.6,
+   "total_ms": 35.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.5,
+   "ttft_ms": 15.6,
+   "total_ms": 17.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.0,
+   "ttft_ms": 29.2,
+   "total_ms": 34.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 39.0,
+   "ttft_ms": 39.1,
+   "total_ms": 49.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.1,
+   "ttft_ms": 23.1,
+   "total_ms": 30.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.1,
+   "ttft_ms": 27.2,
+   "total_ms": 34.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.2,
+   "ttft_ms": 28.3,
+   "total_ms": 33.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.8,
+   "ttft_ms": 23.8,
+   "total_ms": 30.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.8,
+   "ttft_ms": 17.9,
+   "total_ms": 20.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.8,
+   "ttft_ms": 25.9,
+   "total_ms": 29.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.2,
+   "ttft_ms": 19.4,
+   "total_ms": 22.0,
+   "chunks": 9,
+   "output_tokens": 9
+  }
+ ],
+ "litellm": [
+  {
+   "ttfb_ms": 25.3,
+   "ttft_ms": 25.3,
+   "total_ms": 25.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.9,
+   "ttft_ms": 31.9,
+   "total_ms": 32.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.7,
+   "ttft_ms": 26.7,
+   "total_ms": 27.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.1,
+   "ttft_ms": 33.1,
+   "total_ms": 33.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.4,
+   "ttft_ms": 20.4,
+   "total_ms": 20.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.8,
+   "ttft_ms": 28.8,
+   "total_ms": 29.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.8,
+   "ttft_ms": 24.8,
+   "total_ms": 25.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.3,
+   "ttft_ms": 34.3,
+   "total_ms": 34.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.6,
+   "ttft_ms": 20.6,
+   "total_ms": 20.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 58.3,
+   "ttft_ms": 58.3,
+   "total_ms": 58.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.5,
+   "ttft_ms": 32.5,
+   "total_ms": 32.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 70.1,
+   "ttft_ms": 70.1,
+   "total_ms": 70.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.7,
+   "ttft_ms": 20.7,
+   "total_ms": 21.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.0,
+   "ttft_ms": 33.0,
+   "total_ms": 33.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.1,
+   "ttft_ms": 31.1,
+   "total_ms": 31.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.9,
+   "ttft_ms": 26.9,
+   "total_ms": 27.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.7,
+   "ttft_ms": 34.7,
+   "total_ms": 35.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.4,
+   "ttft_ms": 26.4,
+   "total_ms": 26.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.4,
+   "ttft_ms": 35.4,
+   "total_ms": 35.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.3,
+   "ttft_ms": 36.3,
+   "total_ms": 36.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 64.8,
+   "ttft_ms": 64.8,
+   "total_ms": 65.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.2,
+   "ttft_ms": 19.2,
+   "total_ms": 19.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.7,
+   "ttft_ms": 22.7,
+   "total_ms": 22.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.9,
+   "ttft_ms": 36.9,
+   "total_ms": 37.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.0,
+   "ttft_ms": 35.0,
+   "total_ms": 35.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 44.7,
+   "ttft_ms": 44.7,
+   "total_ms": 45.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.6,
+   "ttft_ms": 21.6,
+   "total_ms": 21.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.3,
+   "ttft_ms": 21.3,
+   "total_ms": 21.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.3,
+   "ttft_ms": 25.3,
+   "total_ms": 25.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.1,
+   "ttft_ms": 27.1,
+   "total_ms": 27.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.7,
+   "ttft_ms": 19.7,
+   "total_ms": 19.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 43.4,
+   "ttft_ms": 43.4,
+   "total_ms": 43.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.0,
+   "ttft_ms": 30.0,
+   "total_ms": 30.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.5,
+   "ttft_ms": 27.5,
+   "total_ms": 27.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.9,
+   "ttft_ms": 21.9,
+   "total_ms": 22.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.7,
+   "ttft_ms": 26.7,
+   "total_ms": 27.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 22.3,
+   "ttft_ms": 22.3,
+   "total_ms": 22.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.5,
+   "ttft_ms": 27.5,
+   "total_ms": 27.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.6,
+   "ttft_ms": 35.6,
+   "total_ms": 35.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.8,
+   "ttft_ms": 28.8,
+   "total_ms": 29.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.4,
+   "ttft_ms": 24.4,
+   "total_ms": 24.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.0,
+   "ttft_ms": 24.0,
+   "total_ms": 24.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.1,
+   "ttft_ms": 37.1,
+   "total_ms": 37.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.9,
+   "ttft_ms": 32.9,
+   "total_ms": 33.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.7,
+   "ttft_ms": 30.7,
+   "total_ms": 31.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.5,
+   "ttft_ms": 24.5,
+   "total_ms": 24.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 19.3,
+   "ttft_ms": 19.3,
+   "total_ms": 19.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.1,
+   "ttft_ms": 33.1,
+   "total_ms": 33.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.9,
+   "ttft_ms": 28.9,
+   "total_ms": 29.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.7,
+   "ttft_ms": 25.7,
+   "total_ms": 25.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.3,
+   "ttft_ms": 24.3,
+   "total_ms": 26.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.5,
+   "ttft_ms": 28.5,
+   "total_ms": 28.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.3,
+   "ttft_ms": 28.3,
+   "total_ms": 28.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.5,
+   "ttft_ms": 24.5,
+   "total_ms": 24.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.6,
+   "ttft_ms": 34.6,
+   "total_ms": 35.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.3,
+   "ttft_ms": 31.3,
+   "total_ms": 31.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.9,
+   "ttft_ms": 31.9,
+   "total_ms": 32.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.9,
+   "ttft_ms": 23.9,
+   "total_ms": 24.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.6,
+   "ttft_ms": 28.6,
+   "total_ms": 29.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 38.3,
+   "ttft_ms": 38.3,
+   "total_ms": 38.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.2,
+   "ttft_ms": 27.2,
+   "total_ms": 27.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.3,
+   "ttft_ms": 20.3,
+   "total_ms": 20.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 40.3,
+   "ttft_ms": 40.3,
+   "total_ms": 40.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.5,
+   "ttft_ms": 20.5,
+   "total_ms": 20.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.5,
+   "ttft_ms": 28.5,
+   "total_ms": 28.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.4,
+   "ttft_ms": 23.4,
+   "total_ms": 23.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.1,
+   "ttft_ms": 31.1,
+   "total_ms": 31.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 79.2,
+   "ttft_ms": 79.2,
+   "total_ms": 79.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 39.5,
+   "ttft_ms": 39.5,
+   "total_ms": 39.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.0,
+   "ttft_ms": 33.0,
+   "total_ms": 33.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 51.9,
+   "ttft_ms": 51.9,
+   "total_ms": 52.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.4,
+   "ttft_ms": 29.4,
+   "total_ms": 29.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.4,
+   "ttft_ms": 21.4,
+   "total_ms": 21.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.6,
+   "ttft_ms": 27.6,
+   "total_ms": 28.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.6,
+   "ttft_ms": 31.6,
+   "total_ms": 31.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 40.2,
+   "ttft_ms": 40.2,
+   "total_ms": 40.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.1,
+   "ttft_ms": 36.1,
+   "total_ms": 36.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 69.1,
+   "ttft_ms": 69.1,
+   "total_ms": 69.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.2,
+   "ttft_ms": 30.2,
+   "total_ms": 30.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.3,
+   "ttft_ms": 23.3,
+   "total_ms": 23.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.9,
+   "ttft_ms": 23.9,
+   "total_ms": 24.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.3,
+   "ttft_ms": 26.3,
+   "total_ms": 26.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.7,
+   "ttft_ms": 32.7,
+   "total_ms": 32.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.3,
+   "ttft_ms": 27.3,
+   "total_ms": 27.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.7,
+   "ttft_ms": 32.7,
+   "total_ms": 33.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 50.3,
+   "ttft_ms": 50.3,
+   "total_ms": 51.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.6,
+   "ttft_ms": 31.6,
+   "total_ms": 31.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.6,
+   "ttft_ms": 23.6,
+   "total_ms": 23.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 38.7,
+   "ttft_ms": 38.7,
+   "total_ms": 39.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.6,
+   "ttft_ms": 31.6,
+   "total_ms": 33.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.6,
+   "ttft_ms": 29.6,
+   "total_ms": 29.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 55.2,
+   "ttft_ms": 55.2,
+   "total_ms": 55.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.0,
+   "ttft_ms": 27.0,
+   "total_ms": 27.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.0,
+   "ttft_ms": 37.0,
+   "total_ms": 37.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.7,
+   "ttft_ms": 28.7,
+   "total_ms": 29.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 40.5,
+   "ttft_ms": 40.5,
+   "total_ms": 40.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 82.1,
+   "ttft_ms": 82.1,
+   "total_ms": 82.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.8,
+   "ttft_ms": 17.8,
+   "total_ms": 17.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.5,
+   "ttft_ms": 29.5,
+   "total_ms": 29.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.9,
+   "ttft_ms": 16.9,
+   "total_ms": 17.0,
+   "chunks": 9,
+   "output_tokens": 9
+  }
+ ],
+ "litellm_full": [
+  {
+   "ttfb_ms": 29.7,
+   "ttft_ms": 29.7,
+   "total_ms": 30.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.8,
+   "ttft_ms": 32.8,
+   "total_ms": 33.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 15.6,
+   "ttft_ms": 15.6,
+   "total_ms": 15.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.0,
+   "ttft_ms": 24.0,
+   "total_ms": 24.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.0,
+   "ttft_ms": 26.0,
+   "total_ms": 26.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.2,
+   "ttft_ms": 27.2,
+   "total_ms": 27.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.1,
+   "ttft_ms": 16.1,
+   "total_ms": 16.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.4,
+   "ttft_ms": 31.4,
+   "total_ms": 31.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.0,
+   "ttft_ms": 20.0,
+   "total_ms": 20.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.5,
+   "ttft_ms": 18.5,
+   "total_ms": 18.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.2,
+   "ttft_ms": 23.2,
+   "total_ms": 23.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.9,
+   "ttft_ms": 34.9,
+   "total_ms": 35.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.7,
+   "ttft_ms": 27.7,
+   "total_ms": 28.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 39.0,
+   "ttft_ms": 39.0,
+   "total_ms": 39.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 39.7,
+   "ttft_ms": 39.7,
+   "total_ms": 40.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.2,
+   "ttft_ms": 32.2,
+   "total_ms": 32.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.9,
+   "ttft_ms": 24.9,
+   "total_ms": 25.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.4,
+   "ttft_ms": 37.4,
+   "total_ms": 37.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 42.0,
+   "ttft_ms": 42.0,
+   "total_ms": 42.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.5,
+   "ttft_ms": 26.5,
+   "total_ms": 26.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.2,
+   "ttft_ms": 21.2,
+   "total_ms": 21.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.1,
+   "ttft_ms": 21.1,
+   "total_ms": 21.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 40.0,
+   "ttft_ms": 40.0,
+   "total_ms": 40.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 64.8,
+   "ttft_ms": 64.8,
+   "total_ms": 64.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.3,
+   "ttft_ms": 37.3,
+   "total_ms": 37.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.3,
+   "ttft_ms": 32.3,
+   "total_ms": 32.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.6,
+   "ttft_ms": 33.6,
+   "total_ms": 33.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.4,
+   "ttft_ms": 25.4,
+   "total_ms": 25.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.6,
+   "ttft_ms": 26.6,
+   "total_ms": 26.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.3,
+   "ttft_ms": 28.3,
+   "total_ms": 28.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.7,
+   "ttft_ms": 28.7,
+   "total_ms": 29.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.3,
+   "ttft_ms": 28.3,
+   "total_ms": 28.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.9,
+   "ttft_ms": 27.9,
+   "total_ms": 28.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.3,
+   "ttft_ms": 24.3,
+   "total_ms": 24.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.8,
+   "ttft_ms": 24.8,
+   "total_ms": 25.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.5,
+   "ttft_ms": 36.5,
+   "total_ms": 36.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 38.5,
+   "ttft_ms": 38.5,
+   "total_ms": 38.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.3,
+   "ttft_ms": 32.3,
+   "total_ms": 32.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.1,
+   "ttft_ms": 35.1,
+   "total_ms": 35.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 45.4,
+   "ttft_ms": 45.4,
+   "total_ms": 46.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.7,
+   "ttft_ms": 35.7,
+   "total_ms": 35.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 20.8,
+   "ttft_ms": 20.8,
+   "total_ms": 21.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.2,
+   "ttft_ms": 32.2,
+   "total_ms": 32.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.9,
+   "ttft_ms": 34.9,
+   "total_ms": 35.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.0,
+   "ttft_ms": 29.0,
+   "total_ms": 29.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 24.9,
+   "ttft_ms": 24.9,
+   "total_ms": 25.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.0,
+   "ttft_ms": 33.0,
+   "total_ms": 33.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.8,
+   "ttft_ms": 21.8,
+   "total_ms": 22.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.8,
+   "ttft_ms": 31.8,
+   "total_ms": 69.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.5,
+   "ttft_ms": 27.5,
+   "total_ms": 27.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.5,
+   "ttft_ms": 34.5,
+   "total_ms": 34.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.8,
+   "ttft_ms": 36.8,
+   "total_ms": 37.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.0,
+   "ttft_ms": 37.0,
+   "total_ms": 37.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.1,
+   "ttft_ms": 30.1,
+   "total_ms": 30.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.0,
+   "ttft_ms": 36.0,
+   "total_ms": 36.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.1,
+   "ttft_ms": 29.1,
+   "total_ms": 29.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.5,
+   "ttft_ms": 31.5,
+   "total_ms": 31.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.3,
+   "ttft_ms": 29.3,
+   "total_ms": 29.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 65.6,
+   "ttft_ms": 65.6,
+   "total_ms": 65.9,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 29.1,
+   "ttft_ms": 29.1,
+   "total_ms": 29.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.8,
+   "ttft_ms": 31.8,
+   "total_ms": 32.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 38.5,
+   "ttft_ms": 38.5,
+   "total_ms": 38.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 39.9,
+   "ttft_ms": 39.9,
+   "total_ms": 40.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 21.3,
+   "ttft_ms": 21.3,
+   "total_ms": 21.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.9,
+   "ttft_ms": 31.9,
+   "total_ms": 32.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.1,
+   "ttft_ms": 32.1,
+   "total_ms": 32.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.8,
+   "ttft_ms": 27.8,
+   "total_ms": 28.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.8,
+   "ttft_ms": 14.8,
+   "total_ms": 15.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.6,
+   "ttft_ms": 28.6,
+   "total_ms": 28.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.1,
+   "ttft_ms": 35.1,
+   "total_ms": 35.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 28.9,
+   "ttft_ms": 28.9,
+   "total_ms": 29.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.2,
+   "ttft_ms": 31.2,
+   "total_ms": 31.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.8,
+   "ttft_ms": 26.8,
+   "total_ms": 27.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.2,
+   "ttft_ms": 33.2,
+   "total_ms": 33.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 30.2,
+   "ttft_ms": 30.2,
+   "total_ms": 30.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 38.6,
+   "ttft_ms": 38.6,
+   "total_ms": 38.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 54.1,
+   "ttft_ms": 54.1,
+   "total_ms": 54.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 27.5,
+   "ttft_ms": 27.5,
+   "total_ms": 27.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 38.8,
+   "ttft_ms": 38.8,
+   "total_ms": 39.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.3,
+   "ttft_ms": 23.3,
+   "total_ms": 23.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 32.7,
+   "ttft_ms": 32.7,
+   "total_ms": 33.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.6,
+   "ttft_ms": 37.6,
+   "total_ms": 38.0,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 25.0,
+   "ttft_ms": 25.0,
+   "total_ms": 25.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.2,
+   "ttft_ms": 23.2,
+   "total_ms": 23.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 41.1,
+   "ttft_ms": 41.1,
+   "total_ms": 41.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.3,
+   "ttft_ms": 31.3,
+   "total_ms": 31.6,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 33.9,
+   "ttft_ms": 33.9,
+   "total_ms": 34.3,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 31.2,
+   "ttft_ms": 31.2,
+   "total_ms": 31.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 37.4,
+   "ttft_ms": 37.4,
+   "total_ms": 37.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 39.1,
+   "ttft_ms": 39.1,
+   "total_ms": 39.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 18.0,
+   "ttft_ms": 18.0,
+   "total_ms": 18.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 23.2,
+   "ttft_ms": 23.2,
+   "total_ms": 23.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 34.4,
+   "ttft_ms": 34.4,
+   "total_ms": 34.7,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 16.7,
+   "ttft_ms": 16.7,
+   "total_ms": 17.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 26.8,
+   "ttft_ms": 26.8,
+   "total_ms": 27.1,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 36.4,
+   "ttft_ms": 36.4,
+   "total_ms": 36.8,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.0,
+   "ttft_ms": 17.0,
+   "total_ms": 17.2,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 17.3,
+   "ttft_ms": 17.3,
+   "total_ms": 17.4,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 35.2,
+   "ttft_ms": 35.2,
+   "total_ms": 35.5,
+   "chunks": 9,
+   "output_tokens": 9
+  },
+  {
+   "ttfb_ms": 14.0,
+   "ttft_ms": 14.0,
+   "total_ms": 14.2,
+   "chunks": 9,
+   "output_tokens": 9
+  }
+ ]
+}
