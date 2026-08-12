@@ -1,0 +1,11 @@
+name: Feature request
+description: A provider, model, endpoint, or capability you want
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What do you want and why
+      description: What you're building and what's missing. If it's a model/provider request, name it.
+    validations:
+      required: true

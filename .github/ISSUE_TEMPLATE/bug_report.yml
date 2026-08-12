@@ -1,0 +1,24 @@
+name: Bug report
+description: Something in the gateway or console is broken
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Gateway version
+      placeholder: "0.2.3 (pip show mlpal-gateway, or the console footer)"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got. Include the request path (e.g. /v1/messages) and provider if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / trace
+      description: Relevant gateway logs or a trace id. Strip API keys.
+      render: text

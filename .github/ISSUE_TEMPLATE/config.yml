@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & discussion
+    url: https://github.com/ML-Pal/mlpal-gateway/discussions
+    about: Ask anything — setup, providers, self-hosting, the managed service.
+  - name: Yodex (coding agent) issues
+    url: https://github.com/ML-Pal/yodex/issues
+    about: Feature requests and bugs for the Yodex CLI.
