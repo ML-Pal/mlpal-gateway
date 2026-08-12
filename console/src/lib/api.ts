@@ -271,7 +271,7 @@ export interface FeedStatus {
   gateway_version: string;
   last_sync: FeedSync | null;
   instance_id: string | null;
-  contact_email: string | null;
+  feed_key_set: boolean;
 }
 
 export interface CaptureStatus {
@@ -468,10 +468,10 @@ export class GatewayClient {
 
   setFeedMode(
     mode: "bundled" | "hosted",
-    contactEmail?: string,
+    feedKey?: string,
   ): Promise<{ mode: string; sync: FeedSync | null }> {
     const body: Record<string, unknown> = { mode };
-    if (contactEmail !== undefined) body.contact_email = contactEmail;
+    if (feedKey !== undefined) body.feed_key = feedKey;
     return this.request("PUT", "/admin/v1/catalog/feed", body);
   }
 

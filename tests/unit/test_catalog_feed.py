@@ -49,16 +49,17 @@ async def test_instance_id_stable(session_factory):
 
 
 @pytest.mark.asyncio
-async def test_record_install_upserts(session_factory):
+async def test_record_install_upserts_and_links_account(session_factory):
     async with session_factory() as s:
-        await catalog_feed.record_install(s, "inst-1", "0.2.3")
-        await catalog_feed.record_install(s, "inst-1", "0.3.0")
+        await catalog_feed.record_install(s, "inst-1", "0.2.3", user_id=7, api_key_id=3)
+        await catalog_feed.record_install(s, "inst-1", "0.3.0", user_id=7, api_key_id=4)
         await catalog_feed.record_install(s, "inst-2", None)
     async with session_factory() as s:
         rows = {r.instance_id: r for r in (await s.execute(select(FeedInstall))).scalars()}
     assert rows["inst-1"].pull_count == 2
     assert rows["inst-1"].gateway_version == "0.3.0"
-    assert rows["inst-2"].pull_count == 1
+    assert rows["inst-1"].user_id == 7 and rows["inst-1"].api_key_id == 4
+    assert rows["inst-2"].pull_count == 1 and rows["inst-2"].user_id is None
 
 
 class _FakeRedis:
@@ -73,18 +74,7 @@ class _FakeRedis:
 
 
 @pytest.mark.asyncio
-async def test_record_install_email_optional_and_updatable(session_factory):
-    async with session_factory() as s:
-        await catalog_feed.record_install(s, "inst-9", "0.3.0")           # anonymous
-        await catalog_feed.record_install(s, "inst-9", "0.3.0", "a@b.co")  # adds email
-        await catalog_feed.record_install(s, "inst-9", "0.3.0")           # absent -> kept
-    async with session_factory() as s:
-        row = (await s.execute(select(FeedInstall))).scalars().one()
-    assert row.email == "a@b.co" and row.pull_count == 3
-
-
-@pytest.mark.asyncio
-async def test_pull_sends_contact_only_when_operator_set_one(session_factory, monkeypatch):
+async def test_pull_requires_feed_key_and_sends_it_as_bearer(session_factory, monkeypatch):
     class _Resp:
         status_code = 304
         headers = {}
@@ -100,12 +90,15 @@ async def test_pull_sends_contact_only_when_operator_set_one(session_factory, mo
             return _Resp()
 
     monkeypatch.setattr(catalog_feed.httpx, "AsyncClient", _Client)
-    await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
-    assert "X-MLPal-Contact" not in _Client.sent
+    # no key stored -> hard error before any network call, actionable message
+    out = await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
+    assert out["result"] == "error" and "feed key" in out["error"]
+    # key stored -> sent as bearer
     async with session_factory() as s:
-        await catalog_feed.set_meta(s, catalog_feed.CONTACT_META_KEY, "ops@corp.io")
-    await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
-    assert _Client.sent["X-MLPal-Contact"] == "ops@corp.io"
+        await catalog_feed.set_meta(s, catalog_feed.FEED_KEY_META_KEY, "mlpal_sk_feedonly")
+    out = await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
+    assert out["result"] == "unchanged"
+    assert _Client.sent["Authorization"] == "Bearer mlpal_sk_feedonly"
 
 
 @pytest.mark.asyncio
@@ -151,6 +144,8 @@ async def test_pull_applies_feed(session_factory, monkeypatch):
             return _Resp()
 
     monkeypatch.setattr(catalog_feed.httpx, "AsyncClient", _Client)
+    async with session_factory() as s:
+        await catalog_feed.set_meta(s, catalog_feed.FEED_KEY_META_KEY, "mlpal_sk_x")
 
     applied = {}
 
@@ -169,8 +164,8 @@ async def test_pull_applies_feed(session_factory, monkeypatch):
     assert out["result"] == "applied"
     assert applied == {"registry": [], "pricing": [], "routing": [{"meta_model_tag": "mlpal"}]}
     assert redis.store[catalog_feed.ETAG_KEY] == '"abc123"'
-    # identity + version headers went out (the documented telemetry, nothing else)
-    assert set(_Client.sent_headers) == {"X-MLPal-Instance", "X-MLPal-Version"}
+    # exactly: identity, version, and the subscriber's key — nothing else
+    assert set(_Client.sent_headers) == {"X-MLPal-Instance", "X-MLPal-Version", "Authorization"}
     # status blob is written for the console
     assert json.loads(redis.store[catalog_feed.LAST_SYNC_KEY])["result"] == "applied"
 
@@ -191,6 +186,8 @@ async def test_pull_304_is_unchanged(session_factory, monkeypatch):
             return _Resp()
 
     monkeypatch.setattr(catalog_feed.httpx, "AsyncClient", _Client)
+    async with session_factory() as s:
+        await catalog_feed.set_meta(s, catalog_feed.FEED_KEY_META_KEY, "mlpal_sk_x")
     out = await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
     assert out["result"] == "unchanged"
 
@@ -207,6 +204,8 @@ async def test_pull_never_raises(session_factory, monkeypatch):
             raise OSError("network down")
 
     monkeypatch.setattr(catalog_feed.httpx, "AsyncClient", _Client)
+    async with session_factory() as s:
+        await catalog_feed.set_meta(s, catalog_feed.FEED_KEY_META_KEY, "mlpal_sk_x")
     out = await catalog_feed.pull_and_reconcile(session_factory, _FakeRedis())
     assert out["result"] == "error"
 

@@ -391,10 +391,10 @@ class CaptureToggleRequest(BaseModel):
 
 class FeedModeRequest(BaseModel):
     mode: Literal["bundled", "hosted"]
-    # Optional operator contact, stored locally and sent with feed pulls so
-    # the feed operator can reach the install about breaking catalog changes.
-    # Empty string clears it.
-    contact_email: str | None = None
+    # The mlpal.ai API key that authenticates feed pulls (free account;
+    # a key with zero permissions is recommended — identity only). Stored
+    # locally in gateway_meta. Empty string clears it.
+    feed_key: str | None = None
 
 
 @router.get(
@@ -613,12 +613,12 @@ async def feed_toggle(
     from mlpal_assistants_service.services import catalog_feed
 
     await catalog_feed.set_mode(redis_client, body.mode)
-    if body.contact_email is not None:
+    if body.feed_key is not None:
         from mlpal_assistants_service.db.session import async_session_factory as _sf
 
         async with _sf() as session:
             await catalog_feed.set_meta(
-                session, catalog_feed.CONTACT_META_KEY, body.contact_email.strip() or None
+                session, catalog_feed.FEED_KEY_META_KEY, body.feed_key.strip() or None
             )
     logger.info("Catalog feed mode set via admin API", extra={"mode": body.mode})
     result = None

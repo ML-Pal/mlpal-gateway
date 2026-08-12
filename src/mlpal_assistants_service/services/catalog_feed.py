@@ -11,10 +11,10 @@ Modes (runtime Redis override > env, mirroring the capture toggle):
 - ``bundled`` (default): catalog frozen at what this version shipped.
 - ``hosted``: pull from ``catalog_feed_url`` every ``catalog_feed_interval_hours``.
 
-Telemetry (documented in the README): a feed pull sends two headers — a random
-per-install UUID (``X-MLPal-Instance``) and the gateway version — so the feed
-operator can count active installs. Nothing else is sent; disable by staying in
-``bundled`` mode.
+Feed pulls are AUTHENTICATED with an mlpal.ai API key (free account; identity
+only — no permissions needed, no charges possible from feed pulls). A pull
+sends the key plus a per-install UUID and the gateway version, linking the
+install to the subscriber's account. Bundled mode sends nothing, ever.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ MODE_KEY = "feed:mode"          # runtime override: "bundled" | "hosted"
 ETAG_KEY = "feed:etag"
 LAST_SYNC_KEY = "feed:last_sync"  # JSON blob for the console
 INSTANCE_META_KEY = "instance_id"
-CONTACT_META_KEY = "contact_email"
+FEED_KEY_META_KEY = "feed_key"  # the mlpal.ai key that authenticates pulls
 
 _BACKGROUND: set[asyncio.Task] = set()
 
@@ -126,7 +126,7 @@ async def status(redis: Any, session: Any) -> dict[str, Any]:
         "gateway_version": gateway_version(),
         "last_sync": last_sync,
         "instance_id": await get_instance_id(session) if session is not None else None,
-        "contact_email": await get_meta(session, CONTACT_META_KEY) if session is not None else None,
+        "feed_key_set": bool(await get_meta(session, FEED_KEY_META_KEY)) if session is not None else False,
     }
 
 
@@ -186,7 +186,11 @@ async def set_meta(session: Any, key: str, value: str | None) -> None:
 
 
 async def record_install(
-    session: Any, instance_id: str, version: str | None, email: str | None = None
+    session: Any,
+    instance_id: str,
+    version: str | None,
+    user_id: int | None = None,
+    api_key_id: int | None = None,
 ) -> None:
     """Upsert a feed_installs row for a pulling instance (feed-server side)."""
     from sqlalchemy import select
@@ -201,15 +205,17 @@ async def record_install(
         session.add(
             FeedInstall(
                 instance_id=instance_id, first_seen=now, last_seen=now,
-                gateway_version=version, pull_count=1, email=email,
+                gateway_version=version, pull_count=1,
+                user_id=user_id, api_key_id=api_key_id,
             )
         )
     else:
         row.last_seen = now
         row.gateway_version = version or row.gateway_version
         row.pull_count += 1
-        if email:
-            row.email = email
+        if user_id is not None:
+            row.user_id = user_id
+            row.api_key_id = api_key_id
     await session.commit()
 
 
@@ -224,11 +230,17 @@ async def pull_and_reconcile(session_factory: Any, redis: Any) -> dict[str, Any]
         headers = {}
         async with session_factory() as session:
             headers["X-MLPal-Instance"] = await get_instance_id(session)
-            contact = await get_meta(session, CONTACT_META_KEY)
+            feed_key = await get_meta(session, FEED_KEY_META_KEY)
         headers["X-MLPal-Version"] = gateway_version()
-        if contact:
-            # Only ever an address the operator typed into the subscribe flow.
-            headers["X-MLPal-Contact"] = contact
+        if not feed_key:
+            out.update(result="error", error="no feed key — subscribe with a free mlpal.ai API key")
+            if redis is not None:
+                try:
+                    await redis.set(LAST_SYNC_KEY, json.dumps(out))
+                except Exception:  # noqa: BLE001
+                    pass
+            return out
+        headers["Authorization"] = f"Bearer {feed_key}"
         if redis is not None:
             etag = await redis.get(ETAG_KEY)
             if etag:

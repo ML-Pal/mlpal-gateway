@@ -94,12 +94,15 @@ print(msg.text, msg.compute_units)
   (zlib-compressed, runtime toggle — your box, your data).
 - **Provider semantics preserved.** Prompt caching (`cache_control`), tools,
   structured output, and MCP config pass through untouched.
-- **Catalog that keeps itself current (opt-in).** By default your box ships
-  with the bundled model catalog, frozen at this version. Subscribe to the
-  hosted feed (one click on the Models page, or `MLPAL_CATALOG_FEED=hosted`)
-  and the gateway pulls the curated catalog daily — new models appear and
-  retired ones are absorbed with no upgrade. See [Telemetry](#telemetry) for
-  exactly what a feed pull sends.
+- **Catalog that keeps itself current (opt-in, free).** By default your box
+  ships with the bundled model catalog, frozen at this version — fully
+  functional offline, zero calls home. Subscribe to the hosted feed (Models
+  page, or `MLPAL_CATALOG_FEED=hosted`) and the gateway pulls the curated
+  catalog daily — new models appear and retired ones are absorbed with no
+  upgrade. Subscribing requires a free [mlpal.ai](https://mlpal.ai) account
+  key purely as identity — we recommend a dedicated key with **no
+  permissions** (it can authenticate the feed and nothing else; feed pulls
+  are never billed). See [Telemetry](#telemetry).
 
 ## Measured
 
@@ -209,12 +212,11 @@ standalone with no external dependencies. `src/` never imports from
 ## Telemetry
 
 None by default. If you opt in to the hosted catalog feed, each daily pull
-sends exactly two headers to `models.mlpal.ai`: a random per-install UUID and
-your gateway version — used to count active installs, nothing else. If you
-also choose to leave a contact email at subscribe time (optional, for
-breaking-catalog-change notices), that address is sent too; leave it blank and
-it never exists. No keys, no payloads, no usage data, ever. Stay in `bundled`
-mode (the default) and the gateway makes zero calls home.
+sends exactly three things to `models.mlpal.ai`: the mlpal.ai API key you
+subscribed with (identity — links the install to your account), a random
+per-install UUID, and your gateway version. Feed pulls are free and never
+metered. No provider keys, no payloads, no usage data, ever. Stay in
+`bundled` mode (the default) and the gateway makes zero calls home.
 
 ## License and contact
 

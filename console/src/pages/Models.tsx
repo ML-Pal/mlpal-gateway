@@ -48,7 +48,7 @@ function FeedCard() {
   const { client } = useConnection();
   const [feed, setFeed] = useState<FeedStatus | null>(null);
   const [busy, setBusy] = useState(false);
-  const [email, setEmail] = useState("");
+  const [feedKey, setFeedKey] = useState("");
 
   useEffect(() => {
     if (!client) return;
@@ -58,9 +58,13 @@ function FeedCard() {
   async function toggle() {
     if (!client || !feed || busy) return;
     const next = feed.mode === "hosted" ? "bundled" : "hosted";
+    if (next === "hosted" && !feedKey.trim() && !feed.feed_key_set) {
+      toast.error("A free mlpal.ai API key is required — create an account at mlpal.ai and paste any key (a key with no permissions is recommended).");
+      return;
+    }
     setBusy(true);
     try {
-      const res = await client.setFeedMode(next, next === "hosted" ? email.trim() : undefined);
+      const res = await client.setFeedMode(next, next === "hosted" ? feedKey.trim() : undefined);
       if (next === "hosted") {
         const sync = res.sync;
         if (sync?.result === "applied") {
@@ -97,17 +101,21 @@ function FeedCard() {
               ? feed.last_sync
                 ? `Last sync ${new Date(feed.last_sync.at).toLocaleString()} · ${feed.last_sync.result}${feed.last_sync.feed_version ? ` · feed ${feed.last_sync.feed_version}` : ""}`
                 : "First sync pending"
-              : "Subscribe and this gateway pulls the curated feed daily — new models appear, retired ones are absorbed, no upgrade needed. Sends only an anonymous install id + version."}
+              : <>Free with a{" "}
+                  <a href="https://mlpal.ai" target="_blank" rel="noreferrer" className="link-accent">free mlpal.ai account</a>
+                  {" "}— paste any of your keys (one with no permissions is recommended) and this
+                  gateway pulls the curated feed daily: new models appear, retired ones are absorbed,
+                  no upgrade needed.</>}
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2">
         {!hosted && (
           <Input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="email (optional) — catalog-change notices"
-            className="h-8 w-64 text-xs"
+            value={feedKey}
+            onChange={(e) => setFeedKey(e.target.value)}
+            placeholder="mlpal_sk_…  (your mlpal.ai key)"
+            className="h-8 w-64 font-mono text-xs"
           />
         )}
       <button
