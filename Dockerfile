@@ -35,6 +35,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY src/ ./src/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
+# Version metadata for /v1/catalog/feed (the project itself isn't pip-installed)
+COPY pyproject.toml .
 # Seed + bootstrap scripts (used by the docker-compose migrate/seed init
 # containers for self-hosted setup). Harmless in the managed image.
 COPY scripts/ ./scripts/

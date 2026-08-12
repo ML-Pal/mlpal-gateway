@@ -202,9 +202,14 @@ async def pull_and_reconcile(session_factory: Any, redis: Any) -> dict[str, Any]
             doc = resp.json()
             from mlpal_assistants_service.services.catalog_sync import reconcile
 
+            routing_doc = doc.get("routing")
+            # routing.json is a wrapper doc ({_note, updated, routes}); the
+            # reconcile wants the routes list (same normalization as
+            # scripts/reconcile_catalog.py).
+            routing = routing_doc.get("routes") if isinstance(routing_doc, dict) else routing_doc
             async with session_factory() as session:
                 summary = await reconcile(
-                    session, doc["registry"], doc["pricing"], doc.get("routing"),
+                    session, doc["registry"], doc["pricing"], routing,
                     retire_message="Retired from the hosted MLPal catalog feed",
                 )
                 await session.commit()

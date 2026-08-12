@@ -92,7 +92,9 @@ async def test_pull_applies_feed(session_factory, monkeypatch):
     feed_doc = {
         "feed_version": "abc123",
         "latest_gateway_version": "9.9.9",
-        "registry": [], "pricing": [], "routing": [],
+        "registry": [], "pricing": [],
+        # the real feed wraps routes in a doc — the client must unwrap it
+        "routing": {"_note": "x", "updated": "2026-08-12", "routes": [{"meta_model_tag": "mlpal"}]},
     }
 
     class _Resp:
@@ -129,7 +131,7 @@ async def test_pull_applies_feed(session_factory, monkeypatch):
     redis = _FakeRedis()
     out = await catalog_feed.pull_and_reconcile(session_factory, redis)
     assert out["result"] == "applied"
-    assert applied == {"registry": [], "pricing": [], "routing": []}
+    assert applied == {"registry": [], "pricing": [], "routing": [{"meta_model_tag": "mlpal"}]}
     assert redis.store[catalog_feed.ETAG_KEY] == '"abc123"'
     # identity + version headers went out (the documented telemetry, nothing else)
     assert set(_Client.sent_headers) == {"X-MLPal-Instance", "X-MLPal-Version"}
