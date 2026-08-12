@@ -252,6 +252,27 @@ export interface ProviderStatus {
   health: ProviderHealth | null;
 }
 
+export interface FeedSync {
+  at: string;
+  result: "applied" | "unchanged" | "error";
+  feed_version?: string;
+  latest_gateway_version?: string;
+  inserted?: number;
+  updated?: number;
+  retired?: number;
+  error?: string;
+}
+
+export interface FeedStatus {
+  mode: "bundled" | "hosted";
+  source: string;
+  feed_url: string;
+  bundled_version: string;
+  gateway_version: string;
+  last_sync: FeedSync | null;
+  instance_id: string | null;
+}
+
 export interface CaptureStatus {
   enabled: boolean;
   source: "runtime" | "env" | "file" | "default";
@@ -438,6 +459,14 @@ export class GatewayClient {
   /** Provider key status + live health probes (admin). */
   listProviders(): Promise<{ data: ProviderStatus[] }> {
     return this.request<{ data: ProviderStatus[] }>("GET", "/admin/v1/providers");
+  }
+
+  getFeedStatus(): Promise<FeedStatus> {
+    return this.request<FeedStatus>("GET", "/admin/v1/catalog/feed");
+  }
+
+  setFeedMode(mode: "bundled" | "hosted"): Promise<{ mode: string; sync: FeedSync | null }> {
+    return this.request("PUT", "/admin/v1/catalog/feed", { mode });
   }
 
   getCaptureStatus(): Promise<CaptureStatus> {

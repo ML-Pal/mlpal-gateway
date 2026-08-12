@@ -1,0 +1,225 @@
+"""Hosted catalog feed: serving, subscribing, and install identity.
+
+Every gateway ships a bundled catalog (``catalog/*.json``) and can serve it at
+``GET /v1/catalog/feed``. A deployment may also SUBSCRIBE to another gateway's
+feed (normally the managed one at models.mlpal.ai): a background task pulls the
+feed on an interval and applies it through the idempotent
+``catalog_sync.reconcile`` — so model retirements and additions are absorbed
+without upgrading the box.
+
+Modes (runtime Redis override > env, mirroring the capture toggle):
+- ``bundled`` (default): catalog frozen at what this version shipped.
+- ``hosted``: pull from ``catalog_feed_url`` every ``catalog_feed_interval_hours``.
+
+Telemetry (documented in the README): a feed pull sends two headers — a random
+per-install UUID (``X-MLPal-Instance``) and the gateway version — so the feed
+operator can count active installs. Nothing else is sent; disable by staying in
+``bundled`` mode.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+import logging
+import uuid
+from datetime import UTC, datetime
+from importlib import resources
+from typing import Any
+
+import httpx
+
+from mlpal_assistants_service.core.config import get_settings
+
+logger = logging.getLogger(__name__)
+
+MODE_KEY = "feed:mode"          # runtime override: "bundled" | "hosted"
+ETAG_KEY = "feed:etag"
+LAST_SYNC_KEY = "feed:last_sync"  # JSON blob for the console
+INSTANCE_META_KEY = "instance_id"
+
+_BACKGROUND: set[asyncio.Task] = set()
+
+
+# -- bundled feed ------------------------------------------------------------
+
+def load_bundled_feed() -> dict[str, Any]:
+    """The catalog this build ships, as a feed document with a content hash."""
+    pkg = resources.files("mlpal_assistants_service") / "catalog"
+    doc: dict[str, Any] = {}
+    for name in ("registry", "pricing", "routing"):
+        doc[name] = json.loads((pkg / f"{name}.json").read_text())
+    canonical = json.dumps(doc, sort_keys=True, separators=(",", ":")).encode()
+    doc["feed_version"] = hashlib.sha256(canonical).hexdigest()[:12]
+    doc["generated_at"] = datetime.now(UTC).isoformat()
+    doc["latest_gateway_version"] = gateway_version()
+    return doc
+
+
+def gateway_version() -> str:
+    try:
+        from importlib.metadata import version
+
+        return version("mlpal-gateway")
+    except Exception:  # noqa: BLE001 — editable/dev installs under the old name
+        return "0.0.0-dev"
+
+
+# -- mode + status (Redis runtime override > env default) --------------------
+
+async def effective_mode(redis: Any) -> tuple[str, str]:
+    """(mode, source). Runtime override wins; else the env/settings default."""
+    if redis is not None:
+        try:
+            override = await redis.get(MODE_KEY)
+            if override in ("bundled", "hosted"):
+                return override, "runtime"
+        except Exception:  # noqa: BLE001
+            pass
+    return get_settings().catalog_feed_mode, "env"
+
+
+async def set_mode(redis: Any, mode: str) -> None:
+    await redis.set(MODE_KEY, mode)
+
+
+async def status(redis: Any, session: Any) -> dict[str, Any]:
+    mode, source = await effective_mode(redis)
+    last_sync = None
+    if redis is not None:
+        try:
+            raw = await redis.get(LAST_SYNC_KEY)
+            last_sync = json.loads(raw) if raw else None
+        except Exception:  # noqa: BLE001
+            pass
+    return {
+        "mode": mode,
+        "source": source,
+        "feed_url": get_settings().catalog_feed_url,
+        "bundled_version": load_bundled_feed()["feed_version"],
+        "gateway_version": gateway_version(),
+        "last_sync": last_sync,
+        "instance_id": await get_instance_id(session) if session is not None else None,
+    }
+
+
+# -- install identity --------------------------------------------------------
+
+async def get_instance_id(session: Any) -> str:
+    """Stable anonymous UUID for this deployment, created on first use."""
+    from sqlalchemy import select
+
+    from mlpal_assistants_service.db.models.feed import GatewayMeta
+
+    row = (
+        await session.execute(select(GatewayMeta).where(GatewayMeta.key == INSTANCE_META_KEY))
+    ).scalar_one_or_none()
+    if row is not None:
+        return row.value
+    value = str(uuid.uuid4())
+    session.add(GatewayMeta(key=INSTANCE_META_KEY, value=value))
+    try:
+        await session.commit()
+    except Exception:  # noqa: BLE001 — raced by a sibling worker: theirs wins
+        await session.rollback()
+        row = (
+            await session.execute(select(GatewayMeta).where(GatewayMeta.key == INSTANCE_META_KEY))
+        ).scalar_one_or_none()
+        return row.value if row else value
+    return value
+
+
+async def record_install(session: Any, instance_id: str, version: str | None) -> None:
+    """Upsert a feed_installs row for a pulling instance (feed-server side)."""
+    from sqlalchemy import select
+
+    from mlpal_assistants_service.db.models.feed import FeedInstall
+
+    row = (
+        await session.execute(select(FeedInstall).where(FeedInstall.instance_id == instance_id))
+    ).scalar_one_or_none()
+    now = datetime.now(UTC)
+    if row is None:
+        session.add(
+            FeedInstall(
+                instance_id=instance_id, first_seen=now, last_seen=now,
+                gateway_version=version, pull_count=1,
+            )
+        )
+    else:
+        row.last_seen = now
+        row.gateway_version = version or row.gateway_version
+        row.pull_count += 1
+    await session.commit()
+
+
+# -- subscriber --------------------------------------------------------------
+
+async def pull_and_reconcile(session_factory: Any, redis: Any) -> dict[str, Any]:
+    """One feed pull: fetch (ETag-aware), reconcile if changed, record status.
+    Returns the status blob written to Redis. Never raises."""
+    settings = get_settings()
+    out: dict[str, Any] = {"at": datetime.now(UTC).isoformat(), "url": settings.catalog_feed_url}
+    try:
+        headers = {}
+        async with session_factory() as session:
+            headers["X-MLPal-Instance"] = await get_instance_id(session)
+        headers["X-MLPal-Version"] = gateway_version()
+        if redis is not None:
+            etag = await redis.get(ETAG_KEY)
+            if etag:
+                headers["If-None-Match"] = etag
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(settings.catalog_feed_url, headers=headers)
+        if resp.status_code == 304:
+            out.update(result="unchanged")
+        elif resp.status_code == 200:
+            doc = resp.json()
+            from mlpal_assistants_service.services.catalog_sync import reconcile
+
+            async with session_factory() as session:
+                summary = await reconcile(
+                    session, doc["registry"], doc["pricing"], doc.get("routing"),
+                    retire_message="Retired from the hosted MLPal catalog feed",
+                )
+                await session.commit()
+            out.update(
+                result="applied",
+                feed_version=doc.get("feed_version"),
+                latest_gateway_version=doc.get("latest_gateway_version"),
+                inserted=summary.inserted, updated=summary.updated, retired=summary.retired,
+            )
+            if redis is not None and resp.headers.get("etag"):
+                await redis.set(ETAG_KEY, resp.headers["etag"])
+            logger.info("catalog feed applied", extra=out)
+        else:
+            out.update(result="error", status=resp.status_code)
+            logger.warning("catalog feed pull failed: HTTP %s", resp.status_code)
+    except Exception as e:  # noqa: BLE001 — subscription must never hurt serving
+        out.update(result="error", error=str(e)[:200])
+        logger.warning("catalog feed pull failed: %s", e)
+    if redis is not None:
+        try:
+            await redis.set(LAST_SYNC_KEY, json.dumps(out))
+        except Exception:  # noqa: BLE001
+            pass
+    return out
+
+
+def start_subscriber(session_factory: Any, redis: Any) -> None:
+    """Start the background loop (lifespan). Checks mode every cycle so the runtime
+    toggle takes effect without a restart; bundled mode pulls nothing."""
+
+    async def _loop() -> None:
+        settings = get_settings()
+        await asyncio.sleep(60)  # never in the boot path
+        while True:
+            mode, _ = await effective_mode(redis)
+            if mode == "hosted":
+                await pull_and_reconcile(session_factory, redis)
+            await asyncio.sleep(settings.catalog_feed_interval_hours * 3600)
+
+    task = asyncio.get_running_loop().create_task(_loop())
+    _BACKGROUND.add(task)
+    task.add_done_callback(_BACKGROUND.discard)

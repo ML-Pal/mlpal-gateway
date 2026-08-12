@@ -389,6 +389,10 @@ class CaptureToggleRequest(BaseModel):
     enabled: bool
 
 
+class FeedModeRequest(BaseModel):
+    mode: Literal["bundled", "hosted"]
+
+
 @router.get(
     "/config",
     summary="Effective gateway configuration (safe view)",
@@ -568,6 +572,48 @@ async def capture_toggle(
     cfg = await capture_state.set_runtime_override(redis_client, body.enabled)
     logger.info("Payload capture toggled via admin API", extra={"enabled": body.enabled})
     return {"enabled": cfg.enabled, "source": cfg.source}
+
+
+@router.get(
+    "/catalog/feed",
+    summary="Catalog-feed subscription status",
+)
+async def feed_status(
+    api_key: CurrentAPIKey, redis_client: RedisDep, model_router: ModelRouterDep
+) -> dict:
+    _require_admin(api_key)
+    from mlpal_assistants_service.services import catalog_feed
+
+    return await catalog_feed.status(redis_client, model_router.session)
+
+
+@router.put(
+    "/catalog/feed",
+    summary="Switch catalog-feed mode at runtime",
+    description=(
+        "bundled = catalog frozen at what this version shipped; hosted = pull "
+        "the curated feed on an interval and keep the catalog current. "
+        "Switching to hosted runs one sync immediately."
+    ),
+)
+async def feed_toggle(
+    body: FeedModeRequest, api_key: CurrentAPIKey, redis_client: RedisDep
+) -> dict:
+    _require_admin(api_key)
+    if redis_client is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Runtime toggle requires Redis; set MLPAL_CATALOG_FEED instead.",
+        )
+    from mlpal_assistants_service.db.session import async_session_factory
+    from mlpal_assistants_service.services import catalog_feed
+
+    await catalog_feed.set_mode(redis_client, body.mode)
+    logger.info("Catalog feed mode set via admin API", extra={"mode": body.mode})
+    result = None
+    if body.mode == "hosted":
+        result = await catalog_feed.pull_and_reconcile(async_session_factory, redis_client)
+    return {"mode": body.mode, "sync": result}
 
 
 @router.get(

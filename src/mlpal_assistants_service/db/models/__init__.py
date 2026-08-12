@@ -7,6 +7,7 @@ external users table, but without database-level FK constraints for schema flexi
 
 from mlpal_assistants_service.db.models.api_key import APIKey
 from mlpal_assistants_service.db.models.base import Base
+from mlpal_assistants_service.db.models.feed import FeedInstall, GatewayMeta
 from mlpal_assistants_service.db.models.meta_routing import MetaModelRouting
 from mlpal_assistants_service.db.models.model_feedback import (
     FEEDBACK_OUTCOMES,
@@ -27,6 +28,8 @@ from mlpal_assistants_service.db.models.user_credits import (
 )
 
 __all__ = [
+    "FeedInstall",
+    "GatewayMeta",
     "Base",
     "APIKey",
     "MetaModelRouting",

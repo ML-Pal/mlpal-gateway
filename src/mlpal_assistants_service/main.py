@@ -136,6 +136,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         app.state.adapters["bedrock"] = BedrockAdapter()
     logger.info("Provider adapters initialized", providers=list(app.state.adapters.keys()))
 
+    # Catalog-feed subscriber: no-op in bundled mode; in hosted mode it pulls
+    # the feed on an interval and reconciles the catalog (runtime-toggleable
+    # via /admin/v1/catalog/feed — the loop re-reads the mode every cycle).
+    from mlpal_assistants_service.db.session import async_session_factory
+    from mlpal_assistants_service.services.catalog_feed import start_subscriber
+
+    start_subscriber(async_session_factory, app.state.redis)
+
     # Initialize asset storage (S3)
     try:
         app.state.asset_storage = AssetStorageService(

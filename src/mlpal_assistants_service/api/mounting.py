@@ -42,6 +42,7 @@ def mount_api(app: FastAPI, settings: Settings) -> None:
     """Attach every router to `app` per the versioning policy above."""
     from mlpal_assistants_service.api.admin_v1 import router as admin_v1_router
     from mlpal_assistants_service.api.v1 import router as v1_router
+    from mlpal_assistants_service.api.v1.feed import router as feed_router
     from mlpal_assistants_service.api.v2.catalog import router as catalog_router
     from mlpal_assistants_service.api.v2.feedback import router as feedback_router
     from mlpal_assistants_service.api.v2.messages import router as universal_messages_router
@@ -54,6 +55,8 @@ def mount_api(app: FastAPI, settings: Settings) -> None:
     app.include_router(universal_messages_router, prefix=f"{v1}/messages", tags=["Messages"])
     # MLPal curation surfaces, canonical under /v1.
     app.include_router(catalog_router, prefix=v1, tags=["Catalog"])
+    # Public feed: lets other gateways subscribe to this deployment's catalog.
+    app.include_router(feed_router, prefix=v1, tags=["Catalog"])
     app.include_router(feedback_router, prefix=v1, tags=["Feedback"])
     # Control plane, independently versioned.
     app.include_router(admin_v1_router, prefix="/admin/v1")

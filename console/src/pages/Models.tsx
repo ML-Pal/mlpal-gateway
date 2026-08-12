@@ -1,11 +1,11 @@
-import { Boxes, ExternalLink, Search, Sparkles, X } from "lucide-react";
+import { Boxes, ExternalLink, Rss, Search, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { type AdminModel, GatewayError } from "@/lib/api";
+import { type AdminModel, type FeedStatus, GatewayError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useConnection } from "@/lib/connection";
 
@@ -42,6 +42,79 @@ function statusOf(m: AdminModel): { label: string; variant: "warning" | "muted" 
   if (m.is_deprecated) return { label: "deprecated", variant: "warning" };
   if (!m.is_active) return { label: "inactive", variant: "muted" };
   return null;
+}
+
+function FeedCard() {
+  const { client } = useConnection();
+  const [feed, setFeed] = useState<FeedStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!client) return;
+    client.getFeedStatus().then(setFeed).catch(() => null);
+  }, [client]);
+
+  async function toggle() {
+    if (!client || !feed || busy) return;
+    const next = feed.mode === "hosted" ? "bundled" : "hosted";
+    setBusy(true);
+    try {
+      const res = await client.setFeedMode(next);
+      if (next === "hosted") {
+        const sync = res.sync;
+        if (sync?.result === "applied") {
+          toast.success(`Subscribed — catalog synced (${sync.inserted ?? 0} added, ${sync.updated ?? 0} updated, ${sync.retired ?? 0} retired)`);
+        } else if (sync?.result === "unchanged") {
+          toast.success("Subscribed — catalog already current");
+        } else {
+          toast.warning(`Subscribed, but the first sync failed${sync?.error ? `: ${sync.error}` : ""} — will retry on the next cycle`);
+        }
+      } else {
+        toast.success("Unsubscribed — catalog stays as shipped");
+      }
+      setFeed(await client.getFeedStatus());
+    } catch (err) {
+      toast.error((err as GatewayError).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!feed) return null;
+  const hosted = feed.mode === "hosted";
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
+      <div className="flex items-start gap-3">
+        <Rss className={cn("mt-0.5 size-4", hosted ? "text-[var(--link)]" : "text-muted-foreground")} />
+        <div>
+          <div className="text-sm font-medium">
+            Catalog feed:{" "}
+            {hosted ? "subscribed — kept current by mlpal.ai" : "bundled — frozen at this version"}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {hosted
+              ? feed.last_sync
+                ? `Last sync ${new Date(feed.last_sync.at).toLocaleString()} · ${feed.last_sync.result}${feed.last_sync.feed_version ? ` · feed ${feed.last_sync.feed_version}` : ""}`
+                : "First sync pending"
+              : "Subscribe and this gateway pulls the curated feed daily — new models appear, retired ones are absorbed, no upgrade needed. Sends only an anonymous install id + version."}
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={toggle}
+        disabled={busy}
+        className={cn(
+          "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+          hosted
+            ? "bg-secondary text-foreground hover:bg-secondary/70"
+            : "bg-[var(--link)] text-background hover:opacity-90",
+          busy && "opacity-50",
+        )}
+      >
+        {busy ? "Syncing…" : hosted ? "Unsubscribe" : "Subscribe"}
+      </button>
+    </div>
+  );
 }
 
 export function Models() {
@@ -115,6 +188,8 @@ export function Models() {
         <code className="text-xs">"model": "mlpal"</code>)? That lives in{" "}
         <Link to="/catalog" className="link-accent">Routing</Link>.
       </p>
+
+      <FeedCard />
 
       {/* filter bar */}
       <div className="flex flex-wrap items-center gap-3">

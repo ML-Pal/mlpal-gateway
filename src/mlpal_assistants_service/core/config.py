@@ -165,6 +165,15 @@ class Settings(BaseSettings):
     anthropic_messages_backend: str = Field(
         default="first_party", alias="MLPAL_ANTHROPIC_MESSAGES_BACKEND"
     )
+    # Hosted catalog feed: 'bundled' ships frozen; 'hosted' subscribes to
+    # catalog_feed_url and keeps the catalog current (runtime-toggleable).
+    catalog_feed_mode: str = Field(default="bundled", alias="MLPAL_CATALOG_FEED")
+    catalog_feed_url: str = Field(
+        default="https://models.mlpal.ai/v1/catalog/feed", alias="MLPAL_CATALOG_FEED_URL"
+    )
+    catalog_feed_interval_hours: float = Field(
+        default=24.0, alias="MLPAL_CATALOG_FEED_INTERVAL_HOURS"
+    )
     anthropic_base_url: str = Field(
         default="https://api.anthropic.com", alias="MLPAL_ANTHROPIC_BASE_URL"
     )
