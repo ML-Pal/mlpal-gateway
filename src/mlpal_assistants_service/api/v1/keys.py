@@ -86,12 +86,6 @@ async def create_api_key(
     )
 
 
-@router.get(
-    "",
-    response_model=APIKeyList,
-    summary="List API keys",
-    description="List all API keys for the current user.",
-)
 async def _billing_paused(billing_repository, user_id: int) -> bool:
     """User-level billing pause, derived per response. Fails open: a billing
     lookup problem must never break key management."""
@@ -104,6 +98,12 @@ async def _billing_paused(billing_repository, user_id: int) -> bool:
         return False
 
 
+@router.get(
+    "",
+    response_model=APIKeyList,
+    summary="List API keys",
+    description="List all API keys for the current user.",
+)
 async def list_api_keys(
     current_user: ManagementPrincipal,
     api_key_service: APIKeyServiceDep,
