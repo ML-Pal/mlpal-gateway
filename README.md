@@ -8,14 +8,14 @@ Self-hosted. Model routing, per-request cost metering, per-key access control, a
 
 [![PyPI](https://img.shields.io/pypi/v/mlpal-gateway)](https://pypi.org/project/mlpal-gateway/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![CI](https://github.com/ML-Pal/mlpal-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/ML-Pal/mlpal-gateway/actions/workflows/ci.yml)
+[![CI](https://github.com/mlpal-ai/mlpal-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/mlpal-ai/mlpal-gateway/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/pypi/pyversions/mlpal-gateway)](https://pypi.org/project/mlpal-gateway/)
 
 </div>
 
 <br>
 
-![Gateway console](https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/console.png)
+![Gateway console](https://raw.githubusercontent.com/mlpal-ai/mlpal-gateway/main/docs/console.png)
 
 <br>
 
@@ -44,7 +44,7 @@ month up to 5B tokens**; your tokens are always billed at provider list price,
 passed through with no markup, either way.
 
 Prebuilt multi-arch images are on GHCR if you'd rather not build from source:
-`ghcr.io/ml-pal/mlpal-gateway` and `ghcr.io/ml-pal/mlpal-gateway-console`
+`ghcr.io/mlpal-ai/mlpal-gateway` and `ghcr.io/mlpal-ai/mlpal-gateway-console`
 (tags: `latest`, version, commit SHA).
 
 ## Calling it
@@ -115,8 +115,8 @@ methodology in the [technical report](paper/mlpal-gateway-technical-report.pdf),
 raw data and harness in [`paper/bench/`](paper/bench/)):
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-overhead-dark.svg">
-  <img alt="Gateway overhead benchmark" src="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-overhead-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mlpal-ai/mlpal-gateway/main/docs/fig-overhead-dark.svg">
+  <img alt="Gateway overhead benchmark" src="https://raw.githubusercontent.com/mlpal-ai/mlpal-gateway/main/docs/fig-overhead-light.svg">
 </picture>
 
 **+8.5 ms with everything on — less than a bare proxy checks one static key
@@ -134,8 +134,8 @@ Production models retire on roughly a 12-month cycle now — from the providers'
 own deprecation ledgers:
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-lifetimes-dark.svg">
-  <img alt="Model launch-to-retirement spans" src="https://raw.githubusercontent.com/ML-Pal/mlpal-gateway/main/docs/fig-lifetimes-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mlpal-ai/mlpal-gateway/main/docs/fig-lifetimes-dark.svg">
+  <img alt="Model launch-to-retirement spans" src="https://raw.githubusercontent.com/mlpal-ai/mlpal-gateway/main/docs/fig-lifetimes-light.svg">
 </picture>
 
 Serving a model well — valid parameter ranges, per-model cache minimums,
@@ -180,10 +180,10 @@ Details: [docs/API_SURFACE.md](docs/API_SURFACE.md).
 
 ## Use it with a coding agent
 
-[Yodex](https://github.com/ML-Pal/yodex) is a coding CLI built on this
+[Yodex](https://github.com/mlpal-ai/yodex) is a coding CLI built on this
 gateway — it speaks the Anthropic wire and uses `GET /v1/catalog` to route
 sub-tasks to cheaper models (~10× lower sub-agent cost in its
-[benchmarks](https://github.com/ML-Pal/yodex#benchmarks)):
+[benchmarks](https://github.com/mlpal-ai/yodex#benchmarks)):
 
 ```bash
 npm install -g @mlpal/yodex

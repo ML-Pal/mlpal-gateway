@@ -1,4 +1,4 @@
-# Prebuilt images on GHCR: ghcr.io/ml-pal/mlpal-gateway and .../mlpal-gateway-console.
+# Prebuilt images on GHCR: ghcr.io/mlpal-ai/mlpal-gateway and .../mlpal-gateway-console.
 # Pushed on every main commit (tag: latest + sha) and on version tags (tag: vX.Y.Z).
 name: Publish images to GHCR
 
@@ -34,7 +34,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/ml-pal/${{ matrix.image }}
+          images: ghcr.io/mlpal-ai/${{ matrix.image }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=
