@@ -49,8 +49,13 @@ def _error_status(exc: Exception) -> int:
 
 
 class TranslatingEdge:
-    def __init__(self, adapter: BaseAdapter) -> None:
+    def __init__(self, adapter: BaseAdapter, wire_model_id: str | None = None) -> None:
         self._adapter = adapter
+        # Serving backends address models by their own IDs (Azure deployment
+        # names, Bedrock inference profiles). When set, this overrides
+        # ctx.provider_model_id on the adapter call — billing/observability
+        # still use the catalog tag from ctx.
+        self._wire_model_id = wire_model_id
 
     def _prepare(self, req: ValidatedRequest, ctx: RequestContext) -> tuple[CommonRequest, dict[str, Any]]:
         """Translate inbound once → (CommonRequest, adapter chat kwargs). Applies
@@ -73,7 +78,7 @@ class TranslatingEdge:
         if common.reasoning_effort:
             ctx.cc_metadata["reasoning_effort"] = common.reasoning_effort
         kwargs: dict[str, Any] = {
-            "model": ctx.provider_model_id,
+            "model": self._wire_model_id or ctx.provider_model_id,
             "messages": common.messages,
             "tools": common.tools,
             "tool_choice": common.tool_choice,

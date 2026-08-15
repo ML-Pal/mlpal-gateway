@@ -103,14 +103,43 @@ class MessagesV2Core:
         return model.model_tag in allow
 
     # -- edge selection -----------------------------------------------------
-    def _edge_for(self, provider: str) -> ProviderEdge:
+    def _backend_label(self, model) -> str:
+        """Observability label: which backend serves this request."""
+        if model.provider != "anthropic":
+            return "adapter"
+        try:
+            backend = get_anthropic_backend(self._settings)
+        except ValueError:
+            return "adapter"
+        return backend.name if backend.serves(model.provider_model_id) else "adapter"
+
+    def _edge_for(self, model) -> ProviderEdge:
+        provider = model.provider
         if provider == "anthropic":
-            return AnthropicEdge(get_anthropic_backend(self._settings))
+            # Native path (byte-faithful) when a native backend serves this
+            # model: first-party serves everything; bedrock-mantle only its
+            # allowlist. Otherwise fall back to the adapter path — the factory
+            # priority picks the serving backend (bedrock SDK, vertex).
+            try:
+                backend = get_anthropic_backend(self._settings)
+            except ValueError:
+                backend = None
+            if backend is not None and backend.serves(model.provider_model_id):
+                return AnthropicEdge(backend)
+            return self._translating_edge(provider, model.provider_model_id)
         if provider in ("openai", "google"):
             # Same translating edge for both: Anthropic surface ↔ OpenAI-common
             # ↔ provider adapter ↔ Anthropic wire (see translating_edge.py).
-            return TranslatingEdge(get_adapter_factory().get(provider))
+            return self._translating_edge(provider, model.provider_model_id)
         raise ModelNotAllowed(f"provider '{provider}' not yet served by /v2/messages")
+
+    @staticmethod
+    def _translating_edge(provider: str, provider_model_id: str) -> TranslatingEdge:
+        try:
+            adapter, wire_id = get_adapter_factory().resolve(provider, provider_model_id)
+        except (ValueError, RuntimeError) as e:
+            raise ModelNotAllowed(str(e))
+        return TranslatingEdge(adapter, wire_model_id=wire_id)
 
     # -- request handling ---------------------------------------------------
     async def handle(
@@ -203,14 +232,14 @@ class MessagesV2Core:
             model_tag=model.model_tag,
             provider=model.provider,
             provider_model_id=model.provider_model_id,
-            backend=self._settings.anthropic_messages_backend,
+            backend=self._backend_label(model),
             trace_id=trace_id,
             api_key=api_key,
             headers=headers,
             cc_metadata=cc_metadata,
         )
         try:
-            edge = self._edge_for(model.provider)
+            edge = self._edge_for(model)
         except ModelNotAllowed as e:
             return Response(error_body(400, str(e)), 400, media_type="application/json")
 

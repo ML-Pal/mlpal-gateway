@@ -24,6 +24,7 @@ from mlpal_assistants_service.services.bedrock_mantle import (
     parse_sse_event,
 )
 from mlpal_assistants_service.services.messages_v2.anthropic_backend import (
+    AnthropicBedrockBackend,
     AnthropicFirstPartyBackend,
 )
 from mlpal_assistants_service.services.messages_v2.edges import EdgeResult, RequestContext
@@ -57,17 +58,22 @@ def _shared_client() -> httpx.AsyncClient:
 
 
 class AnthropicEdge:
-    def __init__(self, backend: AnthropicFirstPartyBackend, timeout: float = 120.0) -> None:
+    def __init__(
+        self,
+        backend: AnthropicFirstPartyBackend | AnthropicBedrockBackend,
+        timeout: float = 120.0,
+    ) -> None:
         self._backend = backend
         self._timeout = timeout
 
     def _outbound(self, req: ValidatedRequest, ctx: RequestContext) -> tuple[bytes, dict[str, str]]:
         # Rewrite `model` to the provider's id (first-party == the tag, but the
         # router is the source of truth) and re-serialize. The RESPONSE is what
-        # must stay byte-faithful, not the request.
+        # must stay byte-faithful, not the request. The backend owns final body
+        # adaptation + auth headers (SigV4 backends sign the exact bytes).
         body = dict(req.body)
         body["model"] = ctx.provider_model_id
-        return json.dumps(body).encode(), self._backend.headers(ctx.headers)
+        return self._backend.prepare(json.dumps(body).encode(), ctx.headers)
 
     async def invoke(self, req: ValidatedRequest, ctx: RequestContext) -> EdgeResult:
         content, headers = self._outbound(req, ctx)

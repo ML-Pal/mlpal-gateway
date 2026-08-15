@@ -94,6 +94,14 @@ print(msg.text, msg.compute_units)
   (zlib-compressed, runtime toggle — your box, your data).
 - **Provider semantics preserved.** Prompt caching (`cache_control`), tools,
   structured output, and MCP config pass through untouched.
+- **Serve through the cloud you already have.** The same models can be served
+  via Azure AI Foundry, Vertex AI, or AWS Bedrock instead of (or in priority
+  order with) the provider's own API — `MLPAL_ANTHROPIC_BACKENDS=bedrock,first_party`
+  and Claude requests ride your AWS account; same IDs, same wire, zero client
+  changes. `scripts/probe_backends.py` live-verifies what your credentials can
+  serve and prints the exact config. See [docs/BACKENDS.md](docs/BACKENDS.md);
+  third-party adapters plug in via a pip entry point
+  ([docs/ADAPTERS.md](docs/ADAPTERS.md)).
 - **Catalog that keeps itself current (opt-in, free).** By default your box
   ships with the bundled model catalog, frozen at this version — fully
   functional offline, zero calls home. Subscribe to the hosted feed (Models

@@ -169,16 +169,19 @@ class ModelRouter:
             ModelNotAvailableError: If no adapter available
         """
         model = await self.get_model(model_tag)
+        return self._resolve_backend(model)
 
+    def _resolve_backend(self, model: "ModelRegistry") -> tuple["BaseAdapter", str]:
+        """Backend-aware adapter selection: the factory walks the family's
+        MLPAL_<FAMILY>_BACKENDS priority list (cached — dict lookup on the
+        hot path) and returns the adapter plus the wire model ID for it."""
         try:
-            adapter = self._adapter_factory.get(model.provider)
+            return self._adapter_factory.resolve(model.provider, model.provider_model_id)
         except (ValueError, RuntimeError) as e:
             raise ModelNotAvailableError(
-                model_tag,
-                f"No adapter available for provider: {model.provider}. {e}",
+                model.model_tag,
+                f"No serving backend available for {model.provider}: {e}",
             )
-
-        return adapter, model.provider_model_id
 
     async def get_adapter_with_breaker(
         self,
@@ -199,10 +202,10 @@ class ModelRouter:
                 response = await adapter.chat(model_id, messages)
         """
         model = await self.get_model(model_tag)
-        adapter = self._adapter_factory.get(model.provider)
+        adapter, wire_model_id = self._resolve_backend(model)
         breaker = await self._circuit_breakers.get(model.provider)
 
-        return adapter, model.provider_model_id, breaker
+        return adapter, wire_model_id, breaker
 
     async def get_adapter_with_fallback(
         self,
@@ -229,9 +232,9 @@ class ModelRouter:
         # Check if primary provider is available
         if not breaker.is_open:
             try:
-                adapter = self._adapter_factory.get(model.provider)
-                return adapter, model.provider_model_id, model
-            except (ValueError, RuntimeError):
+                adapter, wire_model_id = self._resolve_backend(model)
+                return adapter, wire_model_id, model
+            except ModelNotAvailableError:
                 pass  # Try fallback
 
         # Primary is unavailable, try fallback
@@ -241,12 +244,12 @@ class ModelRouter:
                 fallback_breaker = await self._circuit_breakers.get(fallback_model.provider)
 
                 if not fallback_breaker.is_open:
-                    adapter = self._adapter_factory.get(fallback_model.provider)
+                    adapter, wire_model_id = self._resolve_backend(fallback_model)
                     logger.info(
                         f"Using fallback model {fallback_model.model_tag} "
                         f"for {model_tag} (primary circuit open)"
                     )
-                    return adapter, fallback_model.provider_model_id, fallback_model
+                    return adapter, wire_model_id, fallback_model
 
             except (ModelNotFoundError, ModelNotAvailableError, ValueError):
                 pass  # Fallback also unavailable
@@ -465,9 +468,9 @@ class ModelRouter:
             routing_metadata.resolved_provider = model.provider
 
         # Get adapter
-        adapter = self._adapter_factory.get(model.provider)
+        adapter, wire_model_id = self._resolve_backend(model)
 
-        return adapter, model.provider_model_id, model, routing_metadata
+        return adapter, wire_model_id, model, routing_metadata
 
     async def get_adapter_with_breaker_for_operation(
         self,
@@ -495,10 +498,10 @@ class ModelRouter:
             routing_metadata.resolved_provider = model.provider
 
         # Get adapter and circuit breaker
-        adapter = self._adapter_factory.get(model.provider)
+        adapter, wire_model_id = self._resolve_backend(model)
         breaker = await self._circuit_breakers.get(model.provider)
 
-        return adapter, model.provider_model_id, breaker, model, routing_metadata
+        return adapter, wire_model_id, breaker, model, routing_metadata
 
     async def load_routing_table(self) -> int:
         """Load all active meta-model routing rules into the local cache.

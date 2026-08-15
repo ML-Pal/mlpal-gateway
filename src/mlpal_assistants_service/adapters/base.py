@@ -853,6 +853,26 @@ class BaseAdapter(ABC):
 
     provider_name: str
 
+    # Serving-backend identity. "first_party" = the provider's own API;
+    # cloud backends (azure, vertex, bedrock) override. Used by the factory's
+    # priority resolution and surfaced in /v1/models.
+    backend_name: str = "first_party"
+
+    def serves(self, provider_model_id: str) -> bool:
+        """Whether this backend can serve the given provider model ID.
+
+        First-party adapters serve their whole family. Cloud backends
+        override with their deployment/enablement map so priority
+        resolution can fall through to the next backend.
+        """
+        return True
+
+    def backend_model_id(self, provider_model_id: str) -> str:
+        """Map a provider model ID to this backend's wire ID (identity for
+        first-party; deployment name on Azure, dashed dateless IDs on
+        Vertex Claude, prefixed IDs on Bedrock)."""
+        return provider_model_id
+
     # =========================================================================
     # Model Capabilities
     # =========================================================================

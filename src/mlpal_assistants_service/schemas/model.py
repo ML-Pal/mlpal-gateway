@@ -26,6 +26,13 @@ class ModelInfo(BaseSchema):
     pricing_tier: str = Field(..., description="Pricing tier (budget, standard, premium)")
     is_deprecated: bool = Field(default=False, description="Whether model is deprecated")
     deprecation_message: str | None = Field(default=None, description="Deprecation notice")
+    serving_backend: str | None = Field(
+        default=None,
+        description=(
+            "Backend that will serve this model (first_party, azure, vertex, "
+            "bedrock). null = no configured backend serves it — calls will fail."
+        ),
+    )
 
 
 class ModelDetailInfo(ModelInfo):

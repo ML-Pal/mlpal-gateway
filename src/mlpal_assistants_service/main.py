@@ -12,12 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from mlpal_assistants_service.adapters import (
-    AnthropicAdapter,
-    BedrockAdapter,
-    GoogleAdapter,
-    OpenAIAdapter,
-)
+from mlpal_assistants_service.adapters.factory import get_adapter_factory
 from mlpal_assistants_service.api.mounting import mount_api
 from mlpal_assistants_service.core.cache import CacheInvalidator
 from mlpal_assistants_service.core.config import get_settings
@@ -120,22 +115,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             logger.warning("Redis pub/sub client unavailable", error=str(e))
             app.state.cache_pubsub_redis = None
 
-    # Initialize provider adapters — only for providers whose key is present, so
-    # a self-hosted box boots with just the keys it has. (In prod all keys are
-    # set, so this builds the same three as before.)
-    app.state.adapters = {}
-    if settings.openai_api_key:
-        app.state.adapters["openai"] = OpenAIAdapter()
-    if settings.anthropic_api_key:
-        app.state.adapters["anthropic"] = AnthropicAdapter()
-    if settings.google_api_key:
-        app.state.adapters["google"] = GoogleAdapter()
-    # Bedrock activates on a flag (AWS creds come from the environment/IRSA, not
-    # an API key). Without this entry the admin console reports a serving
-    # provider as unconfigured and /admin/v1/router marks its routes unserved.
-    if settings.enable_bedrock:
-        app.state.adapters["bedrock"] = BedrockAdapter()
-    logger.info("Provider adapters initialized", providers=list(app.state.adapters.keys()))
+    # Initialize provider adapters via the factory: each family gets its
+    # highest-priority CONFIGURED backend (first-party key, or Azure/Vertex/
+    # Bedrock per MLPAL_<FAMILY>_BACKENDS), so a self-hosted box boots with
+    # whatever clouds it has. Building them here also warms the factory's
+    # backend caches before traffic arrives.
+    app.state.adapters = get_adapter_factory().get_enabled()
+    logger.info(
+        "Provider adapters initialized",
+        providers={p: a.backend_name for p, a in app.state.adapters.items()},
+    )
 
     # Catalog-feed subscriber: no-op in bundled mode; in hosted mode it pulls
     # the feed on an interval and reconciles the catalog (runtime-toggleable

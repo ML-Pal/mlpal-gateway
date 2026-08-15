@@ -332,7 +332,7 @@ class OpenAIAdapter(BaseAdapter):
         max_output_tokens=16384,
     )
 
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         if api_key:
             self._api_key = api_key
         else:
@@ -341,12 +341,16 @@ class OpenAIAdapter(BaseAdapter):
 
         # Create client with connection pooling. Ceiling on simultaneous in-flight
         # requests to OpenAI across ALL callers — raised for client concurrency.
+        # base_url seam lets serving backends (Azure /openai/v1) reuse this
+        # adapter unchanged — the v1 surface is OpenAI-wire-compatible.
         http_client = httpx.AsyncClient(
             limits=httpx.Limits(max_connections=300, max_keepalive_connections=60),
             timeout=httpx.Timeout(120.0, connect=10.0),
         )
+        self._base_url = base_url
         self._client = AsyncOpenAI(
             api_key=self._api_key,
+            base_url=base_url,
             http_client=http_client,
         )
 
@@ -1052,7 +1056,7 @@ class OpenAIAdapter(BaseAdapter):
         # Use synchronous client for file upload within async context
         from openai import OpenAI
 
-        sync_client = OpenAI(api_key=self._api_key)
+        sync_client = OpenAI(api_key=self._api_key, base_url=self._base_url)
 
         file_path_obj = Path(file_path)
         with open(file_path_obj, "rb") as f:

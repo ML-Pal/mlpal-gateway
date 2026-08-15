@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, status
 
+from mlpal_assistants_service.adapters.factory import get_adapter_factory
 from mlpal_assistants_service.api.deps import (
     APIKeyModelPolicy,
     CurrentUserFlexible,
@@ -54,6 +55,10 @@ async def list_models(
     if model_policy:
         models = [m for m in models if PolicyService.is_model_allowed(model_policy, m.model_tag)]
 
+    # Serving truth per model: which configured backend (if any) would take
+    # the call. Cached in the factory — no I/O here. null lets the console
+    # render unserved models visibly distinct instead of silently listing them.
+    factory = get_adapter_factory()
     return ModelListResponse(
         models=[
             ModelInfo(
@@ -67,6 +72,7 @@ async def list_models(
                 pricing_tier=m.pricing_tier,
                 is_deprecated=m.is_deprecated,
                 deprecation_message=m.deprecation_message,
+                serving_backend=factory.serving_backend_for(m.provider, m.provider_model_id),
             )
             for m in models
         ],

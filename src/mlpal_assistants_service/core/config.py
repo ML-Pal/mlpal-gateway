@@ -166,10 +166,56 @@ class Settings(BaseSettings):
     messages_v2_stream_thinking: bool = Field(
         default=True, alias="MLPAL_MESSAGES_V2_STREAM_THINKING"
     )
-    # Anthropic backend selection (first_party today; "bedrock" later) + first-
-    # party endpoint config. Backend is a config choice, never hardcoded.
-    anthropic_messages_backend: str = Field(
-        default="first_party", alias="MLPAL_ANTHROPIC_MESSAGES_BACKEND"
+    # --- Multi-cloud serving backends ------------------------------------
+    # Priority-ordered CSV per model FAMILY. The first backend that is
+    # configured and serves the requested model wins. Valid names:
+    #   openai:    first_party, azure
+    #   google:    first_party, vertex
+    #   anthropic: first_party, bedrock, vertex
+    # (The `bedrock` catalog family — open-weight models — is unchanged.)
+    openai_backends: str = Field(default="first_party", alias="MLPAL_OPENAI_BACKENDS")
+    google_backends: str = Field(default="first_party", alias="MLPAL_GOOGLE_BACKENDS")
+    anthropic_backends: str = Field(
+        default="first_party", alias="MLPAL_ANTHROPIC_BACKENDS"
+    )
+    # Azure OpenAI / AI Foundry, v1 surface (<endpoint>/openai/v1/). Azure
+    # addresses models by DEPLOYMENT name; name deployments after the model
+    # IDs (e.g. deployment "gpt-5.2" for gpt-5.2) and no mapping is needed.
+    # For accurate serves()/console display, or non-identity names, provide
+    # MLPAL_AZURE_DEPLOYMENTS as JSON {model_id: deployment_name}.
+    azure_openai_endpoint: str | None = Field(
+        default=None, alias="MLPAL_AZURE_OPENAI_ENDPOINT"
+    )
+    azure_openai_api_key: str | None = Field(
+        default=None, alias="MLPAL_AZURE_OPENAI_API_KEY"
+    )
+    azure_openai_deployments: str | None = Field(
+        default=None, alias="MLPAL_AZURE_DEPLOYMENTS"
+    )
+    # Vertex AI. One service account (GOOGLE_APPLICATION_CREDENTIALS, ADC)
+    # serves both Gemini (google-genai vertexai=True) and Claude
+    # (AnthropicVertex). "global" location preferred: higher availability,
+    # and Claude at first-party price (regional endpoints carry +10%).
+    vertex_project: str | None = Field(default=None, alias="MLPAL_VERTEX_PROJECT")
+    vertex_location: str = Field(default="global", alias="MLPAL_VERTEX_LOCATION")
+    # Claude-on-{Bedrock,Vertex} model maps: JSON {anthropic_model_id:
+    # backend_model_id}. EXPLICIT and empty by default — both clouds require
+    # per-model enablement (Bedrock model access / Vertex Model Garden), so
+    # we never guess what an account can serve. `scripts/probe_backends.py`
+    # discovers and verifies the map for your credentials.
+    bedrock_anthropic_models: str | None = Field(
+        default=None, alias="MLPAL_BEDROCK_ANTHROPIC_MODELS"
+    )
+    # Models the bedrock-mantle NATIVE endpoint serves (JSON list of Anthropic
+    # model IDs). Mantle's population is a subset of bedrock-runtime's (newest
+    # dateless-ID generation only — live-verified 2026-08-14: opus-4-7/4-8,
+    # opus-5, sonnet-5). Models on this list get the byte-faithful native
+    # /v1/messages path; other Claude models fall back to the adapter path.
+    bedrock_mantle_models: str | None = Field(
+        default=None, alias="MLPAL_BEDROCK_MANTLE_MODELS"
+    )
+    vertex_anthropic_models: str | None = Field(
+        default=None, alias="MLPAL_VERTEX_ANTHROPIC_MODELS"
     )
     # Hosted catalog feed: 'bundled' ships frozen; 'hosted' subscribes to
     # catalog_feed_url and keeps the catalog current (runtime-toggleable).

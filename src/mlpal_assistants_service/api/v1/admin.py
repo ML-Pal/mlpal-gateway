@@ -246,6 +246,12 @@ async def list_all_models(
     cards = curated.get("cards") or {}
     lineage = curated.get("lineage") or {}
 
+    # Serving truth: which configured backend would take each model's calls
+    # (null = unserved — the console renders these visibly distinct).
+    from mlpal_assistants_service.adapters.factory import get_adapter_factory
+
+    factory = get_adapter_factory()
+
     def _price(m: ModelRegistry) -> dict | None:
         op = (m.capabilities or {}).get("operation", "chat") if isinstance(m.capabilities, dict) else "chat"
         p = price_by_key.get((m.model_tag, op)) or price_first.get(m.model_tag)
@@ -275,6 +281,11 @@ async def list_all_models(
             "is_paused": m.is_paused,
             "pause_reason": m.pause_reason,
             "source": m.source,
+            "serving_backend": (
+                factory.serving_backend_for(m.provider, m.provider_model_id)
+                if m.provider != "mlpal"
+                else "router"
+            ),
             "pricing": _price(m),
             "lineage": lineage.get(m.model_tag),
             "card": cards.get(m.model_tag),
@@ -684,11 +695,15 @@ async def provider_status(
     for provider, n in rows:
         counts[provider] = n
 
+    # Family-aware: a box with only a cloud backend (Azure/Vertex/Bedrock-
+    # Claude) counts as configured for that family even without the first-
+    # party key. The factory owns that logic.
+    from mlpal_assistants_service.adapters.factory import get_adapter_factory
+
+    factory = get_adapter_factory()
     configured = {
-        "openai": bool(settings.openai_api_key),
-        "anthropic": bool(settings.anthropic_api_key),
-        "google": bool(settings.google_api_key),
-        "bedrock": bool(settings.enable_bedrock),
+        name: factory.is_enabled(name)
+        for name in ("openai", "anthropic", "google", "bedrock")
     }
 
     async def probe(name: str, adapter) -> dict:
@@ -717,6 +732,10 @@ async def provider_status(
             "configured": configured.get(name, False),
             "enabled": active,
             "models_active": counts.get(name, 0),
+            # Multi-cloud serving: the primary backend actually serving this
+            # family, and the full priority order (MLPAL_<FAMILY>_BACKENDS).
+            "serving_backend": adapters[name].backend_name if name in adapters else None,
+            "backend_priority": factory.backend_priority(name),
         }
         if active and name in probes:
             entry["health"] = probes[name]

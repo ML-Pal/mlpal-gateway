@@ -183,7 +183,7 @@ class AnthropicAdapter(BaseAdapter):
         max_output_tokens=8192,
     )
 
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key: str | None = None, client: Any | None = None) -> None:
         if api_key:
             self._api_key = api_key
         else:
@@ -192,6 +192,11 @@ class AnthropicAdapter(BaseAdapter):
 
         # Create client with connection pooling. Ceiling on simultaneous in-flight
         # requests to Anthropic across ALL callers — raised for client concurrency.
+        # `client` seam lets serving backends supply AsyncAnthropicBedrock /
+        # AsyncAnthropicVertex — same .messages surface, different auth/host.
+        if client is not None:
+            self._client = client
+            return
         http_client = httpx.AsyncClient(
             limits=httpx.Limits(max_connections=300, max_keepalive_connections=60),
             timeout=httpx.Timeout(120.0, connect=10.0),
