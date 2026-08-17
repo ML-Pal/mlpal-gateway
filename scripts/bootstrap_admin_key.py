@@ -236,6 +236,15 @@ The secret key is output to stdout ONCE. Store it securely in AWS Secrets Manage
         action="store_true",
         help="Create new key even if one exists",
     )
+    parser.add_argument(
+        "--if-missing",
+        action="store_true",
+        help=(
+            "Exit 0 without creating when an admin key already exists. For "
+            "idempotent boot flows (compose seed) where 'already bootstrapped' "
+            "is success, not failure."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -262,6 +271,13 @@ The secret key is output to stdout ONCE. Store it securely in AWS Secrets Manage
         if existing and not args.force:
             print(f"Admin key already exists: {existing['name']}", file=sys.stderr)
             print(f"  Prefix: {existing['key_prefix']}", file=sys.stderr)
+            if args.if_missing:
+                print(
+                    "Nothing to do (--if-missing). Lost the secret? Mint a new "
+                    "admin key with: bootstrap_admin_key.py --name <name> --force",
+                    file=sys.stderr,
+                )
+                sys.exit(0)
             print("Use --force to create a new one anyway.", file=sys.stderr)
             sys.exit(1)
 

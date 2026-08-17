@@ -30,7 +30,7 @@ docker compose up             # Postgres + Redis + gateway + admin console
 |---|---|
 | Gateway | `http://localhost:8000` — Swagger at `/docs` |
 | Admin console | `http://localhost:8080` |
-| Bootstrap admin key | printed once: `docker compose logs seed` |
+| Bootstrap admin key | printed once: `docker compose logs seed` — lost it? mint another: `docker compose run --rm seed python scripts/bootstrap_admin_key.py --name admin-2 --force` |
 
 Adapters activate based on which provider keys you set. `GET /v1/models` lists
 only what your box can serve; a single-provider deployment works without any

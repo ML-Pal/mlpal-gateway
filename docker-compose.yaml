@@ -79,7 +79,7 @@ services:
       - -c
       - >-
         python scripts/reconcile_catalog.py &&
-        python scripts/bootstrap_admin_key.py --name oss-admin
+        python scripts/bootstrap_admin_key.py --name oss-admin --if-missing
     environment: *gateway-env
     depends_on:
       migrate:

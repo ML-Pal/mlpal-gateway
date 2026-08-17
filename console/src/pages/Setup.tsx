@@ -125,7 +125,8 @@ export function Setup() {
               />
               <p className="text-xs text-muted-foreground">
                 Started with docker compose? The bootstrap admin key is printed once at seed time —
-                run <code>docker compose logs seed</code> to retrieve it.
+                run <code>docker compose logs seed</code> to retrieve it. Lost it? Mint another:{" "}
+                <code>docker compose run --rm seed python scripts/bootstrap_admin_key.py --name admin-2 --force</code>
               </p>
             </div>
             <Button type="submit" disabled={busy}>
