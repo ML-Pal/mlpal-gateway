@@ -68,6 +68,57 @@ def load_bundled_feed() -> dict[str, Any]:
     return doc
 
 
+BUNDLED_APPLIED_KEY = "catalog:applied_bundled_version"
+
+
+async def apply_bundled_if_new(session_factory: Any) -> dict[str, Any] | None:
+    """Reconcile the DB from the BUNDLED catalog when this build ships a new
+    version. Version-gated via gateway_meta and idempotent, so every pod runs
+    it at boot (a racing pod's second pass no-ops). This is how a merged
+    catalog change reaches a bundled-mode deployment's DB — prod included —
+    with no manual step. Returns the apply summary, or None if current.
+
+    Reads the RAW packaged JSONs (markup intact): the deployment's own DB
+    keeps its business config; the markup scrub is only for the public feed.
+    """
+    pkg = resources.files("mlpal_assistants_service") / "catalog"
+    raw: dict[str, Any] = {
+        name: json.loads((pkg / f"{name}.json").read_text())
+        for name in ("registry", "pricing", "routing")
+    }
+    canonical = json.dumps(
+        raw, sort_keys=True, separators=(",", ":"), default=str
+    ).encode()
+    version = hashlib.sha256(canonical).hexdigest()[:12]
+
+    async with session_factory() as session:
+        if await get_meta(session, BUNDLED_APPLIED_KEY) == version:
+            return None
+        from mlpal_assistants_service.services.catalog_sync import reconcile
+
+        routing_doc = raw["routing"]
+        routing = (
+            routing_doc.get("routes") if isinstance(routing_doc, dict) else routing_doc
+        )
+        summary = await reconcile(
+            session,
+            raw["registry"],
+            raw["pricing"],
+            routing,
+            retire_message="Retired from the bundled MLPal catalog",
+        )
+        await set_meta(session, BUNDLED_APPLIED_KEY, version)
+        await session.commit()
+    out = {
+        "bundled_version": version,
+        "inserted": summary.inserted,
+        "updated": summary.updated,
+        "retired": summary.retired,
+    }
+    logger.info("bundled catalog applied at boot", extra=out)
+    return out
+
+
 def gateway_version() -> str:
     from importlib.metadata import version
 

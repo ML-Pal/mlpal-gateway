@@ -141,7 +141,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # the feed on an interval and reconciles the catalog (runtime-toggleable
     # via /admin/v1/catalog/feed — the loop re-reads the mode every cycle).
     from mlpal_assistants_service.db.session import async_session_factory
-    from mlpal_assistants_service.services.catalog_feed import start_subscriber
+    from mlpal_assistants_service.services.catalog_feed import (
+        apply_bundled_if_new,
+        start_subscriber,
+    )
+
+    # Catalog-at-boot: when this build ships a NEWER bundled catalog than the
+    # DB has applied, reconcile it now (version-gated + idempotent — racing
+    # pods no-op). This is what makes "merge the scout PR → deploy" reach the
+    # DB with no manual step, for prod and every bundled-mode box alike.
+    try:
+        applied = await apply_bundled_if_new(async_session_factory)
+        if applied:
+            logger.info("Bundled catalog reconciled at boot", **applied)
+    except Exception as e:  # noqa: BLE001 — catalog refresh must not block boot
+        logger.warning("Bundled catalog reconcile failed; serving existing DB", error=str(e))
 
     start_subscriber(async_session_factory, app.state.redis)
 
