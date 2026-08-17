@@ -1,10 +1,15 @@
-import { ScrollText, Settings as SettingsIcon } from "lucide-react";
+import { Layers, ScrollText, Settings as SettingsIcon, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type ConfigItem, GatewayError, type GatewayConfigView } from "@/lib/api";
+import {
+  type ConfigItem,
+  GatewayError,
+  type GatewayConfigView,
+  type RuntimeSetting,
+} from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useConnection } from "@/lib/connection";
 
@@ -105,14 +110,16 @@ export function Settings() {
             </CardContent>
           </Card>
 
+          <ServingBackendsCard />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Gateway configuration</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                Payload capture is the only setting changeable live from here. Everything below is
-                deployment configuration — set via env var or <code>config/gateway.yaml</code> and
-                applied on restart, on purpose: changing billing backends or provider keys under a
-                running gateway isn't something you want a web toggle for.
+                Payload capture and serving-backend priorities are changeable live (above).
+                Everything below is deployment configuration — set via env var or{" "}
+                <code>config/gateway.yaml</code> and applied on restart, on purpose: credentials
+                and endpoints aren't something you want a web toggle for.
               </p>
             </CardHeader>
             <CardContent>
@@ -166,5 +173,134 @@ function Row({ name, item }: { name: string; item: ConfigItem }) {
         </Badge>
       </td>
     </tr>
+  );
+}
+
+const FAMILY_LABEL: Record<string, string> = {
+  openai: "OpenAI",
+  google: "Google",
+  anthropic: "Anthropic",
+};
+
+/** Live editor for MLPAL_<FAMILY>_BACKENDS: the priority chain of serving
+ * backends per model family. Changes apply in ~1s, persist across restarts,
+ * and "Reset to env" drops the override. */
+function ServingBackendsCard() {
+  const { client } = useConnection();
+  const [settings, setSettings] = useState<RuntimeSetting[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!client) return;
+    try {
+      const r = await client.listRuntimeSettings();
+      setSettings(r.data.filter((s) => s.family));
+    } catch {
+      setSettings([]); // gateway predates /admin/v1/settings — hide the card body
+    }
+  }, [client]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function apply(name: string, value: string | null) {
+    if (!client) return;
+    setBusy(name);
+    try {
+      await client.updateRuntimeSetting(name, value);
+      await load();
+      toast.success(value === null ? "Reset to env value." : "Priority updated — live now.");
+    } catch (err) {
+      toast.error((err as GatewayError).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  if (settings !== null && settings.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Layers className="size-4" /> Serving backends
+          <Badge variant="secondary" className="font-normal">runtime</Badge>
+        </CardTitle>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Who serves each model family, in priority order — the first backend that is configured
+          and has the model takes the call. Changes apply live (no restart) and persist. Cloud
+          credentials themselves stay in env (<code>docs/BACKENDS.md</code>).
+        </p>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {settings === null ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          settings.map((s) => {
+            const chain = s.effective.split(",").map((x) => x.trim()).filter(Boolean);
+            const addable = (s.valid_values ?? []).filter((v) => !chain.includes(v));
+            return (
+              <div key={s.name} className="flex flex-wrap items-center gap-2">
+                <span className="w-24 shrink-0 text-sm font-medium">
+                  {FAMILY_LABEL[s.family!] ?? s.family}
+                </span>
+                {chain.map((b, i) => (
+                  <span
+                    key={b}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-1 text-xs"
+                  >
+                    {i > 0 && <span className="text-muted-foreground">→</span>}
+                    <code>{b}</code>
+                    {chain.length > 1 && (
+                      <button
+                        aria-label={`Remove ${b}`}
+                        disabled={busy === s.name}
+                        onClick={() => void apply(s.name, chain.filter((x) => x !== b).join(","))}
+                        className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {addable.length > 0 && (
+                  <select
+                    aria-label={`Add backend for ${s.family}`}
+                    disabled={busy === s.name}
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) void apply(s.name, [...chain, e.target.value].join(","));
+                    }}
+                    className="rounded-full border border-dashed border-border bg-transparent px-2 py-1 text-xs text-muted-foreground"
+                  >
+                    <option value="">+ add</option>
+                    {addable.map((v) => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                  </select>
+                )}
+                <Badge variant={s.source === "runtime" ? "success" : "muted"} className="text-[10px]">
+                  {s.source === "runtime" ? "override" : s.source}
+                </Badge>
+                {s.source === "runtime" && (
+                  <button
+                    disabled={busy === s.name}
+                    onClick={() => void apply(s.name, null)}
+                    className="text-xs link-accent"
+                  >
+                    Reset to env
+                  </button>
+                )}
+              </div>
+            );
+          })
+        )}
+        <p className="text-xs text-muted-foreground">
+          Order is priority — remove and re-add to reorder. A backend only serves when its
+          credentials are configured; unserved models stay visible on the Models page.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

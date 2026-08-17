@@ -132,6 +132,19 @@ Two Bedrock paths exist and their model populations differ:
 The gateway picks the native path when the model is on the mantle list and
 falls back to the adapter path automatically. Probe once, paste both lines.
 
+## Changing priorities at runtime (no restart)
+
+Backend **priorities** are runtime-overridable: the console's Settings page
+("Serving backends" card) or `PUT /admin/v1/settings/<family>_backends` change
+them live — persisted in the DB, propagated to every worker via pub/sub within
+about a second, surviving restarts. `value: null` clears the override back to
+the env value. Precedence: runtime override > env > default.
+
+Cloud **credentials** stay env-only on purpose (they're secrets and belong in
+your deployment, not a database) — so the flow is: configure credentials once
+in env, then move traffic between backends live whenever you need to (e.g.
+shift Claude to Bedrock during a first-party incident, then reset).
+
 ## Verifying a box
 
 `scripts/probe_backends.py {bedrock,vertex,azure}` live-verifies each leg

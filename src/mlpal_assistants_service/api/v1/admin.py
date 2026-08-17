@@ -638,6 +638,29 @@ async def feed_toggle(
     return {"mode": body.mode, "sync": result}
 
 
+@router.post(
+    "/catalog/feed/sync",
+    summary="Pull the hosted feed now",
+    description=(
+        "Run one feed pull + reconcile immediately instead of waiting for the "
+        "next scheduled cycle. Requires hosted mode. Requires admin permission."
+    ),
+)
+async def feed_sync_now(api_key: CurrentAPIKey, redis_client: RedisDep) -> dict:
+    _require_admin(api_key)
+    from mlpal_assistants_service.db.session import async_session_factory
+    from mlpal_assistants_service.services import catalog_feed
+
+    mode, _source = await catalog_feed.effective_mode(redis_client)
+    if mode != "hosted":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Feed is in bundled mode — switch to hosted to sync.",
+        )
+    result = await catalog_feed.pull_and_reconcile(async_session_factory, redis_client)
+    return {"sync": result}
+
+
 @router.get(
     "/traces/{trace_id}/payload",
     summary="Captured request/response bodies for a trace",
@@ -787,3 +810,96 @@ async def list_traces(
     )
     out["window_hours"] = hours
     return out
+
+
+# ---------------------------------------------------------------------------
+# Runtime settings (hot-swappable configuration)
+# ---------------------------------------------------------------------------
+
+
+class RuntimeSettingUpdate(BaseModel):
+    """Set a runtime override (value) or clear it back to env (null)."""
+
+    value: str | None
+
+
+@router.get(
+    "/settings",
+    summary="Runtime-overridable settings",
+    description=(
+        "The whitelist of settings that can be changed WITHOUT restarting the "
+        "gateway, with their effective value and where it comes from "
+        "(runtime override > env > default). Everything else is env-only by "
+        "design (credentials, endpoints). Requires admin permission."
+    ),
+)
+async def list_runtime_settings(api_key: CurrentAPIKey) -> dict:
+    _require_admin(api_key)
+    from mlpal_assistants_service.adapters.factory import get_adapter_factory
+    from mlpal_assistants_service.core.config import get_settings
+    from mlpal_assistants_service.services import runtime_settings
+
+    factory = get_adapter_factory()
+    settings = get_settings()
+    data = []
+    for name, spec in runtime_settings.HOT_SETTINGS.items():
+        family = spec.get("family")
+        valid = None
+        if family:
+            valid = sorted(
+                {"first_party"}
+                | {b for (f, b) in factory._backend_classes if f == family}
+            )
+        data.append(
+            {
+                "name": name,
+                "description": spec["description"],
+                "effective": runtime_settings.get(name) or getattr(settings, name),
+                "source": runtime_settings.source_of(name),
+                "env_value": getattr(settings, name),
+                "valid_values": valid,
+                "family": family,
+            }
+        )
+    return {"data": data}
+
+
+@router.put(
+    "/settings/{name}",
+    summary="Change a runtime setting (no restart)",
+    description=(
+        "Set a runtime override for a whitelisted setting, or clear it with "
+        "value=null to fall back to the env value. Persisted in the DB "
+        "(survives restarts) and propagated to all workers via pub/sub within "
+        "about a second. Requires admin permission."
+    ),
+)
+async def update_runtime_setting(
+    name: str,
+    body: RuntimeSettingUpdate,
+    api_key: CurrentAPIKey,
+    model_router: ModelRouterDep,
+    cache_invalidator: CacheInvalidatorDep,
+) -> dict:
+    _require_admin(api_key)
+    from mlpal_assistants_service.core.config import get_settings
+    from mlpal_assistants_service.services import runtime_settings
+
+    try:
+        await runtime_settings.set_value(model_router.session, name, body.value)
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    await model_router.session.commit()
+
+    instances_notified = False
+    if cache_invalidator:
+        await cache_invalidator.publish("settings")
+        instances_notified = True
+    return {
+        "name": name,
+        "effective": runtime_settings.get(name) or getattr(get_settings(), name),
+        "source": runtime_settings.source_of(name),
+        "instances_notified": instances_notified,
+    }

@@ -104,14 +104,23 @@ class MessagesV2Core:
 
     # -- edge selection -----------------------------------------------------
     def _backend_label(self, model) -> str:
-        """Observability label: which backend serves this request."""
-        if model.provider != "anthropic":
-            return "adapter"
+        """Observability label: which backend serves this request — the
+        native backend's name on the passthrough path, else the resolved
+        adapter's backend_name (first_party / azure / vertex / bedrock)."""
+        if model.provider == "anthropic":
+            try:
+                backend = get_anthropic_backend(self._settings)
+                if backend.serves(model.provider_model_id):
+                    return backend.name
+            except ValueError:
+                pass
         try:
-            backend = get_anthropic_backend(self._settings)
-        except ValueError:
-            return "adapter"
-        return backend.name if backend.serves(model.provider_model_id) else "adapter"
+            adapter, _ = get_adapter_factory().resolve(
+                model.provider, model.provider_model_id
+            )
+            return getattr(adapter, "backend_name", "first_party")
+        except (ValueError, RuntimeError):
+            return "unresolved"
 
     def _edge_for(self, model) -> ProviderEdge:
         provider = model.provider
@@ -405,6 +414,10 @@ class MessagesV2Core:
                 cc_metadata={
                     **ctx.cc_metadata,
                     "api": getattr(self, "_surface", "v1_messages"),
+                    # Which serving backend took the call (first_party /
+                    # bedrock / azure / vertex / adapter) — queryable per
+                    # trace and shown in the console trace detail.
+                    "serving_backend": ctx.backend,
                     "provider_message_id": ctx.provider_message_id,
                     # Cache observability: input_tokens above CONTAINS the cached
                     # portion; these make prompt-cache effectiveness queryable

@@ -115,6 +115,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             logger.warning("Redis pub/sub client unavailable", error=str(e))
             app.state.cache_pubsub_redis = None
 
+    # Runtime setting overrides (console-set, DB-persisted) load BEFORE the
+    # adapters so a stored backend-priority override shapes boot too.
+    try:
+        from mlpal_assistants_service.db.session import async_session_factory as _asf
+        from mlpal_assistants_service.services import runtime_settings
+
+        async with _asf() as _s:
+            await runtime_settings.load(_s)
+    except Exception as e:  # noqa: BLE001 — a bad row must not block boot
+        logger.warning("Runtime settings load failed; using env values", error=str(e))
+
     # Initialize provider adapters via the factory: each family gets its
     # highest-priority CONFIGURED backend (first-party key, or Azure/Vertex/
     # Bedrock per MLPAL_<FAMILY>_BACKENDS), so a self-hosted box boots with
@@ -503,11 +514,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             else:
                 logger.info("API key cache invalidation received (all keys)")
 
+        async def _reload_runtime_settings():
+            from mlpal_assistants_service.db.session import async_session_factory
+            from mlpal_assistants_service.services import runtime_settings
+
+            async with async_session_factory() as s:
+                await runtime_settings.load(s)
+            logger.info("Runtime settings reloaded via invalidation")
+
         invalidator.register("models", _clear_model_cache)
         invalidator.register("pricing", _clear_pricing_cache)
         invalidator.register("routing", _clear_routing_cache)
         invalidator.register("api_key", _clear_api_key_cache)
         invalidator.register("api_keys", _clear_api_key_cache)
+        invalidator.register("settings", _reload_runtime_settings)
 
         await invalidator.start_listener()
         logger.info("Cache invalidation listener started")

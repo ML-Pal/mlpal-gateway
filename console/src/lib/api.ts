@@ -146,6 +146,9 @@ export interface AdminModel {
   is_paused: boolean;
   pause_reason: string | null;
   source: string;
+  /** Backend that will serve this model (first_party, azure, vertex, bedrock,
+   * router for mlpal tags). null = no configured backend — calls will fail. */
+  serving_backend: string | null;
   pricing: ModelPrice | null;
   lineage: ModelLineage | null;
   card: ModelCardMeta | null;
@@ -244,11 +247,26 @@ export interface ProviderHealth {
   error: string | null;
 }
 
+/** A runtime-overridable setting, from /admin/v1/settings. */
+export interface RuntimeSetting {
+  name: string;
+  description: string;
+  effective: string;
+  source: "runtime" | "env" | "default";
+  env_value: string;
+  valid_values: string[] | null;
+  family: string | null;
+}
+
 export interface ProviderStatus {
   provider: string;
   configured: boolean;
   enabled: boolean;
   models_active: number;
+  /** Backend actually serving this family (first_party, azure, vertex, bedrock). */
+  serving_backend: string | null;
+  /** Priority order from MLPAL_<FAMILY>_BACKENDS (first configured wins). */
+  backend_priority: string[];
   health: ProviderHealth | null;
 }
 
@@ -437,6 +455,17 @@ export class GatewayClient {
     return this.request<DailyUsage>("GET", `/admin/v1/keys/${id}/usage/daily?days=${days}`);
   }
 
+  listRuntimeSettings(): Promise<{ data: RuntimeSetting[] }> {
+    return this.request<{ data: RuntimeSetting[] }>("GET", "/admin/v1/settings");
+  }
+
+  updateRuntimeSetting(
+    name: string,
+    value: string | null,
+  ): Promise<{ name: string; effective: string; source: string }> {
+    return this.request("PUT", `/admin/v1/settings/${name}`, { value });
+  }
+
   getConfig(): Promise<GatewayConfigView> {
     return this.request<GatewayConfigView>("GET", "/admin/v1/config");
   }
@@ -460,6 +489,10 @@ export class GatewayClient {
   /** Provider key status + live health probes (admin). */
   listProviders(): Promise<{ data: ProviderStatus[] }> {
     return this.request<{ data: ProviderStatus[] }>("GET", "/admin/v1/providers");
+  }
+
+  syncFeedNow(): Promise<{ sync: FeedSync | null }> {
+    return this.request<{ sync: FeedSync | null }>("POST", "/admin/v1/catalog/feed/sync");
   }
 
   getFeedStatus(): Promise<FeedStatus> {

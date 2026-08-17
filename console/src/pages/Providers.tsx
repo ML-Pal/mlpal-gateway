@@ -132,7 +132,9 @@ function ProviderCard({ p }: { p: ProviderStatus }) {
             <ServerOff className="mt-0.5 size-4 shrink-0" />
             <div>
               No key supplied — models from this provider are hidden from the catalog and can't be
-              routed. Add <code className="text-xs">{meta.envVar}</code> and restart to enable.{" "}
+              routed. Add <code className="text-xs">{meta.envVar}</code>, or serve this family
+              through a cloud backend (Azure / Vertex / Bedrock, see{" "}
+              <code className="text-xs">docs/BACKENDS.md</code>), and restart to enable.{" "}
               <Link to={`/models?provider=${p.provider}`} className="link-accent">
                 See what it unlocks
               </Link>
@@ -142,9 +144,12 @@ function ProviderCard({ p }: { p: ProviderStatus }) {
           <>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <div className="text-xs text-muted-foreground">Key</div>
+                <div className="text-xs text-muted-foreground">Served via</div>
                 <div className="mt-0.5 flex items-center gap-1.5 font-medium">
-                  <KeyRound className="size-3.5 text-muted-foreground" /> configured
+                  <KeyRound className="size-3.5 text-muted-foreground" />
+                  {p.serving_backend === "first_party" || !p.serving_backend
+                    ? "provider API"
+                    : p.serving_backend}
                 </div>
               </div>
               <div>
@@ -158,6 +163,20 @@ function ProviderCard({ p }: { p: ProviderStatus }) {
                 <div className="mt-0.5 font-medium tabular-nums">{p.models_active}</div>
               </div>
             </div>
+            {p.backend_priority.length > 1 && (
+              <div className="text-xs text-muted-foreground">
+                Backend priority:{" "}
+                {p.backend_priority.map((b, i) => (
+                  <span key={b}>
+                    {i > 0 && " → "}
+                    <code className={cn(b === p.serving_backend && "font-semibold text-foreground")}>
+                      {b}
+                    </code>
+                  </span>
+                ))}{" "}
+                — first configured wins (<code>MLPAL_{p.provider.toUpperCase()}_BACKENDS</code>)
+              </div>
+            )}
             <Link
               to={`/models?provider=${p.provider}`}
               className="inline-flex items-center gap-1 self-start text-xs link-accent"

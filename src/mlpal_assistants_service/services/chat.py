@@ -144,6 +144,7 @@ class ChatService:
         billing_needs_ensure: bool,
         sqs_client: Any | None = None,
         budgets: list | None = None,
+        serving_backend: str | None = None,
     ) -> None:
         """Background task for post-provider steps.
 
@@ -174,6 +175,9 @@ class ChatService:
                     latency_ms=latency_ms,
                     status="success",
                     wallet_debit_status="pending",
+                    cc_metadata=(
+                        {"serving_backend": serving_backend} if serving_backend else None
+                    ),
                 )
 
                 # CU v3: skip wallet debit when gating is off. The frontend
@@ -375,6 +379,7 @@ class ChatService:
                     billing_needs_ensure=not billing_existed,
                     sqs_client=self._sqs_client,
                     budgets=budgets,
+                    serving_backend=adapter.backend_name,
                 )
             )
 
@@ -606,6 +611,7 @@ class ChatService:
                                     latency_ms=latency_ms,
                                     billing_needs_ensure=not billing_existed,
                                     budgets=budgets,
+                                    serving_backend=adapter.backend_name,
                                 )
                             )
 

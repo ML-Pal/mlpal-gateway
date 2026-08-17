@@ -188,9 +188,12 @@ class AdapterFactory:
     _backend_instances: dict[tuple[str, str], "BaseAdapter | None"] = {}
 
     def _priority(self, family: str) -> list[str]:
-        """Parse and validate the priority CSV for a family."""
+        """Parse and validate the priority CSV for a family. A runtime
+        override (console-set, DB-persisted) wins over the env value."""
+        from mlpal_assistants_service.services import runtime_settings
+
         settings = get_settings()
-        raw = {
+        raw = runtime_settings.get(f"{family}_backends") or {
             "openai": settings.openai_backends,
             "google": settings.google_backends,
             "anthropic": settings.anthropic_backends,

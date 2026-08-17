@@ -471,7 +471,15 @@ function TraceDetail({
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <Field label="Model"><code className="text-xs">{t.model_tag}</code></Field>
-            <Field label="Provider">{t.provider}</Field>
+            <Field label="Provider">
+              {t.provider}
+              {(() => {
+                const b = t.metadata?.serving_backend as string | undefined;
+                return b && b !== "first_party" ? (
+                  <span className="ml-1.5 text-xs text-muted-foreground">via {b}</span>
+                ) : null;
+              })()}
+            </Field>
             <Field label="Operation">{t.operation}</Field>
             <Field label="When">{t.created_at ? new Date(t.created_at).toLocaleString() : "—"}</Field>
             <Field label="Latency">{fmtMs(t.latency_ms)}</Field>

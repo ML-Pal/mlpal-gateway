@@ -44,6 +44,17 @@ function statusOf(m: AdminModel): { label: string; variant: "warning" | "muted" 
   return null;
 }
 
+// Serving truth from the gateway: null = no configured backend has this model
+// (missing provider key / cloud backend) — requests to it will fail, so the
+// card must not look orderable. Cloud backends get a small provenance badge;
+// first_party is the norm and stays unlabeled.
+const unserved = (m: AdminModel) =>
+  m.serving_backend === null && m.is_active && !m.is_deprecated;
+const cloudBackend = (m: AdminModel) =>
+  m.serving_backend && !["first_party", "router"].includes(m.serving_backend)
+    ? m.serving_backend
+    : null;
+
 function FeedCard() {
   const { client } = useConnection();
   const [feed, setFeed] = useState<FeedStatus | null>(null);
@@ -117,6 +128,27 @@ function FeedCard() {
             placeholder="mlpal_sk_…  (your mlpal.ai key)"
             className="h-8 w-64 font-mono text-xs"
           />
+        )}
+        {hosted && (
+          <button
+            onClick={async () => {
+              if (!client || busy) return;
+              setBusy(true);
+              try {
+                await client.syncFeedNow();
+                setFeed(await client.getFeedStatus());
+                toast.success("Feed synced.");
+              } catch (err) {
+                toast.error((err as GatewayError).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+            disabled={busy}
+            className="rounded-full border border-border px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            Sync now
+          </button>
         )}
       <button
         onClick={toggle}
@@ -195,7 +227,12 @@ export function Models() {
           </h1>
           <p className="text-sm text-muted-foreground">
             {models
-              ? `${models.filter((m) => m.provider !== "mlpal" && m.is_active && !m.is_deprecated).length} active of ${models.filter((m) => m.provider !== "mlpal").length} in the registry — unhobbled and priced. Click a card for details.`
+              ? (() => {
+                  const rows = models.filter((m) => m.provider !== "mlpal");
+                  const active = rows.filter((m) => m.is_active && !m.is_deprecated);
+                  const un = active.filter((m) => m.serving_backend === null).length;
+                  return `${active.length} active of ${rows.length} in the registry${un ? ` — ${un} not served by any configured backend` : ""}. Click a card for details.`;
+                })()
               : "Loading the registry…"}
           </p>
         </div>
@@ -285,9 +322,10 @@ function FilterChip({
 
 function ModelCard({ m, onOpen }: { m: AdminModel; onOpen: () => void }) {
   const status = statusOf(m);
-  const dim = m.is_deprecated || !m.is_active;
+  const dim = m.is_deprecated || !m.is_active || unserved(m);
   const summary = m.card?.summary ?? m.description ?? "";
   const tier = m.lineage?.tier ?? m.pricing_tier;
+  const via = cloudBackend(m);
 
   return (
     <button
@@ -311,6 +349,8 @@ function ModelCard({ m, onOpen }: { m: AdminModel; onOpen: () => void }) {
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           {status && <Badge variant={status.variant}>{status.label}</Badge>}
+          {unserved(m) && <Badge variant="warning">not served</Badge>}
+          {via && <Badge variant="secondary">via {via}</Badge>}
           {m.source === "local" && <Badge variant="secondary">local</Badge>}
         </div>
       </div>
@@ -370,11 +410,24 @@ function ModelDetail({ m, onClose }: { m: AdminModel; onClose: () => void }) {
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             {statusOf(m) && <Badge variant={statusOf(m)!.variant}>{statusOf(m)!.label}</Badge>}
+            {unserved(m) && <Badge variant="warning">not served</Badge>}
+            {cloudBackend(m) && <Badge variant="secondary">via {cloudBackend(m)}</Badge>}
             {m.source === "local" && <Badge variant="secondary">local</Badge>}
             {(m.lineage?.tier ?? m.pricing_tier) && (
               <Badge variant="outline" className="capitalize">{m.lineage?.tier ?? m.pricing_tier}</Badge>
             )}
           </div>
+
+          {unserved(m) && (
+            <p className="mt-4 rounded-md border border-border bg-secondary/60 p-3 text-sm text-muted-foreground">
+              No configured backend serves this model — requests to it will fail.
+              Add the provider&apos;s API key, or configure a cloud backend
+              (<code className="text-xs">MLPAL_OPENAI_BACKENDS</code> /{" "}
+              <code className="text-xs">MLPAL_ANTHROPIC_BACKENDS</code> /{" "}
+              <code className="text-xs">MLPAL_GOOGLE_BACKENDS</code>) — see{" "}
+              <code className="text-xs">docs/BACKENDS.md</code>.
+            </p>
+          )}
 
           {m.card?.summary && (
             <p className="mt-4 flex gap-2 text-sm">

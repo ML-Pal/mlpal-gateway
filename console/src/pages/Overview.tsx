@@ -65,7 +65,15 @@ export function Overview() {
   const baseUrl = connection?.baseUrl ?? "http://localhost:8000";
   const enabled = (providers ?? []).filter((p) => p.enabled);
   const down = enabled.filter((p) => p.health && !p.health.healthy);
-  const firstRun = traces !== null && traces.total === 0;
+  // First-run means "this box has never served a request" — NOT "no traffic
+  // in the last 24h". The traces call is 24h-scoped, so on a quiet day it
+  // returns 0 while Usage still shows month totals; falling back to the
+  // onboarding screen then reads as a broken/empty dashboard. Use the 14-day
+  // series to distinguish quiet from new.
+  const dailyTotal = (daily?.daily ?? []).reduce((acc, d) => acc + d.requests, 0);
+  const firstRun =
+    traces !== null && traces.total === 0 && daily !== null && dailyTotal === 0;
+  const quietDay = traces !== null && traces.total === 0 && dailyTotal > 0;
 
   const stats = useMemo(() => {
     const list = traces?.data ?? [];
@@ -90,7 +98,9 @@ export function Overview() {
         <p className="text-sm text-muted-foreground">
           {firstRun
             ? "You're connected. Three steps to your first request."
-            : "Your gateway at a glance."}
+            : quietDay
+              ? "No requests in the last 24 hours — the charts below cover your last 14 days."
+              : "Your gateway at a glance."}
         </p>
       </div>
 
