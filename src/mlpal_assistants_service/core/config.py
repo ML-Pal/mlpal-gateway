@@ -16,6 +16,19 @@ def _package_version() -> str:
             return version(dist)
         except PackageNotFoundError:
             continue
+    # Container images run from source without installing the project — read
+    # the version straight from the bundled pyproject (same fallback as
+    # catalog_feed.gateway_version).
+    try:
+        import pathlib
+        import tomllib
+
+        for parent in pathlib.Path(__file__).resolve().parents:
+            pp = parent / "pyproject.toml"
+            if pp.exists():
+                return tomllib.loads(pp.read_text())["project"]["version"]
+    except Exception:  # noqa: BLE001
+        pass
     return "0.0.0-dev"
 
 
