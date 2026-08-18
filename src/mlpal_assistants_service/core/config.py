@@ -192,6 +192,13 @@ class Settings(BaseSettings):
     azure_openai_deployments: str | None = Field(
         default=None, alias="MLPAL_AZURE_DEPLOYMENTS"
     )
+    # Claude on Microsoft Foundry (same AIServices resource, native Anthropic
+    # wire at <endpoint>/anthropic). Deployments are addressed by name — name
+    # them after the Anthropic model IDs and no map is needed; this JSON map
+    # covers non-identity names and makes serves()/console display exact.
+    azure_anthropic_deployments: str | None = Field(
+        default=None, alias="MLPAL_AZURE_ANTHROPIC_DEPLOYMENTS"
+    )
     # Vertex AI. One service account (GOOGLE_APPLICATION_CREDENTIALS, ADC)
     # serves both Gemini (google-genai vertexai=True) and Claude
     # (AnthropicVertex). "global" location preferred: higher availability,

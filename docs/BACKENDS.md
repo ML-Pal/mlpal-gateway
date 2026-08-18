@@ -6,11 +6,11 @@ the default and needs nothing but the provider key. Cloud backends let you
 serve the **same models, same IDs, same wire** through the cloud you already
 have credentials, quota, or compliance requirements on.
 
-| Family    | Backends                          | Cloud credential                       |
-| --------- | --------------------------------- | -------------------------------------- |
-| openai    | `first_party`, `azure`            | Azure AI Foundry resource key          |
-| google    | `first_party`, `vertex`           | GCP ADC (service account / user creds) |
-| anthropic | `first_party`, `bedrock`, `vertex`| AWS creds / GCP ADC                    |
+| Family    | Backends                                   | Cloud credential                       |
+| --------- | ------------------------------------------ | -------------------------------------- |
+| openai    | `first_party`, `azure`                     | Azure AI Foundry resource key          |
+| google    | `first_party`, `vertex`                    | GCP ADC (service account / user creds) |
+| anthropic | `first_party`, `bedrock`, `vertex`, `azure`| AWS creds / GCP ADC / same Azure key   |
 
 The `bedrock` *catalog* family (open-weight models) is unrelated — it keeps
 working exactly as before via `MLPAL_ENABLE_BEDROCK`.
@@ -69,6 +69,34 @@ to the next backend in priority. Without it, Azure claims the whole family.
 Fresh subscriptions start with zero quota for most models — check
 `az cognitiveservices usage list -l <region>` and request increases in the
 portal's Quota blade.
+
+### Claude on Microsoft Foundry (same resource)
+
+The SAME AIServices resource serves Claude natively at `<endpoint>/anthropic`
+— so Azure credits cover Claude too, with no extra credentials:
+
+```env
+MLPAL_ANTHROPIC_BACKENDS=azure,first_party
+# optional exact map (identity convention otherwise):
+MLPAL_AZURE_ANTHROPIC_DEPLOYMENTS='{"claude-haiku-4-5-20251001": "claude-haiku-4-5-20251001"}'
+```
+
+Deploying Claude needs the Anthropic marketplace attestation, which the
+Foundry portal doesn't always surface — use the ARM API (auto-signs the
+Anthropic terms on your behalf; set values matching your real organization):
+
+```bash
+az rest --method put \
+  --url "https://management.azure.com/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.CognitiveServices/accounts/<res>/deployments/claude-haiku-4-5-20251001?api-version=2025-10-01-preview" \
+  --body '{"sku": {"name": "GlobalStandard", "capacity": 50},
+           "properties": {"model": {"format": "Anthropic", "name": "claude-haiku-4-5", "version": "20251001"},
+                          "modelProviderData": {"industry": "technology", "organizationName": "<LegalName>", "countryCode": "US"}}}'
+```
+
+`industry` must be lowercase; Claude on Foundry requires the resource in
+East US 2 or Sweden Central, and fresh subscriptions start at zero Claude
+quota (request in the Quota blade). Claude gets the byte-faithful native
+`/v1/messages` path; the OpenAI-wire endpoints work via translation.
 
 ## Vertex AI (Google + Anthropic families)
 

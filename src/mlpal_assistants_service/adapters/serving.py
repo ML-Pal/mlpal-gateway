@@ -172,3 +172,44 @@ class VertexAnthropicAdapter(AnthropicAdapter):
 
     def backend_model_id(self, provider_model_id: str) -> str:
         return self._model_map[provider_model_id]
+
+
+class AzureAnthropicAdapter(AnthropicAdapter):
+    """Claude via Microsoft Foundry (GA). The same AIServices resource that
+    serves /openai/v1 exposes the NATIVE Anthropic wire at /anthropic, so the
+    standard Anthropic SDK works with a base_url + key swap. `model` means
+    DEPLOYMENT name — identity convention (deployment named after the model
+    ID) or MLPAL_AZURE_ANTHROPIC_DEPLOYMENTS for exact/non-identity maps."""
+
+    backend_name = "azure"
+
+    def __init__(self) -> None:
+        from anthropic import AsyncAnthropic
+
+        settings = get_settings()
+        if not (settings.azure_openai_endpoint and settings.azure_openai_api_key):
+            raise RuntimeError(
+                "Azure backend requires MLPAL_AZURE_OPENAI_ENDPOINT and "
+                "MLPAL_AZURE_OPENAI_API_KEY (the AIServices resource serves "
+                "both OpenAI and Claude)"
+            )
+        self._deployments = _parse_map(
+            settings.azure_anthropic_deployments, "MLPAL_AZURE_ANTHROPIC_DEPLOYMENTS"
+        )
+        super().__init__(
+            api_key=settings.azure_openai_api_key,
+            client=AsyncAnthropic(
+                api_key=settings.azure_openai_api_key,
+                base_url=settings.azure_openai_endpoint.rstrip("/") + "/anthropic",
+                http_client=httpx.AsyncClient(
+                    limits=httpx.Limits(max_connections=300, max_keepalive_connections=60),
+                    timeout=httpx.Timeout(120.0, connect=10.0),
+                ),
+            ),
+        )
+
+    def serves(self, provider_model_id: str) -> bool:
+        return provider_model_id in self._deployments if self._deployments else True
+
+    def backend_model_id(self, provider_model_id: str) -> str:
+        return self._deployments.get(provider_model_id, provider_model_id)

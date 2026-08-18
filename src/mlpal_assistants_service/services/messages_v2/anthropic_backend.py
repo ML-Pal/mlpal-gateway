@@ -88,9 +88,56 @@ class AnthropicBedrockBackend:
 _backends: dict[tuple, object] = {}
 
 
+class AnthropicAzureBackend:
+    """Claude native wire via Microsoft Foundry: the AIServices resource
+    exposes /anthropic/v1/messages byte-compatibly. `model` = DEPLOYMENT
+    name — identity convention, or the MLPAL_AZURE_ANTHROPIC_DEPLOYMENTS map."""
+
+    name = "azure"
+
+    def __init__(self, settings: Settings) -> None:
+        import json as _json
+
+        self.url = (
+            settings.azure_openai_endpoint.rstrip("/") + "/anthropic/v1/messages"
+        )
+        self._api_key = settings.azure_openai_api_key
+        self._default_version = settings.anthropic_api_version
+        self._deployments: dict[str, str] = _json.loads(
+            settings.azure_anthropic_deployments or "{}"
+        )
+
+    def serves(self, provider_model_id: str) -> bool:
+        # No map → identity convention (deployment named after the model ID);
+        # Foundry 404s undeployed models, same contract as the OpenAI side.
+        return provider_model_id in self._deployments if self._deployments else True
+
+    def prepare(
+        self, body: bytes, client_headers: Mapping[str, str]
+    ) -> tuple[bytes, dict[str, str]]:
+        import json as _json
+
+        if self._deployments:
+            obj = _json.loads(body)
+            mapped = self._deployments.get(obj.get("model"))
+            if mapped:
+                obj["model"] = mapped
+                body = _json.dumps(obj).encode()
+        h = {
+            "x-api-key": self._api_key,
+            "anthropic-version": client_headers.get("anthropic-version")
+            or self._default_version,
+            "content-type": "application/json",
+        }
+        beta = client_headers.get("anthropic-beta")
+        if beta:
+            h["anthropic-beta"] = beta
+        return body, h
+
+
 def get_anthropic_backend(
     settings: Settings,
-) -> AnthropicFirstPartyBackend | AnthropicBedrockBackend:
+) -> AnthropicFirstPartyBackend | AnthropicBedrockBackend | AnthropicAzureBackend:
     """Resolve the native-path backend: first configured entry of
     MLPAL_ANTHROPIC_BACKENDS. `vertex` is adapter-path only for now (its
     native wire needs OAuth token refresh — tracked in the worklog)."""
@@ -100,21 +147,26 @@ def get_anthropic_backend(
         settings.anthropic_base_url,
         settings.bedrock_mantle_region,
         settings.bedrock_mantle_models,
+        settings.azure_openai_endpoint,
+        settings.azure_anthropic_deployments,
     )
     hit = _backends.get(key)
     if hit is not None:
         return hit  # type: ignore[return-value]
     for name in (n.strip() for n in settings.anthropic_backends.split(",")):
-        backend: AnthropicFirstPartyBackend | AnthropicBedrockBackend | None = None
+        backend: object | None = None
         if name == "first_party" and settings.anthropic_api_key:
             backend = AnthropicFirstPartyBackend(settings)
         elif name == "bedrock":
             backend = AnthropicBedrockBackend(settings)
+        elif name == "azure" and settings.azure_openai_endpoint and settings.azure_openai_api_key:
+            backend = AnthropicAzureBackend(settings)
         if backend is not None:
             _backends[key] = backend
             return backend
     raise ValueError(
         f"No usable native Anthropic backend in "
         f"MLPAL_ANTHROPIC_BACKENDS={settings.anthropic_backends!r} "
-        "(first_party needs ANTHROPIC_API_KEY; bedrock needs AWS creds)"
+        "(first_party needs ANTHROPIC_API_KEY; bedrock needs AWS creds; "
+        "azure needs MLPAL_AZURE_OPENAI_{ENDPOINT,API_KEY})"
     )

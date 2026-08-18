@@ -24,6 +24,7 @@ from mlpal_assistants_service.services.bedrock_mantle import (
     parse_sse_event,
 )
 from mlpal_assistants_service.services.messages_v2.anthropic_backend import (
+    AnthropicAzureBackend,
     AnthropicBedrockBackend,
     AnthropicFirstPartyBackend,
 )
@@ -60,7 +61,7 @@ def _shared_client() -> httpx.AsyncClient:
 class AnthropicEdge:
     def __init__(
         self,
-        backend: AnthropicFirstPartyBackend | AnthropicBedrockBackend,
+        backend: AnthropicFirstPartyBackend | AnthropicBedrockBackend | AnthropicAzureBackend,
         timeout: float = 120.0,
     ) -> None:
         self._backend = backend

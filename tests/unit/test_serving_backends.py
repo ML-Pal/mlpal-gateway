@@ -292,3 +292,57 @@ def test_v2_bedrock_prepare_adapts_and_signs(monkeypatch):
     assert adapted["model"] == "anthropic.claude-opus-5"
     assert "anthropic_version" in adapted
     assert any(h.lower() == "authorization" for h in headers)  # SigV4 applied
+
+
+def test_azure_claude_adapter_resolution(factory, monkeypatch):
+    """Claude via Microsoft Foundry: same AIServices creds as Azure OpenAI,
+    deployment map (or identity) for model IDs."""
+    from mlpal_assistants_service.adapters.serving import AzureAnthropicAdapter
+
+    s = get_settings()
+    monkeypatch.setattr(s, "anthropic_backends", "azure,first_party")
+    monkeypatch.setattr(s, "azure_openai_endpoint", "https://res.services.ai.azure.com")
+    monkeypatch.setattr(s, "azure_openai_api_key", "az-key")
+    monkeypatch.setattr(s, "azure_anthropic_deployments", '{"claude-haiku-4-5-20251001": "my-haiku"}')
+
+    adapter, wire_id = factory.resolve("anthropic", "claude-haiku-4-5-20251001")
+    assert isinstance(adapter, AzureAnthropicAdapter)
+    assert wire_id == "my-haiku"
+    assert str(adapter._client.base_url).startswith("https://res.services.ai.azure.com/anthropic")
+    # Unmapped model falls through to first_party.
+    adapter2, _ = factory.resolve("anthropic", "claude-opus-5")
+    assert adapter2.backend_name == "first_party"
+
+
+def test_v2_azure_native_backend(monkeypatch):
+    import json
+
+    from mlpal_assistants_service.services.messages_v2.anthropic_backend import (
+        AnthropicAzureBackend,
+        get_anthropic_backend,
+    )
+
+    s = get_settings()
+    monkeypatch.setattr(s, "anthropic_api_key", None)
+    monkeypatch.setattr(s, "anthropic_backends", "azure")
+    monkeypatch.setattr(s, "azure_openai_endpoint", "https://res.services.ai.azure.com")
+    monkeypatch.setattr(s, "azure_openai_api_key", "az-key")
+    monkeypatch.setattr(s, "azure_anthropic_deployments", '{"claude-opus-5": "opus5-dep"}')
+
+    b = get_anthropic_backend(s)
+    assert isinstance(b, AnthropicAzureBackend)
+    assert b.url == "https://res.services.ai.azure.com/anthropic/v1/messages"
+    assert b.serves("claude-opus-5") and not b.serves("claude-sonnet-5")
+
+    body = json.dumps({"model": "claude-opus-5", "max_tokens": 1}).encode()
+    content, headers = b.prepare(body, {"anthropic-beta": "context-1m-2025-08-07"})
+    assert json.loads(content)["model"] == "opus5-dep"
+    assert headers["x-api-key"] == "az-key"
+    assert headers["anthropic-beta"] == "context-1m-2025-08-07"
+
+    # Identity convention: no map -> serves everything, body untouched.
+    monkeypatch.setattr(s, "azure_anthropic_deployments", None)
+    b2 = AnthropicAzureBackend(s)
+    assert b2.serves("anything")
+    content2, _ = b2.prepare(body, {})
+    assert content2 == body

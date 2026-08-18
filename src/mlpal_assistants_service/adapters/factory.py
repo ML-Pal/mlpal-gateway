@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 FAMILY_BACKENDS: dict[str, tuple[str, ...]] = {
     "openai": ("first_party", "azure"),
     "google": ("first_party", "vertex"),
-    "anthropic": ("first_party", "bedrock", "vertex"),
+    "anthropic": ("first_party", "bedrock", "vertex", "azure"),
 }
 
 
@@ -77,6 +77,7 @@ class AdapterFactory:
         from mlpal_assistants_service.adapters.google import GoogleAdapter
         from mlpal_assistants_service.adapters.openai import OpenAIAdapter
         from mlpal_assistants_service.adapters.serving import (
+            AzureAnthropicAdapter,
             AzureOpenAIAdapter,
             BedrockAnthropicAdapter,
             VertexAnthropicAdapter,
@@ -91,6 +92,7 @@ class AdapterFactory:
         }
         self._backend_classes = {
             ("openai", "azure"): AzureOpenAIAdapter,
+            ("anthropic", "azure"): AzureAnthropicAdapter,
             ("google", "vertex"): VertexGoogleAdapter,
             ("anthropic", "bedrock"): BedrockAnthropicAdapter,
             ("anthropic", "vertex"): VertexAnthropicAdapter,
