@@ -17,6 +17,7 @@ from mlpal_assistants_service.api.deps import (
     UsageServiceDep,
 )
 from mlpal_assistants_service.core.config import get_settings
+from mlpal_assistants_service.core.exceptions import ModelNotFoundError
 from mlpal_assistants_service.core.security import generate_trace_id
 from mlpal_assistants_service.repositories import UsageRepository
 from mlpal_assistants_service.seams.billing import build_billing_gate
@@ -136,3 +137,71 @@ async def list_v2_models(api_key: CurrentAPIKey, model_router: ModelRouterDep) -
             },
         })
     return JSONResponse({"data": out})
+
+
+@router.post(
+    "/count_tokens",
+    summary="Count tokens for a Messages request (Anthropic-wire)",
+    description=(
+        "Passthrough to the serving backend's count_tokens for Anthropic "
+        "models. The Anthropic SDK's client.messages.count_tokens and Claude "
+        "Code's context management call this; without it they see a 404. "
+        "Not metered (no inference happens)."
+    ),
+)
+async def count_tokens_v2(
+    request: Request,
+    api_key: CurrentAPIKey,
+    model_router: ModelRouterDep,
+) -> Response:
+    _require_messages_scope(api_key)
+    import json as _json
+
+    import httpx
+
+    from mlpal_assistants_service.core.config import get_settings
+    from mlpal_assistants_service.services.messages_v2.anthropic_backend import (
+        get_anthropic_backend,
+    )
+
+    raw = await request.body()
+    try:
+        body = _json.loads(raw)
+        model_tag = body.get("model") or ""
+    except Exception:  # noqa: BLE001 — malformed body is a client error
+        return Response(error_body(400, "invalid JSON body"), 400, media_type="application/json")
+
+    try:
+        resolved_tag, _ = await model_router.resolve_meta_model(model_tag, "chat")
+        model = await model_router.get_model(resolved_tag)
+    except ModelNotFoundError:
+        return Response(error_body(404, f"model '{model_tag}' not found"), 404, media_type="application/json")
+
+    if model.provider != "anthropic":
+        return Response(
+            error_body(400, "count_tokens is only available for Anthropic models"),
+            400,
+            media_type="application/json",
+        )
+    try:
+        backend = get_anthropic_backend(get_settings())
+    except ValueError as e:
+        return Response(error_body(503, str(e)), 503, media_type="application/json")
+    if not backend.url.endswith("/v1/messages") or backend.name == "bedrock":
+        # Mantle has no count_tokens surface; adapter-path models likewise.
+        return Response(
+            error_body(501, f"count_tokens is not supported by the '{backend.name}' backend"),
+            501,
+            media_type="application/json",
+        )
+
+    body["model"] = model.provider_model_id
+    content, headers = backend.prepare(_json.dumps(body).encode(), request.headers)
+    url = backend.url + "/count_tokens"
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(url, content=content, headers=headers)
+    return Response(
+        resp.content,
+        status_code=resp.status_code,
+        media_type=resp.headers.get("content-type", "application/json"),
+    )
