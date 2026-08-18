@@ -384,6 +384,7 @@ def _extract_bearer_token(authorization: str) -> str:
 
 async def get_current_user_flexible(
     authorization: Annotated[str | None, Header()] = None,
+    x_api_key: Annotated[str | None, Header(alias="x-api-key")] = None,
     api_key_service: APIKeyServiceDep = None,  # type: ignore
     session: SessionDep = None,  # type: ignore
     settings: SettingsDep = None,  # type: ignore
@@ -400,6 +401,9 @@ async def get_current_user_flexible(
 
     Use for read-only catalog endpoints (models) that don't consume compute.
     """
+    if authorization is None and x_api_key:
+        # Anthropic-style header — same normalization as get_current_api_key.
+        authorization = f"Bearer {x_api_key}"
     if authorization is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -479,6 +483,7 @@ APIKeyModelPolicy = Annotated[dict | None, Depends(get_api_key_model_policy)]
 
 async def get_management_principal(
     authorization: Annotated[str | None, Header()] = None,
+    x_api_key: Annotated[str | None, Header(alias="x-api-key")] = None,
     api_key_service: APIKeyServiceDep = None,  # type: ignore
     session: SessionDep = None,  # type: ignore
     settings: SettingsDep = None,  # type: ignore
@@ -494,6 +499,9 @@ async def get_management_principal(
     Returns AuthenticatedUser so downstream endpoints (which use `.id`) are
     identical across both modes.
     """
+    if authorization is None and x_api_key:
+        # Anthropic-style header — same normalization as get_current_api_key.
+        authorization = f"Bearer {x_api_key}"
     if getattr(settings, "auth_backend", "managed") == "local":
         if not authorization:
             raise HTTPException(

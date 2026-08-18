@@ -35,31 +35,32 @@ def _admin_key(user_id=42, is_admin=True):
 
 @pytest.mark.asyncio
 async def test_local_admin_key_resolves_to_principal():
-    p = await get_management_principal("Bearer mlpal_sk_abc", _key_service(_admin_key(42)),
-                                       MagicMock(), _LOCAL)
+    p = await get_management_principal(authorization="Bearer mlpal_sk_abc",
+                                       api_key_service=_key_service(_admin_key(42)),
+                                       session=MagicMock(), settings=_LOCAL)
     assert isinstance(p, AuthenticatedUser) and p.id == 42  # keys created under admin's user_id
 
 
 @pytest.mark.asyncio
 async def test_local_non_admin_key_403():
     with pytest.raises(HTTPException) as ei:
-        await get_management_principal("Bearer mlpal_sk_abc",
-                                       _key_service(_admin_key(1, is_admin=False)),
-                                       MagicMock(), _LOCAL)
+        await get_management_principal(authorization="Bearer mlpal_sk_abc",
+                                       api_key_service=_key_service(_admin_key(1, is_admin=False)),
+                                       session=MagicMock(), settings=_LOCAL)
     assert ei.value.status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_local_missing_auth_401():
     with pytest.raises(HTTPException) as ei:
-        await get_management_principal(None, _key_service(), MagicMock(), _LOCAL)
+        await get_management_principal(authorization=None, api_key_service=_key_service(), session=MagicMock(), settings=_LOCAL)
     assert ei.value.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_local_jwt_token_rejected_needs_admin_key():
     with pytest.raises(HTTPException) as ei:  # a JWT (non-key prefix) is not accepted in local mode
-        await get_management_principal("Bearer eyJhbGciOiJ", _key_service(), MagicMock(), _LOCAL)
+        await get_management_principal(authorization="Bearer eyJhbGciOiJ", api_key_service=_key_service(), session=MagicMock(), settings=_LOCAL)
     assert ei.value.status_code == 401
 
 
