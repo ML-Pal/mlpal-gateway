@@ -2,7 +2,7 @@
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -109,7 +109,7 @@ class UsageService:
             "wallet_debit_attempts": wallet_debit_attempts,
             "wallet_debit_error": wallet_debit_error,
             "cc_metadata": cc_metadata,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         if wallet_debit_status == "pending":
@@ -196,7 +196,7 @@ class UsageService:
         usage_log.wallet_debit_attempts = attempts
         usage_log.wallet_debit_error = error
         if status == "debited":
-            usage_log.wallet_debited_at = datetime.utcnow()
+            usage_log.wallet_debited_at = datetime.now(UTC)
 
     async def _get_monthly_usage_cached(self, user_id: str) -> Decimal:
         """Get current month's usage from cache or database."""
@@ -221,7 +221,7 @@ class UsageService:
 
     async def _get_monthly_usage_from_db(self, user_id: str) -> Decimal:
         """Load current month's usage from database."""
-        start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_of_month = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         result = await self.session.execute(
             select(func.coalesce(func.sum(UsageLog.compute_units), 0)).where(
@@ -267,9 +267,9 @@ class UsageService:
         is under 10ms locally.
         """
         if start_date is None:
-            start_date = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            start_date = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         if end_date is None:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
 
         from mlpal_assistants_service.services.platform_fee import month_progress
 
@@ -352,9 +352,9 @@ class UsageService:
         Defaults to the current calendar month, matching get_usage_summary.
         """
         if start_date is None:
-            start_date = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            start_date = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         if end_date is None:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
 
         success_filter = UsageLog.status == "success"
         # Observability metadata (nullable — older rows predate these fields):
@@ -454,7 +454,7 @@ class UsageService:
                 "return cross-user data)"
             )
 
-        end_date = datetime.utcnow()
+        end_date = datetime.now(UTC)
         start_date = end_date - timedelta(days=days)
 
         day_bucket = func.date_trunc("day", UsageLog.created_at).label("day")

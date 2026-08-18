@@ -169,9 +169,15 @@ def get_audio_service(
     return AudioService(session, redis_client, asset_storage, sqs_client, shared_caches)
 
 
-def get_billing_repository(session: SessionDep, redis_client: RedisDep = None) -> BillingRepository:
-    """Get billing repository for billing status checks."""
-    return BillingRepository(session, redis_client)
+def get_billing_repository(session: SessionDep, redis_client: RedisDep = None):
+    """Billing gate via the seam: managed = the wallet-backed BillingRepository,
+    local (OSS) = the no-callout gate. Endpoints already tolerate the local
+    gate's missing wallet surface (getattr checks) — constructing the managed
+    repository unconditionally made self-hosted boxes issue doomed HTTP
+    callouts to the MLPal backend with a 2s timeout per key listing."""
+    from mlpal_assistants_service.seams.billing import build_billing_gate
+
+    return build_billing_gate(session, redis_client)
 
 
 def get_meta_routing_repository(session: SessionDep) -> MetaRoutingRepository:
@@ -195,24 +201,30 @@ ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
 EmbeddingServiceDep = Annotated[EmbeddingService, Depends(get_embedding_service)]
 ImageServiceDep = Annotated[ImageService, Depends(get_image_service)]
 AudioServiceDep = Annotated[AudioService, Depends(get_audio_service)]
-BillingRepositoryDep = Annotated[BillingRepository, Depends(get_billing_repository)]
+BillingRepositoryDep = Annotated[Any, Depends(get_billing_repository)]
 MetaRoutingRepositoryDep = Annotated[MetaRoutingRepository, Depends(get_meta_routing_repository)]
 RateLimiterDep = Annotated[RateLimiter | None, Depends(get_rate_limiter)]
 
 
 async def get_current_api_key(
     authorization: Annotated[str | None, Header()] = None,
+    x_api_key: Annotated[str | None, Header(alias="x-api-key")] = None,
     api_key_service: APIKeyServiceDep = None,  # type: ignore
 ) -> APIKey:
     """
     Dependency to validate and return the current API key.
 
-    Extracts API key from Authorization header (Bearer token).
+    Accepts `Authorization: Bearer <key>` (OpenAI-style) or `x-api-key: <key>`
+    (Anthropic-style). The Anthropic SDK and Claude Code send x-api-key by
+    default — without this, the "drop-in for Anthropic SDK users" surface
+    401'd unless the caller knew to switch their SDK to bearer auth.
     """
+    if authorization is None and x_api_key:
+        authorization = f"Bearer {x_api_key}"
     if authorization is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing Authorization header",
+            detail="Missing Authorization header (or x-api-key)",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

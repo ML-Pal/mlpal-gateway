@@ -801,11 +801,17 @@ async def ready(request: Request) -> HealthResponse:
     # Providers can be degraded without failing readiness
     core_healthy = checks.get("database", False) and checks.get("redis", False)
 
-    return HealthResponse(
+    body = HealthResponse(
         status="ready" if core_healthy else "not_ready",
         version=settings.app_version,
         checks=checks,
     )
+    if not core_healthy:
+        # Probes (k8s readinessProbe, compose healthcheck, LB target groups)
+        # look at the STATUS CODE — a 200 "not_ready" keeps a dead-DB pod in
+        # rotation serving 500s.
+        return JSONResponse(status_code=503, content=body.model_dump())
+    return body
 
 
 @app.get("/health/live", tags=["Health"])

@@ -1,5 +1,6 @@
 import { Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { SnippetTabs } from "@/components/CodeSnippet";
@@ -29,6 +30,14 @@ function csv(s: string): string[] {
     .filter(Boolean);
 }
 
+/** True when this row's prefix ("mlpal_sk_805406af…") matches the admin key
+ * the console itself is connected with. */
+function isConsoleKey(k: ManagedKey, adminKey: string | undefined): boolean {
+  if (!adminKey) return false;
+  const prefix = k.key_prefix.replace(/[.…]+$/, "");
+  return prefix.length > 0 && adminKey.startsWith(prefix);
+}
+
 const BLANK_FORM = {
   name: "",
   permissions: "messages",
@@ -47,6 +56,24 @@ export function Keys() {
   const [newSecret, setNewSecret] = useState<ManagedKeyWithSecret | null>(null);
   const [burn, setBurn] = useState<Record<number, KeyBudgetBurn>>({});
   const [selected, setSelected] = useState<ManagedKey | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // ?open=<id> deep-links straight into a key's detail (e.g. from a trace).
+  useEffect(() => {
+    const open = searchParams.get("open");
+    if (!open || !keys) return;
+    const id = Number(open);
+    const k = keys.find((x) => x.id === id);
+    if (k) setSelected(k);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("open");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [keys, searchParams, setSearchParams]);
 
   const load = useCallback(async () => {
     if (!client) return;
@@ -101,7 +128,14 @@ export function Keys() {
 
   async function onDelete(key: ManagedKey) {
     if (!client) return;
-    if (!window.confirm(`Revoke key "${key.name}" (${key.key_prefix}…)? This cannot be undone.`)) {
+    const consoleWarn = isConsoleKey(key, connection?.adminKey)
+      ? " This is the key this console is connected with — revoking it will disconnect the console."
+      : "";
+    if (
+      !window.confirm(
+        `Revoke key "${key.name}" (${key.key_prefix}…)?${consoleWarn} This cannot be undone.`,
+      )
+    ) {
       return;
     }
     try {
@@ -295,10 +329,24 @@ export function Keys() {
         </Card>
       )}
 
-      <KeyList keys={keys} onDelete={onDelete} burn={burn} onOpen={setSelected} />
+      <KeyList
+        keys={keys}
+        onDelete={onDelete}
+        burn={burn}
+        onOpen={setSelected}
+        adminKey={connection?.adminKey}
+      />
 
       {selected && (
-        <KeyDetail k={selected} burn={burn[selected.id]} onClose={() => setSelected(null)} />
+        <KeyDetail
+          k={selected}
+          burn={burn[selected.id]}
+          onClose={() => setSelected(null)}
+          onUpdated={(nk) => {
+            setSelected(nk);
+            void load();
+          }}
+        />
       )}
     </div>
   );
@@ -377,11 +425,13 @@ function KeyList({
   onDelete,
   burn,
   onOpen,
+  adminKey,
 }: {
   keys: ManagedKey[] | null;
   onDelete: (k: ManagedKey) => void;
   burn: Record<number, KeyBudgetBurn>;
   onOpen: (k: ManagedKey) => void;
+  adminKey: string | undefined;
 }) {
   if (keys === null) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (keys.length === 0) {
@@ -400,7 +450,15 @@ function KeyList({
         <Card
           key={k.id}
           onClick={() => onOpen(k)}
-          className="cursor-pointer transition-colors hover:border-ring"
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpen(k);
+            }
+          }}
+          className="cursor-pointer transition-colors hover:border-ring focus-visible:border-ring focus-visible:outline-none"
         >
           <CardContent className="flex items-center gap-4 py-4">
             <div className="flex-1">
@@ -408,6 +466,7 @@ function KeyList({
                 <span className="font-medium">{k.name}</span>
                 <code className="text-xs text-muted-foreground">{k.key_prefix.replace(/\.+$/, "")}…</code>
                 {!k.is_active && <Badge variant="muted">inactive</Badge>}
+                {isConsoleKey(k, adminKey) && <Badge variant="info">console session</Badge>}
               </div>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {k.permissions.map((p) => (

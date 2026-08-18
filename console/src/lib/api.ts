@@ -197,6 +197,7 @@ export interface TraceFilters {
   model_tag?: string;
   operation?: string;
   api_key_id?: number;
+  trace_id?: string;
   hours?: number;
   limit?: number;
   offset?: number;
@@ -428,6 +429,10 @@ export class GatewayClient {
     }
 
     if (!resp.ok) {
+      if (resp.status === 401) {
+        // Stored admin key was rejected — let the app clear it and reconnect.
+        window.dispatchEvent(new CustomEvent("mlpal:unauthorized"));
+      }
       throw new GatewayError(extractMessage(parsed, `HTTP ${resp.status}`), resp.status);
     }
     return parsed as T;
@@ -445,6 +450,18 @@ export class GatewayClient {
 
   deleteKey(id: number): Promise<void> {
     return this.request<void>("DELETE", `/admin/v1/keys/${id}`);
+  }
+
+  updateKey(
+    id: number,
+    patch: {
+      model_policy?: ModelPolicy | null;
+      budgets?: BudgetRule[] | null;
+      rate_limit_tier?: string;
+      is_active?: boolean;
+    },
+  ): Promise<ManagedKey> {
+    return this.request<ManagedKey>("PATCH", `/admin/v1/keys/${id}`, patch);
   }
 
   getKeyUsage(id: number): Promise<KeyUsageSummary> {

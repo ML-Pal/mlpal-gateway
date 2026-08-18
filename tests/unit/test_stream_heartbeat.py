@@ -46,7 +46,7 @@ async def test_heartbeat_emitted_during_silence(monkeypatch):
     chat_service.chat_stream = slow_stream
 
     resp = await create_chat_completion_stream(
-        MagicMock(), MagicMock(), api_key, None, chat_service
+        MagicMock(), MagicMock(), api_key, chat_service
     )
     body = await _collect(resp)
 
@@ -71,7 +71,7 @@ async def test_no_heartbeat_when_chunks_flow(monkeypatch):
     chat_service.chat_stream = fast_stream
 
     resp = await create_chat_completion_stream(
-        MagicMock(), MagicMock(), api_key, None, chat_service
+        MagicMock(), MagicMock(), api_key, chat_service
     )
     body = await _collect(resp)
 
@@ -105,7 +105,7 @@ async def test_producer_cancelled_on_client_disconnect(monkeypatch):
     chat_service.chat_stream = infinite_stream
 
     resp = await create_chat_completion_stream(
-        MagicMock(), MagicMock(), api_key, None, chat_service
+        MagicMock(), MagicMock(), api_key, chat_service
     )
     it = resp.body_iterator
     await it.__anext__()  # read one chunk; producer races ahead and fills the bounded queue

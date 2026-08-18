@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GatewayClient, GatewayError } from "@/lib/api";
-import { useConnection } from "@/lib/connection";
+import { UNAUTHORIZED_FLAG, useConnection } from "@/lib/connection";
 
 const DEFAULT_BASE_URL = "http://localhost:8000";
 // When the entered URL doesn't answer, probe the same host on the ports a
@@ -43,6 +43,11 @@ export function Setup() {
   const [adminKey, setAdminKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [wasRejected] = useState(() => {
+    const flag = sessionStorage.getItem(UNAUTHORIZED_FLAG) !== null;
+    sessionStorage.removeItem(UNAUTHORIZED_FLAG);
+    return flag;
+  });
 
   async function onConnect(e: React.FormEvent) {
     e.preventDefault();
@@ -81,6 +86,11 @@ export function Setup() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
       <Brand size="lg" />
+      {wasRejected && (
+        <div className="w-full max-w-md rounded-lg bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
+          Your admin key was rejected — reconnect.
+        </div>
+      )}
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Connect to your gateway</CardTitle>

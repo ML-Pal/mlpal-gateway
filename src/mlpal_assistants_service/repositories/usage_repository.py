@@ -91,12 +91,12 @@ class UsageRepository(BaseRepository[UsageLog]):
 
     async def get_user_cu_today(self, user_id: int) -> Decimal:
         """Get compute units used by a user today."""
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
         return await self.get_user_cu_total(user_id, start_date=today)
 
     async def get_user_cu_this_month(self, user_id: int) -> Decimal:
         """Get compute units used by a user this month."""
-        first_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        first_of_month = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         return await self.get_user_cu_total(user_id, start_date=first_of_month)
 
     async def get_api_key_cu_in_window(
@@ -244,7 +244,7 @@ class UsageRepository(BaseRepository[UsageLog]):
         minutes: int = 1,
     ) -> int:
         """Get request count in the last N minutes (for rate limiting)."""
-        since = datetime.now() - timedelta(minutes=minutes)
+        since = datetime.now(UTC) - timedelta(minutes=minutes)
 
         stmt = select(func.count(UsageLog.id)).where(
             UsageLog.user_id == user_id,

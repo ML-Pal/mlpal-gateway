@@ -76,7 +76,7 @@ Overview dashboard · Traces (live tail, key/status/window filters, payload view
 | Asset storage (image/audio outputs → presigned URLs) | S3 | optional (set AWS creds; degrades gracefully) |
 | Migrations | manual `alembic upgrade head` | migrate container on boot |
 | Secret hygiene | k8s secrets | gitignored `.env`; publish-semantics secret scanner |
-| E2E verification | `scripts/e2e_full_verification.py` | same script |
+| E2E verification | `the unit suite (`pytest tests/unit`)` | same script |
 
 ## SDK
 
@@ -85,6 +85,6 @@ Overview dashboard · Traces (live tail, key/status/window filters, payload view
 ## The parity rule
 
 Everything is one codebase with a composition root (`api/mounting.py`) and seams
-(auth, billing, capture default, mantle, `/v2` aliases). `scripts/build-oss.sh`
+(auth, billing, capture default, mantle, `/v2` aliases). `the OSS build pipeline`
 derives the OSS tree; drift is structural, not accidental. If a feature lands in
 one deployment only, it must be a **seam with a documented default** — never a fork.

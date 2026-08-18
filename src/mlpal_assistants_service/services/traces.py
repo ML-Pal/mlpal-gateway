@@ -86,7 +86,7 @@ async def query_traces(
         await session.execute(
             select(UsageLog)
             .where(*conditions)
-            .order_by(UsageLog.created_at.desc())
+            .order_by(UsageLog.created_at.desc(), UsageLog.id.desc())
             .limit(limit)
             .offset(offset)
         )

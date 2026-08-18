@@ -298,6 +298,15 @@ class ModelRouter:
                 models = await self._model_repo.get_by_provider(provider)
             else:
                 models = await self._model_repo.get_all(is_active=True)
+            # This branch's repo calls don't take an operation filter — apply
+            # it here, or ?capability= silently returns everything (and the
+            # wrong result then sits in the Redis cache for the full TTL).
+            if operation:
+                models = [
+                    m
+                    for m in models
+                    if (m.capabilities or {}).get("operation", "chat") == operation
+                ]
         else:
             models = await self._model_repo.get_active_models(
                 provider=provider,

@@ -7,9 +7,10 @@
 #   4. built-in default (false — privacy by default)
 
 capture:
-  # Store request/response bodies for the Traces debugger. OFF by default:
-  # nothing is captured unless the operator explicitly opts in here, via env,
-  # or with the console toggle. Auth headers are never stored either way.
+  # Store request/response bodies for the Traces debugger. Bodies never leave
+  # this box and auth headers are never stored. Defaults differ by distribution:
+  # managed ships false (opt-in); the self-hosted build ships true (it's the
+  # operator's own box and data — turn off here, via env, or in the console).
   enabled: true
   # Per-body cap before truncation (request and response each).
   max_body_kb: 256

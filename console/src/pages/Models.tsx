@@ -1,5 +1,5 @@
 import { Boxes, ExternalLink, Rss, Search, Sparkles, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { type AdminModel, type FeedStatus, GatewayError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useConnection } from "@/lib/connection";
+import { fmtRate, rateUnitSuffix } from "@/lib/format";
+import { useEscape } from "@/lib/use-escape";
 
 // One color system: semantic status only. Provider identity is TEXT — the
 // rainbow dots read as status signals they aren't, and clash with the warm
@@ -26,10 +28,6 @@ function fmtTokens(n: number | null): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
   if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
   return `${n}`;
-}
-function fmtRate(r: number | null): string {
-  if (r == null) return "—";
-  return `$${r % 1 === 0 ? r.toFixed(0) : r.toFixed(2)}`;
 }
 function searchUrl(m: AdminModel): string {
   return `https://www.google.com/search?q=${encodeURIComponent(`${m.display_name} ${m.provider} AI model`)}`;
@@ -58,12 +56,13 @@ const cloudBackend = (m: AdminModel) =>
 function FeedCard() {
   const { client } = useConnection();
   const [feed, setFeed] = useState<FeedStatus | null>(null);
+  const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [feedKey, setFeedKey] = useState("");
 
   useEffect(() => {
     if (!client) return;
-    client.getFeedStatus().then(setFeed).catch(() => null);
+    client.getFeedStatus().then(setFeed).catch(() => setFailed(true));
   }, [client]);
 
   async function toggle() {
@@ -96,7 +95,15 @@ function FeedCard() {
     }
   }
 
-  if (!feed) return null;
+  if (!feed) {
+    if (!failed) return null;
+    return (
+      <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+        <Rss className="size-4 text-muted-foreground" />
+        <span className="text-sm text-[var(--warning)]">Feed status unavailable</span>
+      </div>
+    );
+  }
   const hosted = feed.mode === "hosted";
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
@@ -171,9 +178,24 @@ function FeedCard() {
 export function Models() {
   const { client } = useConnection();
   const [models, setModels] = useState<AdminModel[] | null>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState("");
-  const [provider, setProvider] = useState<string | null>(searchParams.get("provider"));
+  // Provider filter lives in the URL so filtered views are linkable.
+  const provider = searchParams.get("provider");
+  const setProvider = useCallback(
+    (p: string | null) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (p == null) next.delete("provider");
+          else next.set("provider", p);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
   const [hideRetired, setHideRetired] = useState(true);
   const [selected, setSelected] = useState<AdminModel | null>(null);
 
@@ -365,7 +387,7 @@ function ModelCard({ m, onOpen }: { m: AdminModel; onOpen: () => void }) {
             <span className="font-semibold text-foreground">
               {fmtRate(m.pricing.input_rate)} · {fmtRate(m.pricing.output_rate)}
             </span>{" "}
-            /1M
+            {rateUnitSuffix(m.pricing.rate_unit)}
           </span>
         )}
       </div>
@@ -383,6 +405,7 @@ function ModelCard({ m, onOpen }: { m: AdminModel; onOpen: () => void }) {
 
 function ModelDetail({ m, onClose }: { m: AdminModel; onClose: () => void }) {
   const benchmarks = m.card?.benchmarks && typeof m.card.benchmarks === "object" ? m.card.benchmarks : null;
+  useEscape(onClose);
 
   return (
     <div
@@ -390,6 +413,8 @@ function ModelDetail({ m, onClose }: { m: AdminModel; onClose: () => void }) {
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-2xl border border-border bg-card shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -444,8 +469,8 @@ function ModelDetail({ m, onClose }: { m: AdminModel; onClose: () => void }) {
             <Row label="Max output">{fmtTokens(m.max_output_tokens)} tokens</Row>
             {m.pricing && (
               <>
-                <Row label="Input">{fmtRate(m.pricing.input_rate)} / 1M</Row>
-                <Row label="Output">{fmtRate(m.pricing.output_rate)} / 1M</Row>
+                <Row label="Input">{fmtRate(m.pricing.input_rate)} {rateUnitSuffix(m.pricing.rate_unit)}</Row>
+                <Row label="Output">{fmtRate(m.pricing.output_rate)} {rateUnitSuffix(m.pricing.rate_unit)}</Row>
               </>
             )}
             <Row label="Provider model">{m.provider_model_id ?? "—"}</Row>
@@ -483,15 +508,23 @@ function ModelDetail({ m, onClose }: { m: AdminModel; onClose: () => void }) {
             </p>
           )}
 
-          <a
-            href={searchUrl(m)}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-5 inline-flex items-center gap-1.5 text-sm link-accent"
-          >
-            Learn more about {m.display_name}
-            <ExternalLink className="size-3.5" />
-          </a>
+          <div className="mt-5 flex flex-wrap items-center gap-4">
+            <Link
+              to={`/traces?model=${encodeURIComponent(m.model_tag)}`}
+              className="inline-flex items-center gap-1.5 text-sm link-accent"
+            >
+              View traces →
+            </Link>
+            <a
+              href={searchUrl(m)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm link-accent"
+            >
+              Learn more about {m.display_name}
+              <ExternalLink className="size-3.5" />
+            </a>
+          </div>
         </div>
       </div>
     </div>

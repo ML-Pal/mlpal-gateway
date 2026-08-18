@@ -58,6 +58,22 @@ class APIKeyCreate(BaseSchema):
         default=["*"],
         description="Allowed operations (e.g., ['chat', 'embeddings'] or ['*'] for all)",
     )
+    rate_limit_tier: str | None = Field(
+        default=None,
+        description="Rate-limit tier (free/standard/premium/enterprise); default standard.",
+    )
+
+    @field_validator("rate_limit_tier")
+    @classmethod
+    def _known_tier_create(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        from mlpal_assistants_service.services.rate_limiter import RATE_LIMIT_TIERS
+
+        if v not in RATE_LIMIT_TIERS:
+            raise ValueError(f"unknown tier {v!r} — valid: {sorted(RATE_LIMIT_TIERS)}")
+        return v
+
     expires_at: datetime | None = Field(
         default=None,
         description=(
@@ -100,6 +116,23 @@ class APIKeyUpdate(BaseSchema):
 
     model_policy: ModelPolicy | None = Field(default=None, description="Replace model access policy.")
     budgets: list[BudgetRule] | None = Field(default=None, description="Replace spend budgets.")
+    rate_limit_tier: str | None = Field(
+        default=None, description="Change the rate-limit tier (free/standard/premium/enterprise)."
+    )
+    is_active: bool | None = Field(
+        default=None, description="Deactivate (false) or reactivate (true) the key."
+    )
+
+    @field_validator("rate_limit_tier")
+    @classmethod
+    def _known_tier(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        from mlpal_assistants_service.services.rate_limiter import RATE_LIMIT_TIERS
+
+        if v not in RATE_LIMIT_TIERS:
+            raise ValueError(f"unknown tier {v!r} — valid: {sorted(RATE_LIMIT_TIERS)}")
+        return v
 
     @field_validator("budgets")
     @classmethod

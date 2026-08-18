@@ -21,6 +21,7 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useConnection } from "@/lib/connection";
+import { fmtCU, zeroFillDaily } from "@/lib/format";
 import { curlChat, curlMessages, jsSnippet, pythonSnippet } from "@/lib/snippets";
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -39,28 +40,30 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(s / 86400)}d`;
 }
 
-function fmtCU(cu: number): string {
-  if (!cu) return "0";
-  if (cu < 0.0001) return cu.toExponential(1);
-  return cu.toFixed(4);
-}
-
 export function Overview() {
   const { client, connection } = useConnection();
   const [providers, setProviders] = useState<ProviderStatus[] | null>(null);
   const [traces, setTraces] = useState<TraceList | null>(null);
+  const [errorTotal, setErrorTotal] = useState<number | null>(null);
   const [keyCount, setKeyCount] = useState<number | null>(null);
   const [daily, setDaily] = useState<DailyUsage | null>(null);
   const [latency, setLatency] = useState<Record<string, LatencyStat> | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!client) return;
-    client.listProviders().then((r) => setProviders(r.data)).catch(() => setProviders([]));
-    client.listTraces({ hours: 24, limit: 50 }).then(setTraces).catch(() => null);
-    client.listKeys().then((r) => setKeyCount(r.total)).catch(() => null);
-    client.getDailyUsage(14).then(setDaily).catch(() => null);
-    client.getLatencyStats(7).then((r) => setLatency(r.data)).catch(() => null);
-  }, [client]);
+    setLoadFailed(false);
+    // A panel that fails must say so — "…" forever reads as still loading.
+    const fail = () => setLoadFailed(true);
+    client.listProviders().then((r) => setProviders(r.data)).catch(() => { setProviders([]); fail(); });
+    client.listTraces({ hours: 24, limit: 50 }).then(setTraces).catch(fail);
+    // True 24h error count — the 50 loaded rows are a sample, not the window.
+    client.listTraces({ hours: 24, status: "error", limit: 1 }).then((r) => setErrorTotal(r.total)).catch(fail);
+    client.listKeys().then((r) => setKeyCount(r.total)).catch(fail);
+    client.getDailyUsage(14).then(setDaily).catch(fail);
+    client.getLatencyStats(7).then((r) => setLatency(r.data)).catch(fail);
+  }, [client, reloadKey]);
 
   const baseUrl = connection?.baseUrl ?? "http://localhost:8000";
   const enabled = (providers ?? []).filter((p) => p.enabled);
@@ -77,16 +80,24 @@ export function Overview() {
 
   const stats = useMemo(() => {
     const list = traces?.data ?? [];
-    const errors = list.filter((t) => t.status !== "success").length;
     const cu = list.reduce((acc, t) => acc + (t.compute_units || 0), 0);
     return {
       requests: traces?.total ?? 0,
-      errorRate: list.length ? (errors / list.length) * 100 : 0,
+      errorRate:
+        errorTotal != null && traces?.total ? (errorTotal / traces.total) * 100 : 0,
       cu,
     };
-  }, [traces]);
+  }, [traces, errorTotal]);
 
-  const chartData = (daily?.daily ?? []).map((d) => ({
+  const chartData = (daily
+    ? zeroFillDaily(daily.daily, 14, {
+        requests: 0,
+        input_tokens: 0,
+        output_tokens: 0,
+        compute_units: 0,
+      })
+    : []
+  ).map((d) => ({
     date: d.date.slice(5),
     requests: d.requests,
   }));
@@ -144,20 +155,55 @@ export function Overview() {
         </div>
       )}
 
+      {loadFailed && (
+        <div className="rounded-lg bg-[var(--warning-bg)] px-4 py-3 text-sm text-[var(--warning)]">
+          Some panels failed to load —{" "}
+          <button onClick={() => setReloadKey((k) => k + 1)} className="font-medium underline">
+            retry
+          </button>
+        </div>
+      )}
+
       {firstRun ? (
         <FirstRun baseUrl={baseUrl} keyCount={keyCount ?? 0} />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Requests (24h)" value={traces ? String(stats.requests) : "…"} to="/traces" />
+            <Stat
+              label="Requests (24h)"
+              value={traces ? String(stats.requests) : loadFailed ? "—" : "…"}
+              to="/traces"
+            />
             <Stat
               label="Error rate (24h)"
-              value={`${stats.errorRate.toFixed(1)}%`}
+              value={
+                traces && errorTotal != null
+                  ? `${stats.errorRate.toFixed(1)}%`
+                  : loadFailed
+                    ? "—"
+                    : "…"
+              }
               to="/traces"
-              tone={stats.errorRate > 5 ? "bad" : stats.errorRate > 0 ? "warn" : "good"}
+              tone={
+                traces && errorTotal != null
+                  ? stats.errorRate > 5
+                    ? "bad"
+                    : stats.errorRate > 0
+                      ? "warn"
+                      : "good"
+                  : undefined
+              }
             />
-            <Stat label="Compute units (24h)" value={fmtCU(stats.cu)} to="/usage" />
-            <Stat label="API keys" value={keyCount != null ? String(keyCount) : "…"} to="/keys" />
+            <Stat
+              label="Compute units (24h)"
+              value={traces ? fmtCU(stats.cu) : loadFailed ? "—" : "…"}
+              to="/usage"
+            />
+            <Stat
+              label="API keys"
+              value={keyCount != null ? String(keyCount) : loadFailed ? "—" : "…"}
+              to="/keys"
+            />
           </div>
 
           {chartData.length > 0 && (

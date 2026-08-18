@@ -260,11 +260,22 @@ class PolicyService:
         now_local = self._now_local()
         windows = {b["window"] for b in budgets}
         try:
+            # Increment ONLY when the counter exists. incrbyfloat would CREATE
+            # a missing counter at just this request's cu — after a Redis
+            # restart/eviction mid-window that tiny counter looks "seeded", so
+            # check_budgets never takes its usage_logs reconcile path and the
+            # cap is silently lifted for the rest of the window. Leaving the
+            # key absent instead routes the next check through the reseed.
+            lua = (
+                "if redis.call('EXISTS', KEYS[1]) == 1 then "
+                "return redis.call('INCRBYFLOAT', KEYS[1], ARGV[1]) "
+                "else return false end"
+            )
             pipe = self._redis.pipeline(transaction=False)
             for window in windows:
                 wid = window_id(window, now_local)
                 ckey = self._counter_key(api_key_id, window, wid)
-                pipe.incrbyfloat(ckey, float(cu))
+                pipe.eval(lua, 1, ckey, float(cu))
                 ttl = self._ttl_seconds(window, now_local)
                 if ttl is not None:
                     pipe.expire(ckey, ttl)

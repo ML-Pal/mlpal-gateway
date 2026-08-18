@@ -1,6 +1,6 @@
 """Image generation API endpoint."""
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, HTTPException, status
 
 from mlpal_assistants_service.api.deps import (
     CurrentAPIKey,
@@ -40,6 +40,14 @@ async def generate_images(
     - dall-e-3 (OpenAI)
     - dall-e-2 (OpenAI)
     """
+    # Permission gate — same contract as /v1/chat: a key scoped away from this
+    # surface must not be able to spend on it.
+    # "image" is a legacy singular some existing keys carry — accept both.
+    if not (api_key.has_permission("images") or api_key.has_permission("image")):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API key does not have permission for image generation",
+        )
     return await image_service.generate(
         user_id=api_key.user_id,
         api_key_id=api_key.id,

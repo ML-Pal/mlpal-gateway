@@ -256,7 +256,17 @@ function ServingBackendsCard() {
                       <button
                         aria-label={`Remove ${b}`}
                         disabled={busy === s.name}
-                        onClick={() => void apply(s.name, chain.filter((x) => x !== b).join(","))}
+                        onClick={() => {
+                          const family = FAMILY_LABEL[s.family!] ?? s.family;
+                          if (
+                            !window.confirm(
+                              `Remove ${b} from the ${family} chain? Models only served by it will stop serving.`,
+                            )
+                          ) {
+                            return;
+                          }
+                          void apply(s.name, chain.filter((x) => x !== b).join(","));
+                        }}
                         className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                       >
                         <X className="size-3" />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import {
   Bar,
   BarChart,
@@ -18,17 +19,28 @@ import {
   type UsageSummary,
 } from "@/lib/api";
 import { useConnection } from "@/lib/connection";
+import { cuToUsd, fmtCU, zeroFillDaily } from "@/lib/format";
 
 function fmtMs(ms?: number): string {
   if (ms == null) return "—";
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
 }
 
+function fmtPeriodDay(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function Usage() {
   const { client } = useConnection();
+  const navigate = useNavigate();
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [daily, setDaily] = useState<DailyUsage | null>(null);
   const [latency, setLatency] = useState<Record<string, LatencyStat> | null>(null);
+  const [cuUsdRate, setCuUsdRate] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,20 +55,39 @@ export function Usage() {
       });
     client.getDailyUsage(14).then(setDaily).catch(() => null);
     client.getLatencyStats(7).then((r) => setLatency(r.data)).catch(() => null);
+    client
+      .getConfig()
+      .then((c) => setCuUsdRate(typeof c.cu_to_usd.value === "number" ? c.cu_to_usd.value : null))
+      .catch(() => null);
   }, [client]);
 
   const models = usage ? Object.values(usage.by_model) : [];
-  const chartData = (daily?.daily ?? []).map((d) => ({
+  const chartData = (daily
+    ? zeroFillDaily(daily.daily, 14, {
+        requests: 0,
+        input_tokens: 0,
+        output_tokens: 0,
+        compute_units: 0,
+      })
+    : []
+  ).map((d) => ({
     date: d.date.slice(5), // MM-DD
     requests: d.requests,
     cu: d.compute_units,
   }));
+  const totalUsd = usage ? cuToUsd(usage.total_compute_units, cuUsdRate) : null;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="display text-4xl">Usage</h1>
         <p className="text-sm text-muted-foreground">This account's usage across the window.</p>
+        {usage?.period_start && usage.period_end && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Billing period {fmtPeriodDay(usage.period_start)} –{" "}
+            {fmtPeriodDay(usage.period_end)} (UTC)
+          </p>
+        )}
       </div>
 
       {error && <p className="text-sm text-muted-foreground">Could not load usage: {error}</p>}
@@ -66,7 +97,11 @@ export function Usage() {
         <>
           <div className="grid grid-cols-3 gap-3">
             <Stat label="Requests" value={usage.total_requests.toLocaleString()} />
-            <Stat label="Compute units" value={usage.total_compute_units.toFixed(4)} />
+            <Stat
+              label="Compute units"
+              value={fmtCU(usage.total_compute_units)}
+              sub={totalUsd ?? undefined}
+            />
             <Stat
               label="Tokens (in / out)"
               value={`${usage.total_input_tokens.toLocaleString()} / ${usage.total_output_tokens.toLocaleString()}`}
@@ -172,17 +207,29 @@ export function Usage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {models.map((m) => (
-                      <tr key={m.model_tag} className="border-b border-border/50 last:border-0">
-                        <td className="py-2">
-                          <code className="text-xs">{m.model_tag}</code>
-                        </td>
-                        <td className="py-2 text-right tabular-nums">{m.requests.toLocaleString()}</td>
-                        <td className="py-2 text-right tabular-nums">{m.input_tokens.toLocaleString()}</td>
-                        <td className="py-2 text-right tabular-nums">{m.output_tokens.toLocaleString()}</td>
-                        <td className="py-2 text-right tabular-nums">{m.compute_units.toFixed(4)}</td>
-                      </tr>
-                    ))}
+                    {models.map((m) => {
+                      const usd = cuToUsd(m.compute_units, cuUsdRate);
+                      return (
+                        <tr
+                          key={m.model_tag}
+                          onClick={() =>
+                            navigate(`/traces?model=${encodeURIComponent(m.model_tag)}`)
+                          }
+                          className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-muted/60"
+                        >
+                          <td className="py-2">
+                            <code className="text-xs">{m.model_tag}</code>
+                          </td>
+                          <td className="py-2 text-right tabular-nums">{m.requests.toLocaleString()}</td>
+                          <td className="py-2 text-right tabular-nums">{m.input_tokens.toLocaleString()}</td>
+                          <td className="py-2 text-right tabular-nums">{m.output_tokens.toLocaleString()}</td>
+                          <td className="py-2 text-right tabular-nums">
+                            {fmtCU(m.compute_units)}
+                            {usd && <span className="ml-1 text-xs text-muted-foreground">({usd})</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
@@ -194,12 +241,13 @@ export function Usage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <Card>
       <CardContent className="py-4">
         <div className="text-xs text-muted-foreground">{label}</div>
         <div className="metric mt-1 tabular-nums">{value}</div>
+        {sub && <div className="mt-0.5 text-xs tabular-nums text-muted-foreground">{sub}</div>}
       </CardContent>
     </Card>
   );

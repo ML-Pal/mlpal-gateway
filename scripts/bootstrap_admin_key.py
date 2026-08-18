@@ -167,7 +167,7 @@ def create_admin_key(
                 f"""
                 INSERT INTO {schema}.api_keys
                 (user_id, key_hash, key_prefix, name, description, permissions, rate_limit_tier, is_active)
-                VALUES (%s, %s, %s, %s, %s, %s, 'unlimited', true)
+                VALUES (%s, %s, %s, %s, %s, %s, 'enterprise', true)
                 RETURNING id, created_at
                 """,
                 (SYSTEM_USER_ID, key_hash, key_prefix, name, description, json.dumps(permissions))
@@ -183,7 +183,7 @@ def create_admin_key(
                 "key_prefix": key_prefix,
                 "permissions": permissions,
                 "user_id": SYSTEM_USER_ID,
-                "rate_limit_tier": "unlimited",
+                "rate_limit_tier": "enterprise",
                 "created_at": str(created_at),
                 "secret": secret,
             }
@@ -202,7 +202,7 @@ Examples:
   %(prog)s --check                  # Check if admin key exists
   %(prog)s --name "deploy-admin"    # Custom name
 
-The secret key is output to stdout ONCE. Store it securely in AWS Secrets Manager.
+The secret key is output to stdout ONCE. Store it in your secrets manager.
         """,
     )
 

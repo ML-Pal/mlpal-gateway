@@ -13,7 +13,6 @@ from mlpal_assistants_service.adapters.base import UnsupportedModalityError
 from mlpal_assistants_service.api.deps import (
     ChatServiceDep,
     CurrentAPIKey,
-    RateLimitCheck,
 )
 from mlpal_assistants_service.core.exceptions import (
     ModelNotAvailableError,
@@ -78,7 +77,6 @@ async def create_chat_completion(
     request: Request,
     body: ChatCompletionRequest,
     api_key: CurrentAPIKey,
-    _rate_limit: RateLimitCheck,
     chat_service: ChatServiceDep,
 ) -> ChatCompletionResponse:
     """
@@ -149,7 +147,6 @@ async def create_chat_completion_stream(
     request: Request,
     body: ChatCompletionRequest,
     api_key: CurrentAPIKey,
-    _rate_limit: RateLimitCheck,
     chat_service: ChatServiceDep,
 ) -> StreamingResponse:
     """Create a streaming chat completion."""

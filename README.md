@@ -53,7 +53,7 @@ Anthropic wire, any provider's model:
 
 ```bash
 curl http://localhost:8000/v1/messages \
-  -H "Authorization: Bearer $MLPAL_KEY" -H "content-type: application/json" \
+  -H "Authorization: Bearer $MLPAL_API_KEY" -H "content-type: application/json" \
   -d '{"model":"mlpal","max_tokens":512,"messages":[{"role":"user","content":"hi"}]}'
 ```
 
@@ -185,6 +185,20 @@ code.
 | `/admin/v1/*` | Keys, policies, budgets, capture, routing |
 
 Details: [docs/API_SURFACE.md](docs/API_SURFACE.md).
+
+## Point the Anthropic SDK or Claude Code at it
+
+`/v1/messages` speaks the native Anthropic wire and accepts the SDK's default
+`x-api-key` header — so it really is a drop-in:
+
+```python
+from anthropic import Anthropic
+client = Anthropic(base_url="http://localhost:8000", api_key="mlpal_sk_...")
+```
+
+For Claude Code, set `ANTHROPIC_BASE_URL=http://localhost:8000` and
+`ANTHROPIC_API_KEY=mlpal_sk_...` — every request is then routed, priced, and
+traced by your gateway.
 
 ## Use it with a coding agent
 

@@ -9,6 +9,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -22,6 +23,20 @@ export interface Connection {
 }
 
 const STORAGE_KEY = "mlpal.console.connection";
+/** Set on a 401 redirect; Setup reads it to explain why you landed there. */
+export const UNAUTHORIZED_FLAG = "mlpal.console.unauthorized";
+
+// A page's worth of parallel requests can all 401 at once — redirect exactly
+// once. The flag lives for the page's lifetime; the redirect reloads anyway.
+let redirecting = false;
+
+function onUnauthorized() {
+  if (redirecting || window.location.pathname === "/setup") return;
+  redirecting = true;
+  localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.setItem(UNAUTHORIZED_FLAG, "1");
+  window.location.assign("/setup");
+}
 
 function load(): Connection | null {
   try {
@@ -48,6 +63,11 @@ const ConnectionContext = createContext<ConnectionContextValue | null>(null);
 
 export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [connection, setConnection] = useState<Connection | null>(load);
+
+  useEffect(() => {
+    window.addEventListener("mlpal:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("mlpal:unauthorized", onUnauthorized);
+  }, []);
 
   const connect = useCallback((c: Connection) => {
     const clean: Connection = { baseUrl: c.baseUrl.replace(/\/+$/, ""), adminKey: c.adminKey };

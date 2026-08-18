@@ -1,6 +1,6 @@
-import { Activity, Copy, Pause, Play, ScrollText, X } from "lucide-react";
+import { Activity, Copy, Download, Pause, Play, ScrollText, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +17,20 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useConnection } from "@/lib/connection";
+import { fmtCU } from "@/lib/format";
 import { curlChat } from "@/lib/snippets";
+import { useEscape } from "@/lib/use-escape";
 
 const REFRESH_MS = 5000;
+const PAGE_SIZE = 100;
+// A search that looks like a trace id (uuid-ish hex) becomes a server-side
+// trace_id filter — client-side text match can't find rows beyond this page.
+const TRACE_ID_RE = /^[0-9a-f][0-9a-f-]{30,40}$/i;
 const WINDOWS = [
   { label: "1h", hours: 1 },
   { label: "24h", hours: 24 },
   { label: "7d", hours: 168 },
+  { label: "30d", hours: 720 },
 ] as const;
 
 function timeAgo(iso: string | null): string {
@@ -46,14 +53,6 @@ function fmtTok(n: number): string {
   return `${n}`;
 }
 
-/** CU spans orders of magnitude (a haiku call is ~4e-6) — fixed 4dp collapses
- * small-but-real values to 0.0000, so switch to compact scientific below 1e-4. */
-function fmtCU(cu: number): string {
-  if (!cu) return "0";
-  if (cu < 0.0001) return cu.toExponential(1);
-  return cu.toFixed(4);
-}
-
 export function Traces() {
   const { client, connection } = useConnection();
   const [traces, setTraces] = useState<TraceRecord[] | null>(null);
@@ -63,14 +62,16 @@ export function Traces() {
   const [keys, setKeys] = useState<ManagedKey[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const keyParam = searchParams.get("key");
-  const keyId = keyParam !== null && keyParam !== "" ? Number(keyParam) : null;
-  const setKeyId = useCallback(
-    (id: number | null) => {
+  const parsedKey = keyParam !== null && keyParam !== "" ? Number(keyParam) : NaN;
+  const keyId = Number.isFinite(parsedKey) ? parsedKey : null;
+  const modelTag = searchParams.get("model");
+  const setParam = useCallback(
+    (name: string, value: string | null) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
-          if (id == null) next.delete("key");
-          else next.set("key", String(id));
+          if (value == null) next.delete(name);
+          else next.set(name, value);
           return next;
         },
         { replace: true },
@@ -78,7 +79,15 @@ export function Traces() {
     },
     [setSearchParams],
   );
-  const [q, setQ] = useState("");
+  const setKeyId = useCallback(
+    (id: number | null) => setParam("key", id == null ? null : String(id)),
+    [setParam],
+  );
+  const [q, setQ] = useState(() => searchParams.get("trace") ?? "");
+  const traceIdQuery = TRACE_ID_RE.test(q.trim()) ? q.trim() : null;
+  const [offset, setOffset] = useState(0);
+  const [errorTotal, setErrorTotal] = useState<number | null>(null);
+  const [windowTotal, setWindowTotal] = useState<number | null>(null);
   const [live, setLive] = useState(true);
   const [selected, setSelected] = useState<TraceRecord | null>(null);
   const [capture, setCapture] = useState<CaptureStatus | null>(null);
@@ -87,18 +96,36 @@ export function Traces() {
   const load = useCallback(async () => {
     if (!client) return;
     try {
-      const filters: TraceFilters = { hours, limit: 100 };
-      if (status) filters.status = status;
-      if (keyId != null) filters.api_key_id = keyId;
-      const res = await client.listTraces(filters);
+      const base: TraceFilters = { hours };
+      if (keyId != null) base.api_key_id = keyId;
+      if (modelTag) base.model_tag = modelTag;
+      if (traceIdQuery) base.trace_id = traceIdQuery;
+      const page: TraceFilters = { ...base, limit: PAGE_SIZE, offset };
+      if (status) page.status = status;
+      const [res, errRes, allRes] = await Promise.all([
+        client.listTraces(page),
+        // True whole-window error count — the loaded page is a sample, not
+        // the window, and its error share is not the window's error rate.
+        client.listTraces({ ...base, status: "error", limit: 1 }),
+        // With a status chip active the page total is status-filtered; the
+        // error-rate denominator must be the whole window.
+        status ? client.listTraces({ ...base, limit: 1 }) : null,
+      ]);
       setTraces(res.data);
       setTotal(res.total);
+      setErrorTotal(errRes.total);
+      setWindowTotal(allRes ? allRes.total : res.total);
     } catch (err) {
       toast.error((err as GatewayError).message);
       setTraces([]);
       setLive(false);
     }
-  }, [client, hours, status, keyId]);
+  }, [client, hours, status, keyId, modelTag, traceIdQuery, offset]);
+
+  // A page offset only makes sense within the filter set it was reached in.
+  useEffect(() => {
+    setOffset(0);
+  }, [hours, status, keyId, modelTag, traceIdQuery]);
 
   useEffect(() => {
     void load();
@@ -132,7 +159,7 @@ export function Traces() {
 
   const shown = useMemo(() => {
     if (!traces) return [];
-    if (!q.trim()) return traces;
+    if (!q.trim() || traceIdQuery) return traces; // trace-id search is server-side
     const needle = q.toLowerCase();
     return traces.filter(
       (t) =>
@@ -140,25 +167,63 @@ export function Traces() {
         t.model_tag.toLowerCase().includes(needle) ||
         t.operation.toLowerCase().includes(needle),
     );
-  }, [traces, q]);
+  }, [traces, q, traceIdQuery]);
 
   const stats = useMemo(() => {
     const list = traces ?? [];
-    const errors = list.filter((t) => t.status !== "success").length;
     const latencies = list.map((t) => t.latency_ms ?? 0).filter((v) => v > 0);
     const cu = list.reduce((acc, t) => acc + (t.compute_units || 0), 0);
     return {
       requests: total,
-      errorRate: list.length ? (errors / list.length) * 100 : 0,
+      errorRate:
+        errorTotal != null && windowTotal ? (errorTotal / windowTotal) * 100 : 0,
       avgMs: latencies.length ? latencies.reduce((a, b) => a + b, 0) / latencies.length : 0,
       cu,
     };
-  }, [traces, total]);
+  }, [traces, total, errorTotal, windowTotal]);
 
   const maxLatency = useMemo(
     () => Math.max(1, ...(traces ?? []).map((t) => t.latency_ms ?? 0)),
     [traces],
   );
+
+  const hasFilters = q.trim() !== "" || keyId != null || status !== "" || modelTag != null;
+
+  function clearFilters() {
+    setQ("");
+    setStatus("");
+    setOffset(0);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const name of ["key", "model", "trace"]) next.delete(name);
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
+  function exportCsv() {
+    const header = [
+      "trace_id", "created_at", "model", "provider", "status",
+      "latency_ms", "input_tokens", "output_tokens", "compute_units",
+    ];
+    const lines = [header.join(",")];
+    for (const t of traces ?? []) {
+      lines.push(
+        [
+          t.trace_id, t.created_at ?? "", t.model_tag, t.provider, t.status,
+          t.latency_ms ?? "", t.input_tokens, t.output_tokens, t.compute_units,
+        ].join(","),
+      );
+    }
+    const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `traces-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -212,7 +277,7 @@ export function Traces() {
           tone={stats.errorRate > 5 ? "bad" : stats.errorRate > 0 ? "warn" : "good"}
         />
         <Stat label="Avg latency" value={fmtMs(Math.round(stats.avgMs))} />
-        <Stat label="Compute units" value={fmtCU(stats.cu)} />
+        <Stat label="Compute units (loaded rows)" value={fmtCU(stats.cu)} />
       </div>
 
       {/* filter bar */}
@@ -230,6 +295,15 @@ export function Traces() {
             </Chip>
           ))}
         </div>
+        {modelTag && (
+          <button
+            onClick={() => setParam("model", null)}
+            title="Clear model filter"
+            className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium"
+          >
+            model: <code>{modelTag}</code> <X className="size-3" />
+          </button>
+        )}
         {keys.length > 0 && (
           <select
             value={keyId ?? ""}
@@ -260,17 +334,36 @@ export function Traces() {
       {traces === null ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : shown.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col gap-4 py-8">
-            <div className="text-center text-sm text-muted-foreground">
-              No requests in this window yet — run this and watch it appear here live:
-            </div>
-            <CodeBlock code={curlChat(connection?.baseUrl ?? "http://localhost:8000")} className="mx-auto w-full max-w-2xl" />
-          </CardContent>
-        </Card>
+        !hasFilters && total === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col gap-4 py-8">
+              <div className="text-center text-sm text-muted-foreground">
+                No requests in this window yet — run this and watch it appear here live:
+              </div>
+              <CodeBlock code={curlChat(connection?.baseUrl ?? "http://localhost:8000")} className="mx-auto w-full max-w-2xl" />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
+              <p className="text-sm text-muted-foreground">No requests match these filters.</p>
+              <button onClick={clearFilters} className="text-xs link-accent">
+                Clear filters
+              </button>
+            </CardContent>
+          </Card>
+        )
       ) : (
         <Card>
           <CardContent className="p-0">
+            <div className="flex items-center justify-end border-b border-border px-4 py-2">
+              <button
+                onClick={exportCsv}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Download className="size-3.5" /> Export CSV
+              </button>
+            </div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -288,7 +381,15 @@ export function Traces() {
                   <tr
                     key={`${t.trace_id}-${t.created_at}`}
                     onClick={() => setSelected(t)}
-                    className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-muted/60"
+                    tabIndex={0}
+                    role="button"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelected(t);
+                      }
+                    }}
+                    className="cursor-pointer border-b border-border/50 transition-colors last:border-0 hover:bg-muted/60 focus-visible:outline-none focus-visible:bg-muted/60"
                   >
                     <td className="py-2.5 pl-4">
                       <span className="inline-flex items-center gap-2">
@@ -328,6 +429,27 @@ export function Traces() {
                 ))}
               </tbody>
             </table>
+            <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
+              <span className="tabular-nums">
+                Showing {total === 0 ? 0 : offset + 1}–{offset + (traces?.length ?? 0)} of {total}
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  disabled={offset === 0}
+                  onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+                  className="rounded-md border border-border px-2.5 py-1 font-medium transition-colors disabled:opacity-40 enabled:hover:bg-muted"
+                >
+                  Prev
+                </button>
+                <button
+                  disabled={offset + PAGE_SIZE >= total}
+                  onClick={() => setOffset(offset + PAGE_SIZE)}
+                  className="rounded-md border border-border px-2.5 py-1 font-medium transition-colors disabled:opacity-40 enabled:hover:bg-muted"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -394,6 +516,7 @@ function TraceDetail({
   const { client, connection } = useConnection();
   const [payload, setPayload] = useState<TracePayload | null | "missing">(null);
   const [tab, setTab] = useState<"request" | "response">("request");
+  useEscape(onClose);
 
   useEffect(() => {
     if (!client) return;
@@ -430,6 +553,8 @@ function TraceDetail({
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
         className="h-full w-full max-w-xl overflow-auto border-l border-border bg-card shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -483,7 +608,11 @@ function TraceDetail({
             <Field label="Operation">{t.operation}</Field>
             <Field label="When">{t.created_at ? new Date(t.created_at).toLocaleString() : "—"}</Field>
             <Field label="Latency">{fmtMs(t.latency_ms)}</Field>
-            <Field label="API key">{t.api_key_name ?? `#${t.api_key_id}`}</Field>
+            <Field label="API key">
+              <Link to={`/keys?open=${t.api_key_id}`} className="link-accent">
+                {t.api_key_name ?? `#${t.api_key_id}`}
+              </Link>
+            </Field>
             <Field label="Input tokens">{t.input_tokens.toLocaleString()}</Field>
             <Field label="Output tokens">{t.output_tokens.toLocaleString()}</Field>
           </div>

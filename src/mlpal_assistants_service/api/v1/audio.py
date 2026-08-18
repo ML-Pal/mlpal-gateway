@@ -1,6 +1,6 @@
 """Audio API endpoints (TTS and transcription)."""
 
-from fastapi import APIRouter, File, Form, Request, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import Response
 
 from mlpal_assistants_service.api.deps import (
@@ -67,6 +67,13 @@ async def text_to_speech(
     - tts-1 (OpenAI - faster)
     - tts-1-hd (OpenAI - higher quality)
     """
+    # Permission gate — same contract as /v1/chat: a key scoped away from this
+    # surface must not be able to spend on it.
+    if not api_key.has_permission("audio"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API key does not have permission for text-to-speech",
+        )
     audio_bytes, tts_response = await audio_service.text_to_speech(
         user_id=api_key.user_id,
         api_key_id=api_key.id,
@@ -126,6 +133,13 @@ async def transcribe_audio(
         prompt=prompt,
     )
 
+    # Permission gate — same contract as /v1/chat: a key scoped away from this
+    # surface must not be able to spend on it.
+    if not api_key.has_permission("audio"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API key does not have permission for transcription",
+        )
     return await audio_service.transcribe(
         user_id=api_key.user_id,
         api_key_id=api_key.id,

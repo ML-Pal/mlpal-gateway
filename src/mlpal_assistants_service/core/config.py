@@ -8,6 +8,17 @@ from pydantic import Field, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _package_version() -> str:
+    from importlib.metadata import PackageNotFoundError, version
+
+    for dist in ("mlpal-gateway", "mlpal-assistants-service"):
+        try:
+            return version(dist)
+        except PackageNotFoundError:
+            continue
+    return "0.0.0-dev"
+
+
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
@@ -20,7 +31,12 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "MLpal Assistants Service"
-    app_version: str = "0.1.0"
+    app_version: str = Field(
+        # Single source of truth is pyproject/package metadata — a hardcoded
+        # literal here shipped "0.1.0" in /health, OpenAPI, and OTEL while
+        # the package was 0.2.x, so bug reports carried the wrong version.
+        default_factory=lambda: _package_version()
+    )
     # "local" = self-hosted OSS: metrics go to console (not AWS EMF) and no
     # X-Ray propagator is attached. (core/metrics.py already branches on "local".)
     environment: Literal["development", "staging", "production", "local"] = Field(

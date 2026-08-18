@@ -91,6 +91,7 @@ class APIKeyService:
             name=data.name,
             description=data.description,
             permissions=data.permissions,
+            rate_limit_tier=getattr(data, "rate_limit_tier", None) or "standard",
             expires_at=data.expires_at,
             tags=data.tags or {},
             model_policy=data.model_policy.model_dump() if data.model_policy else None,
@@ -269,6 +270,10 @@ class APIKeyService:
             key_record.model_policy = updates["model_policy"]
         if "budgets" in updates:
             key_record.budgets = updates["budgets"]
+        if "rate_limit_tier" in updates:
+            key_record.rate_limit_tier = updates["rate_limit_tier"]
+        if "is_active" in updates:
+            key_record.is_active = updates["is_active"]
 
         await self.session.flush()
         await self.session.refresh(key_record)
@@ -359,10 +364,15 @@ class APIKeyService:
 
             obj = json.loads(data)
 
-            # Check expiration (cached value might have expired since caching)
+            # Check expiration (cached value might have expired since caching).
+            # The serialized value is timezone-aware; comparing against naive
+            # utcnow() raised TypeError on every hit, which the broad except
+            # below swallowed — silently disabling the auth cache for every
+            # key that had an expiry.
             if obj.get("expires_at"):
                 expires = datetime.fromisoformat(obj["expires_at"])
-                if expires < datetime.utcnow():
+                now = datetime.now(UTC) if expires.tzinfo else datetime.utcnow()
+                if expires < now:
                     # Expired - remove from cache
                     await self.redis.delete(f"{AUTH_CACHE_PREFIX}{key_hash}")
                     raise InvalidAPIKeyError("API key has expired")

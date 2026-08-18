@@ -34,6 +34,12 @@ class _Pipe:
         self._ops.append(("incr", k, amt))
         return self
 
+    def eval(self, script, numkeys, k, amt):
+        # Mirrors the exists-gated INCRBYFLOAT the service now uses: a missing
+        # counter is NOT created (so check_budgets reseeds from usage_logs).
+        self._ops.append(("incr_if_exists", k, float(amt)))
+        return self
+
     def expire(self, k, ttl):
         self._ops.append(("expire", k, ttl))
         return self
@@ -43,6 +49,10 @@ class _Pipe:
             if op[0] == "incr":
                 cur = float(self._store.get(op[1], 0) or 0)
                 self._store[op[1]] = str(cur + op[2])
+            elif op[0] == "incr_if_exists":
+                if op[1] in self._store:
+                    cur = float(self._store.get(op[1], 0) or 0)
+                    self._store[op[1]] = str(cur + op[2])
         self._ops.clear()
 
 
@@ -255,6 +265,10 @@ async def test_accrual_increments_each_window_and_check_sees_it():
         {"window": "daily", "unit": "cu", "amount": 10},
         {"window": "lifetime", "unit": "cu", "amount": 100},
     ]
+    # Real request flow: check_budgets runs FIRST and seeds the counters from
+    # usage_logs; accrual then increments only existing counters (a missing
+    # counter after Redis eviction must reseed, not restart from this request).
+    await s.check_budgets(7, budgets)
     await s.record_key_usage(7, budgets, Decimal("4"))
     await s.record_key_usage(7, budgets, Decimal("4"))
     # daily now 8 (<10 ok); push over

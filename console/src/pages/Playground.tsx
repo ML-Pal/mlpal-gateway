@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type AdminModel, GatewayError } from "@/lib/api";
 import { useConnection } from "@/lib/connection";
+import { fmtCU } from "@/lib/format";
 
 interface RunResult {
   content: string;
@@ -34,10 +35,13 @@ export function Playground() {
     client
       .listModels()
       .then((r) => {
+        // Serving truth, not just registry state: a model without a
+        // configured backend (serving_backend null) would only error here.
         const served = r.data.filter(
           (m) =>
             m.is_active &&
             !m.is_deprecated &&
+            m.serving_backend !== null &&
             (m.capabilities?.operation ?? "chat") === "chat",
         );
         setModels(served);
@@ -184,15 +188,10 @@ export function Playground() {
                 <code className="text-[11px]">{result.model}</code>
               </Badge>
               <Badge variant="outline">{(result.latency_ms / 1000).toFixed(1)}s</Badge>
-              <Badge variant="outline">
-                {result.compute_units < 0.0001
-                  ? result.compute_units.toExponential(1)
-                  : result.compute_units.toFixed(4)}{" "}
-                CU
-              </Badge>
+              <Badge variant="outline">{fmtCU(result.compute_units)} CU</Badge>
               {result.trace_id && (
                 <Link
-                  to="/traces"
+                  to={`/traces?trace=${encodeURIComponent(result.trace_id)}`}
                   className="ml-auto text-xs link-accent"
                 >
                   View in Traces →

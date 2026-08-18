@@ -847,7 +847,14 @@ class ChatService:
         start_time: float,
         error_detail: str | None = None,
     ) -> None:
-        """Record a failed request for tracking."""
+        """Record a failed request for tracking.
+
+        Runs on its OWN session and commits: this method is called on
+        exception paths where the request session gets rolled back by the
+        session dependency after the handler re-raises — writing the error
+        row there means every failed non-streaming chat silently vanishes
+        from traces (OSS DB path; the managed SQS path was unaffected).
+        """
         try:
             latency_ms = int((time.perf_counter() - start_time) * 1000)
 
@@ -858,24 +865,29 @@ class ChatService:
             except ModelNotFoundError:
                 provider = "unknown"
 
-            await self._usage.record_usage(
-                user_id=str(user_id),
-                api_key_id=str(api_key_id),
-                trace_id=trace_id,
-                model_tag=model_tag,
-                provider=provider,
-                operation="chat",
-                input_tokens=0,
-                output_tokens=0,
-                compute_units=Decimal("0"),
-                latency_ms=latency_ms,
-                status="error",
-                error_code=error_code,
-                # The actual provider/exception text — without this a failed
-                # trace shows only the exception class name, and the operator
-                # has to grep container logs to learn what went wrong.
-                cc_metadata={"error_detail": error_detail[:500]} if error_detail else None,
-            )
+            from mlpal_assistants_service.db.session import async_session_factory
+
+            async with async_session_factory() as err_session:
+                err_usage = UsageService(err_session, self.redis, self._sqs_client)
+                await err_usage.record_usage(
+                    user_id=str(user_id),
+                    api_key_id=str(api_key_id),
+                    trace_id=trace_id,
+                    model_tag=model_tag,
+                    provider=provider,
+                    operation="chat",
+                    input_tokens=0,
+                    output_tokens=0,
+                    compute_units=Decimal("0"),
+                    latency_ms=latency_ms,
+                    status="error",
+                    error_code=error_code,
+                    # The actual provider/exception text — without this a failed
+                    # trace shows only the exception class name, and the operator
+                    # has to grep container logs to learn what went wrong.
+                    cc_metadata={"error_detail": error_detail[:500]} if error_detail else None,
+                )
+                await err_session.commit()
         except Exception as e:
             logger.warning(f"Failed to record error usage: {e}")
 

@@ -14,6 +14,7 @@ and default permissions differ. The CLI / dashboard list both via
 from datetime import datetime
 from typing import Literal
 
+from mlpal_assistants_service.core.exceptions import ValidationError
 from fastapi import APIRouter, HTTPException, Query, status
 
 from mlpal_assistants_service.api.deps import (
@@ -219,6 +220,10 @@ async def update_api_key_policy(
         updates["budgets"] = (
             [b.model_dump() for b in body.budgets] if body.budgets else None
         )
+    if "rate_limit_tier" in fields and body.rate_limit_tier is not None:
+        updates["rate_limit_tier"] = body.rate_limit_tier
+    if "is_active" in fields and body.is_active is not None:
+        updates["is_active"] = body.is_active
 
     api_key = await api_key_service.update_key_policy(key_id, current_user.id, updates)
     if api_key is None:
@@ -260,7 +265,11 @@ async def revoke_api_key(
     Works for both `mlpal_sk_*` and `cde_sk_*` keys — they live in the
     same table.
     """
-    result = await api_key_service.revoke_key(key_id, current_user.id)
+    try:
+        result = await api_key_service.revoke_key(key_id, current_user.id)
+    except ValidationError as e:
+        # Already-revoked is a client-state conflict, not a server error.
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     if result is None:
         raise HTTPException(

@@ -36,6 +36,7 @@ x-gateway-env: &gateway-env
 
 services:
   db:
+    restart: unless-stopped
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: postgres
@@ -51,6 +52,7 @@ services:
       retries: 20
 
   redis:
+    restart: unless-stopped
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
@@ -65,6 +67,11 @@ services:
     build: .
     command: ["alembic", "upgrade", "head"]
     environment: *gateway-env
+    # .env overlays the baked-in map — this is what makes every
+    # MLPAL_* knob in the docs reachable under docker compose.
+    env_file:
+      - path: .env
+        required: false
     depends_on:
       db:
         condition: service_healthy
@@ -81,24 +88,35 @@ services:
         python scripts/reconcile_catalog.py &&
         python scripts/bootstrap_admin_key.py --name oss-admin --if-missing
     environment: *gateway-env
+    # .env overlays the baked-in map — this is what makes every
+    # MLPAL_* knob in the docs reachable under docker compose.
+    env_file:
+      - path: .env
+        required: false
     depends_on:
       migrate:
         condition: service_completed_successfully
     restart: "no"
 
   gateway:
+    restart: unless-stopped
     build: .
     # Host port for the gateway (override with GATEWAY_PORT if 8000 is taken).
     ports:
       - "${GATEWAY_PORT:-8000}:8000"
     environment: *gateway-env
+    # .env overlays the baked-in map — this is what makes every
+    # MLPAL_* knob in the docs reachable under docker compose.
+    env_file:
+      - path: .env
+        required: false
     depends_on:
-      migrate:
+      seed:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health/ready')"]
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health/ready').raise_for_status()"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -108,6 +126,7 @@ services:
   # admin-scoped key. Optional — the gateway is fully usable via the API/SDK
   # without it. `docker compose up console` to run just this + its deps.
   console:
+    restart: unless-stopped
     build: ./console
     ports:
       - "${CONSOLE_PORT:-8080}:80"
