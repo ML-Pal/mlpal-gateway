@@ -18,8 +18,10 @@
   --popover: #ffffff;
   --popover-foreground: var(--n950);
 
-  --primary: #6366f1;              /* Indigo 500 */
-  --primary-foreground: #ffffff;
+  /* Primary CTA = the amber accent family — the stock shadcn indigo was
+     never part of this palette and stuck out on Setup/Keys buttons. */
+  --primary: #f59e0b;              /* Amber 500 */
+  --primary-foreground: #451a03;
   --accent: #f59e0b;               /* Amber 500 */
   --accent-foreground: #451a03;
   /* Amber as TEXT follows figma-frontend's step: 600 on the light bone ground
@@ -50,7 +52,7 @@
   --popover: #1f1f1c;
   --popover-foreground: var(--n50);
 
-  --primary: #818cf8;              /* Indigo 400 */
+  --primary: #fbbf24;              /* Amber 400 */
   --primary-foreground: var(--n950);
   --accent: #fbbf24;               /* Amber 400 */
   --accent-foreground: var(--n950);
