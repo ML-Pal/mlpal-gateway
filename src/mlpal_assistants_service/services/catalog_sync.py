@@ -23,6 +23,7 @@ plan through the ORM.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -34,6 +35,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mlpal_assistants_service.db.models.meta_routing import MetaModelRouting
 from mlpal_assistants_service.db.models.model_pricing import ModelPricing
 from mlpal_assistants_service.db.models.model_registry import ModelRegistry
+
+logger = logging.getLogger(__name__)
 
 FEED_SOURCE = "mlpal-feed"
 LOCAL_SOURCE = "local"
@@ -249,6 +252,14 @@ async def reconcile(
     the same feed is a no-op."""
     retire_message = retire_message or f"Retired from the MLPal catalog feed on {date.today()}"
     summary = ReconcileSummary()
+
+    # `user/` is the reserved tenant-model namespace (tenant_models table) —
+    # a feed row can never claim it, so tenant/catalog collision is
+    # structurally impossible, not just discouraged.
+    blocked = [r["model_tag"] for r in registry_feed if r.get("model_tag", "").startswith("user/")]
+    if blocked:
+        logger.warning("catalog feed rejected reserved user/ tags: %s", blocked)
+        registry_feed = [r for r in registry_feed if r["model_tag"] not in blocked]
 
     existing = {m.model_tag: m for m in (await session.execute(select(ModelRegistry))).scalars()}
     reg_plan = plan_registry(

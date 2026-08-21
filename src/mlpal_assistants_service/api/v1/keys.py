@@ -14,7 +14,6 @@ and default permissions differ. The CLI / dashboard list both via
 from datetime import datetime
 from typing import Literal
 
-from mlpal_assistants_service.core.exceptions import ValidationError
 from fastapi import APIRouter, HTTPException, Query, status
 
 from mlpal_assistants_service.api.deps import (
@@ -23,6 +22,7 @@ from mlpal_assistants_service.api.deps import (
     ManagementPrincipal,
     UsageServiceDep,
 )
+from mlpal_assistants_service.core.exceptions import ValidationError
 from mlpal_assistants_service.core.security import CDE_API_KEY_PREFIX
 from mlpal_assistants_service.schemas.api_key import (
     APIKeyCreate,

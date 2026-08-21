@@ -226,6 +226,31 @@ class UnsupportedCapabilityError(AssistantsServiceError):
         self.suggestions = suggestions or []
 
 
+class UnsupportedModelKwargsError(AssistantsServiceError):
+    """model_kwargs contained keys the serving adapter can't take. LOUD by
+    design: the request is rejected before any provider call — a param is
+    never silently dropped (the gateway's inversion of OpenRouter's
+    require_parameters-off default)."""
+
+    def __init__(
+        self, offending: list[str], allowed: list[str], provider: str
+    ) -> None:
+        super().__init__(
+            f"model_kwargs not supported by the serving adapter ({provider}): "
+            f"{', '.join(sorted(offending))}. Supported keys: "
+            f"{', '.join(sorted(allowed)) or 'none'}. Nothing was sent to the "
+            "provider.",
+            {
+                "offending": sorted(offending),
+                "allowed": sorted(allowed),
+                "provider": provider,
+            },
+        )
+        self.offending = sorted(offending)
+        self.allowed = sorted(allowed)
+        self.provider = provider
+
+
 class ValidationError(AssistantsServiceError):
     """Raised when request validation fails."""
 

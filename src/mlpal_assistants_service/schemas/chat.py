@@ -189,6 +189,27 @@ class ChatCompletionRequest(BaseSchema):
         default=None,
         description="Tool definitions for function calling",
     )
+    fallback_models: list[str] | None = Field(
+        default=None,
+        max_length=3,
+        description=(
+            "Up to 3 model tags tried in order when the primary model's "
+            "serving fails retriably (5xx/timeout/provider rate-limit). "
+            "Billed as-served; the response names the serving model and "
+            "carries metadata.fallback_from when a fallback answered. "
+            "Streaming switches only before the first chunk."
+        ),
+    )
+    model_kwargs: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Provider-native parameters forwarded to the serving backend "
+            "(e.g. OpenAI reasoning/service_tier, Anthropic top_k, Google "
+            "safety_settings). Keys the serving adapter cannot take are "
+            "REJECTED with a 400 listing them — never silently dropped. "
+            "Custom (byom) endpoints accept any non-reserved key."
+        ),
+    )
     tool_choice: str | dict | None = Field(
         default=None,
         description="Tool choice strategy ('auto', 'none', 'required', or specific tool)",

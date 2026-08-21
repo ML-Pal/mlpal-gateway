@@ -59,25 +59,54 @@ async def list_models(
     # the call. Cached in the factory — no I/O here. null lets the console
     # render unserved models visibly distinct instead of silently listing them.
     factory = get_adapter_factory()
-    return ModelListResponse(
-        models=[
-            ModelInfo(
-                model_tag=m.model_tag,
-                display_name=m.display_name,
-                provider=m.provider,
-                description=m.description,
-                capabilities=m.capabilities,
-                context_length=m.context_length,
-                max_output_tokens=m.max_output_tokens,
-                pricing_tier=m.pricing_tier,
-                is_deprecated=m.is_deprecated,
-                deprecation_message=m.deprecation_message,
-                serving_backend=factory.serving_backend_for(m.provider, m.provider_model_id),
+    out = [
+        ModelInfo(
+            model_tag=m.model_tag,
+            display_name=m.display_name,
+            provider=m.provider,
+            description=m.description,
+            capabilities=m.capabilities,
+            context_length=m.context_length,
+            max_output_tokens=m.max_output_tokens,
+            pricing_tier=m.pricing_tier,
+            is_deprecated=m.is_deprecated,
+            deprecation_message=m.deprecation_message,
+            serving_backend=factory.serving_backend_for(m.provider, m.provider_model_id),
+        )
+        for m in models
+    ]
+
+    # The caller's own byom models (`user/…` tags), visible only to them.
+    # provider="user" groups them distinctly in the console.
+    from mlpal_assistants_service.core.config import get_settings
+
+    if get_settings().connections_enabled and provider in (None, "user"):
+        from mlpal_assistants_service.services import connections as conn_svc
+
+        tenant = await conn_svc.get_model_overlay(_user_id, model_router.session)
+        for ref in sorted(tenant.values(), key=lambda r: r.model_tag):
+            if capability and ref.operation != capability:
+                continue
+            if model_policy and not PolicyService.is_model_allowed(
+                model_policy, ref.model_tag
+            ):
+                continue
+            out.append(
+                ModelInfo(
+                    model_tag=ref.model_tag,
+                    display_name=ref.model_tag.removeprefix("user/"),
+                    provider="user",
+                    description=None,
+                    capabilities=ref.capabilities or {"operation": ref.operation},
+                    context_length=ref.context_length,
+                    max_output_tokens=ref.max_output_tokens,
+                    pricing_tier="user",
+                    owned_by="user",
+                    serving_backend="byom:custom",
+                )
             )
-            for m in models
-        ],
-        total=len(models),
-    )
+
+    return ModelListResponse(models=out, total=len(out))
 
 
 # Meta model strategy descriptions

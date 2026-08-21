@@ -26,6 +26,10 @@ class ModelInfo(BaseSchema):
     pricing_tier: str = Field(..., description="Pricing tier (budget, standard, premium)")
     is_deprecated: bool = Field(default=False, description="Whether model is deprecated")
     deprecation_message: str | None = Field(default=None, description="Deprecation notice")
+    owned_by: str | None = Field(
+        default=None,
+        description="'user' for the caller's own byom models; null for catalog models.",
+    )
     serving_backend: str | None = Field(
         default=None,
         description=(

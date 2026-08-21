@@ -701,9 +701,6 @@ async def provider_status(
     import asyncio
     import time as _time
 
-    from mlpal_assistants_service.core.config import get_settings
-
-    settings = get_settings()
     adapters = getattr(request.app.state, "adapters", {})
 
     # Active model count per provider (from the registry).

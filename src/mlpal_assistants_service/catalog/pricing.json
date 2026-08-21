@@ -185,14 +185,14 @@
     "model_tag": "claude-sonnet-5",
     "operation": "chat",
     "tier": "premium",
-    "input_rate": "3.00000000",
-    "output_rate": "15.00000000",
+    "input_rate": "2.00000000",
+    "output_rate": "10.00000000",
     "rate_unit": "per_1m_tokens",
     "markup_multiplier": "1.00",
-    "effective_date": "2026-07-13",
+    "effective_date": "2026-08-10",
     "cu_to_dollar": "10.00",
-    "input_cu_rate": "0.90000000",
-    "output_cu_rate": "4.50000000"
+    "input_cu_rate": "0.60000000",
+    "output_cu_rate": "3.00000000"
   },
   {
     "model_tag": "gemini-2.5-flash",
@@ -349,6 +349,19 @@
     "cu_to_dollar": "10.00",
     "input_cu_rate": "0.09000000",
     "output_cu_rate": "0.75000000"
+  },
+  {
+    "model_tag": "gemini-3.7-flash",
+    "operation": "chat",
+    "tier": "standard",
+    "input_rate": "0.75000000",
+    "output_rate": "3.75000000",
+    "rate_unit": "per_1m_tokens",
+    "markup_multiplier": "1.00",
+    "effective_date": "2026-08-14",
+    "cu_to_dollar": "10.00",
+    "input_cu_rate": "0.22500000",
+    "output_cu_rate": "1.12500000"
   },
   {
     "model_tag": "gemini-3.6-flash",
@@ -598,6 +611,19 @@
     "output_cu_rate": "4.20000000"
   },
   {
+    "model_tag": "gpt-5.3-codex",
+    "operation": "chat",
+    "tier": "premium",
+    "input_rate": "1.75000000",
+    "output_rate": "14.00000000",
+    "rate_unit": "per_1m_tokens",
+    "markup_multiplier": "1.00",
+    "effective_date": "2026-08-15",
+    "cu_to_dollar": "10.00",
+    "input_cu_rate": "0.52500000",
+    "output_cu_rate": "4.20000000"
+  },
+  {
     "model_tag": "gpt-5.2-pro",
     "operation": "chat",
     "tier": "premium",
@@ -679,14 +705,14 @@
     "model_tag": "gpt-5.6-luna",
     "operation": "chat",
     "tier": "standard",
-    "input_rate": "1.00000000",
-    "output_rate": "6.00000000",
+    "input_rate": "0.20000000",
+    "output_rate": "1.20000000",
     "rate_unit": "per_1m_tokens",
     "markup_multiplier": "1.00",
-    "effective_date": "2026-07-13",
+    "effective_date": "2026-07-30",
     "cu_to_dollar": "10.00",
-    "input_cu_rate": "0.30000000",
-    "output_cu_rate": "1.80000000"
+    "input_cu_rate": "0.06000000",
+    "output_cu_rate": "0.36000000"
   },
   {
     "model_tag": "gpt-5.6-sol",
@@ -705,14 +731,14 @@
     "model_tag": "gpt-5.6-terra",
     "operation": "chat",
     "tier": "premium",
-    "input_rate": "2.50000000",
-    "output_rate": "15.00000000",
+    "input_rate": "2.00000000",
+    "output_rate": "12.00000000",
     "rate_unit": "per_1m_tokens",
     "markup_multiplier": "1.00",
-    "effective_date": "2026-07-13",
+    "effective_date": "2026-07-30",
     "cu_to_dollar": "10.00",
-    "input_cu_rate": "0.75000000",
-    "output_cu_rate": "4.50000000"
+    "input_cu_rate": "0.60000000",
+    "output_cu_rate": "3.60000000"
   },
   {
     "model_tag": "gpt-image-1",

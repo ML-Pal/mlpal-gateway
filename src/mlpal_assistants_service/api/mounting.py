@@ -55,6 +55,17 @@ def mount_api(app: FastAPI, settings: Settings) -> None:
     app.include_router(universal_messages_router, prefix=f"{v1}/messages", tags=["Messages"])
     # MLPal curation surfaces, canonical under /v1.
     app.include_router(catalog_router, prefix=v1, tags=["Catalog"])
+    # Tenant connections: BYOK keys + BYOM endpoints (managed feature;
+    # 404s unless MLPAL_CONNECTIONS_ENABLED).
+    from mlpal_assistants_service.api.v1.connections import router as connections_router
+
+    app.include_router(
+        connections_router, prefix=f"{v1}/connections", tags=["Connections"]
+    )
+    # Account-scoped platform views (providers status strip; same flag gate).
+    from mlpal_assistants_service.api.v1.account import router as account_router
+
+    app.include_router(account_router, prefix=f"{v1}/account", tags=["Account"])
     # Public feed: lets other gateways subscribe to this deployment's catalog.
     app.include_router(feed_router, prefix=v1, tags=["Catalog"])
     app.include_router(feedback_router, prefix=v1, tags=["Feedback"])

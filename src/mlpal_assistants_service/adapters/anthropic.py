@@ -39,6 +39,9 @@ logger = logging.getLogger(__name__)
 
 
 class AnthropicAdapter(BaseAdapter):
+    # Messages-API params we forward via model_kwargs.
+    SUPPORTED_KWARGS = frozenset({"top_k", "metadata", "service_tier", "thinking"})
+
     """
     Adapter for Anthropic API using native SDK.
 
@@ -339,6 +342,7 @@ class AnthropicAdapter(BaseAdapter):
         tool_choice: str | dict | None = None,
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AdapterResponse:
         """Execute chat completion via Anthropic API."""
         start_time = time.perf_counter()
@@ -423,6 +427,10 @@ class AnthropicAdapter(BaseAdapter):
                         "mcp_server_name": s["name"],
                     })
                 use_beta = True
+
+            # Model-specific kwargs, pre-validated by the caller.
+            if model_kwargs:
+                params["extra_body"] = {**params.get("extra_body", {}), **model_kwargs}
 
             # Make API call (use beta API for MCP)
             if use_beta:
@@ -532,6 +540,7 @@ class AnthropicAdapter(BaseAdapter):
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
         stream_thinking: bool = False,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AsyncIterator[StreamChunk]:
         """Execute streaming chat completion."""
         try:

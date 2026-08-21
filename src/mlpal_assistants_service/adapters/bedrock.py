@@ -40,6 +40,10 @@ logger = logging.getLogger(__name__)
 
 
 class BedrockAdapter(BaseAdapter):
+    # Converse has additionalModelRequestFields — a first-class arbitrary-
+    # params channel — so this adapter accepts any non-reserved key.
+    accept_all_kwargs = True
+
     """
     Adapter for AWS Bedrock API using boto3 Converse API.
 
@@ -358,6 +362,7 @@ class BedrockAdapter(BaseAdapter):
         tool_choice: str | dict | None = None,
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AdapterResponse:
         """Execute chat completion via Bedrock Converse API."""
         start_time = time.perf_counter()
@@ -429,6 +434,13 @@ class BedrockAdapter(BaseAdapter):
                         model=model,
                         suggestions=["gpt-5.2", "claude-opus-4.5"],
                     )
+
+                # Model-specific kwargs → Converse's designed escape hatch.
+                if model_kwargs:
+                    params["additionalModelRequestFields"] = {
+                        **params.get("additionalModelRequestFields", {}),
+                        **model_kwargs,
+                    }
 
                 # Make API call
                 response = await client.converse(**params)
@@ -516,6 +528,7 @@ class BedrockAdapter(BaseAdapter):
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
         stream_thinking: bool = False,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AsyncIterator[StreamChunk]:
         """Execute streaming chat completion."""
         try:
@@ -581,6 +594,11 @@ class BedrockAdapter(BaseAdapter):
                     )
 
                 # Use converseStream for streaming
+                if model_kwargs:
+                    params["additionalModelRequestFields"] = {
+                        **params.get("additionalModelRequestFields", {}),
+                        **model_kwargs,
+                    }
                 response = await client.converse_stream(**params)
 
                 total_input_tokens = 0

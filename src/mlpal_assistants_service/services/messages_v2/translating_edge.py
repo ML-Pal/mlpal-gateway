@@ -21,6 +21,7 @@ from mlpal_assistants_service.adapters.base import (
 from mlpal_assistants_service.core.config import get_settings
 from mlpal_assistants_service.core.exceptions import (
     UnsupportedCapabilityError,
+    UnsupportedModelKwargsError,
 )
 from mlpal_assistants_service.services.messages_v2 import emit
 from mlpal_assistants_service.services.messages_v2.edges import EdgeResult, RequestContext
@@ -42,7 +43,10 @@ def _message_id(trace_id: str) -> str:
 
 
 def _error_status(exc: Exception) -> int:
-    if isinstance(exc, (UnsupportedModalityError, UnsupportedCapabilityError)):
+    if isinstance(
+        exc,
+        (UnsupportedModalityError, UnsupportedCapabilityError, UnsupportedModelKwargsError),
+    ):
         return 400
     code = getattr(exc, "status_code", None)
     return code if isinstance(code, int) else 502
@@ -77,6 +81,10 @@ class TranslatingEdge:
         # default), so we record it rather than silently discard it.
         if common.reasoning_effort:
             ctx.cc_metadata["reasoning_effort"] = common.reasoning_effort
+        # Model-specific kwargs: validated against the serving adapter —
+        # rejected with a 400 listing the offenders, never silently dropped.
+        self._adapter.validate_model_kwargs(req.model_kwargs)
+
         kwargs: dict[str, Any] = {
             "model": self._wire_model_id or ctx.provider_model_id,
             "messages": common.messages,
@@ -84,6 +92,7 @@ class TranslatingEdge:
             "tool_choice": common.tool_choice,
             "top_p": common.top_p,
             "stop": common.stop,
+            "model_kwargs": req.model_kwargs,
         }
         if common.max_tokens is not None:
             kwargs["max_tokens"] = common.max_tokens

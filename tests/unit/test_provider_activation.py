@@ -13,13 +13,13 @@ from mlpal_assistants_service.core.exceptions import ModelNotAvailableError
 from mlpal_assistants_service.services.router import ModelRouter
 
 # only OpenAI configured (anthropic/google/bedrock absent) — OSS single-provider case
-_BACKEND_DEFAULTS = dict(
-    openai_backends="first_party", google_backends="first_party",
-    anthropic_backends="first_party", azure_openai_endpoint=None,
-    azure_openai_api_key=None, azure_openai_deployments=None,
-    vertex_project=None, bedrock_anthropic_models=None,
-    vertex_anthropic_models=None,
-)
+_BACKEND_DEFAULTS = {
+    "openai_backends": "first_party", "google_backends": "first_party",
+    "anthropic_backends": "first_party", "azure_openai_endpoint": None,
+    "azure_openai_api_key": None, "azure_openai_deployments": None,
+    "vertex_project": None, "bedrock_anthropic_models": None,
+    "vertex_anthropic_models": None,
+}
 _ONE_KEY = SimpleNamespace(openai_api_key="k", anthropic_api_key=None,
                            google_api_key=None, enable_bedrock=False,
                            **_BACKEND_DEFAULTS)

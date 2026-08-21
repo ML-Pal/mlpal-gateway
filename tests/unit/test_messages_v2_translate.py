@@ -305,6 +305,9 @@ class _FakeAdapter:
     def __init__(self, response=None, chunks=None, error=None):
         self._response, self._chunks, self._error = response, chunks, error
 
+    def validate_model_kwargs(self, model_kwargs):
+        return None
+
     async def chat(self, **kwargs):
         if self._error:
             raise self._error
@@ -538,6 +541,9 @@ def test_sanitize_google_tool_schema_strips_and_inlines():
 class _CapturingAdapter:
     def __init__(self):
         self.kwargs = None
+
+    def validate_model_kwargs(self, model_kwargs):
+        return None
     async def chat(self, **kwargs):
         self.kwargs = kwargs
         return AdapterResponse(content="ok", model="gemini", provider="google",

@@ -67,6 +67,9 @@ _THOUGHT_SIG_SENTINEL = b"skip_thought_signature_validator"
 # exception, listed explicitly. Pro models are handled separately (128 floor).
 _THINKING_LIMITS: dict[str, tuple[bool, int]] = {
     "gemini-2.5-flash-lite": (True, 512),
+    # Verified against the live API 2026-08-14: accepts 0 (disable), 1, 128,
+    # and -1 (dynamic) — unlike 3.6-flash, thinking is fully optional here.
+    "gemini-3.7-flash": (True, 1),
 }
 
 
@@ -125,6 +128,16 @@ def _gemini_cached_tokens(usage_metadata: Any) -> int:
 
 
 class GoogleAdapter(BaseAdapter):
+    # GenerateContentConfig fields we forward via model_kwargs (snake_case,
+    # as the google-genai SDK expects).
+    SUPPORTED_KWARGS = frozenset(
+        {
+            "top_k", "candidate_count", "seed", "presence_penalty",
+            "frequency_penalty", "safety_settings", "response_logprobs",
+            "logprobs", "thinking_config", "media_resolution",
+        }
+    )
+
     """
     Adapter for Google AI (Gemini) API using native SDK.
 
@@ -438,6 +451,7 @@ class GoogleAdapter(BaseAdapter):
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
         prefix_cache_ttl: int | None = None,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AdapterResponse:
         """Execute chat completion via Google AI API.
 
@@ -509,6 +523,11 @@ class GoogleAdapter(BaseAdapter):
                     model=model,
                     suggestions=["gpt-5.2", "claude-opus-4.5"],
                 )
+
+            # Model-specific kwargs, pre-validated by the caller: merged into
+            # GenerateContentConfig (the SDK accepts plain dicts for nested types).
+            if model_kwargs:
+                config.update(model_kwargs)
 
             _apply_thinking_output_reserve(config, model, max_tokens, has_tools=bool(tools))
 
@@ -638,6 +657,7 @@ class GoogleAdapter(BaseAdapter):
         mcp_servers: list[dict[str, Any]] | None = None,
         stream_thinking: bool = False,
         prefix_cache_ttl: int | None = None,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AsyncIterator[StreamChunk]:
         """Execute streaming chat completion.
 
@@ -710,6 +730,11 @@ class GoogleAdapter(BaseAdapter):
                     model=model,
                     suggestions=["gpt-5.2", "claude-opus-4.5"],
                 )
+
+            # Model-specific kwargs, pre-validated by the caller: merged into
+            # GenerateContentConfig (the SDK accepts plain dicts for nested types).
+            if model_kwargs:
+                config.update(model_kwargs)
 
             _apply_thinking_output_reserve(config, model, max_tokens, has_tools=bool(tools))
 

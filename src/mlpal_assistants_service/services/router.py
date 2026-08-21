@@ -125,7 +125,11 @@ class ModelRouter:
             cached = await self._get_from_redis(model_tag)
             if cached:
                 self._raise_if_paused(model_tag, cached)
-                return cached
+                # Same gate as the local cache: a retired/inactive row must
+                # fall through to the DB path, which raises properly — without
+                # this, a retirement only takes effect after the Redis TTL.
+                if cached.is_active and not cached.is_deprecated:
+                    return cached
 
         # Query database via repository
         model = await self._model_repo.get_by_tag(model_tag)
@@ -134,6 +138,11 @@ class ModelRouter:
             raise ModelNotFoundError(model_tag)
 
         if not model.is_active:
+            if model.is_deprecated:
+                # Retired for good (provider killed it): a permanent 404, not a
+                # retryable 503. The deprecation_message/fallback_model_tag are
+                # in the registry for surfaces that want to render guidance.
+                raise ModelNotFoundError(model_tag)
             raise ModelNotAvailableError(model_tag, "Model is currently unavailable")
 
         self._raise_if_paused(model_tag, model)

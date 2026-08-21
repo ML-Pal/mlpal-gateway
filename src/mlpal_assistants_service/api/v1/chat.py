@@ -21,6 +21,7 @@ from mlpal_assistants_service.core.exceptions import (
     QuotaExceededError,
     RateLimitExceededError,
     UnsupportedCapabilityError,
+    UnsupportedModelKwargsError,
     http_status_for_provider_error,
 )
 from mlpal_assistants_service.schemas.chat import (
@@ -106,6 +107,11 @@ async def create_chat_completion(
             detail=str(e),
         )
     except UnsupportedCapabilityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        )
+    except UnsupportedModelKwargsError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message,

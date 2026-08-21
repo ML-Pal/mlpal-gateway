@@ -253,6 +253,22 @@ class Settings(BaseSettings):
     vertex_anthropic_models: str | None = Field(
         default=None, alias="MLPAL_VERTEX_ANTHROPIC_MODELS"
     )
+    # --- Connections (BYOK provider keys + BYOM custom endpoints) ----------
+    # Feature gate: off by default everywhere until the rollout decision.
+    connections_enabled: bool = Field(default=False, alias="MLPAL_CONNECTIONS_ENABLED")
+    # Custody driver for tenant secrets: 'secrets_service' (managed; KMS
+    # envelope + audit via mlpal-secrets-service) or 'local' (dev-grade
+    # AES-GCM in the gateway DB).
+    custody_driver: str = Field(default="local", alias="MLPAL_CUSTODY_DRIVER")
+    custody_secrets_service_url: str | None = Field(
+        default=None, alias="MLPAL_SECRETS_SERVICE_URL"
+    )
+    custody_secrets_service_token: str | None = Field(
+        default=None, alias="MLPAL_SECRETS_SERVICE_TOKEN"
+    )
+    custody_local_key: str | None = Field(default=None, alias="MLPAL_CUSTODY_LOCAL_KEY")
+    # Bounded pool of tenant-scoped adapter clients (LRU).
+    connections_pool_size: int = Field(default=256, alias="MLPAL_CONNECTIONS_POOL_SIZE")
     # Hosted catalog feed: 'bundled' ships frozen; 'hosted' subscribes to
     # catalog_feed_url and keeps the catalog current (runtime-toggleable).
     catalog_feed_mode: str = Field(default="bundled", alias="MLPAL_CATALOG_FEED")

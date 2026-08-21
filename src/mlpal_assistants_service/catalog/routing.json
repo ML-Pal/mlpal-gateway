@@ -1,161 +1,309 @@
 {
-  "_note": "Router-tag candidate lists — ONE source of truth with the rest of the catalog feed. For each (tag, operation) the candidates are priority-ordered and deliberately span providers: resolution picks the FIRST candidate this deployment actually serves (model active + provider configured), so a single-provider box still resolves every tag its provider can cover. Reconciled into meta_model_routing by scripts/reconcile_catalog.py.",
+  "_note": "Router-tag candidate lists \u2014 ONE source of truth with the rest of the catalog feed. For each (tag, operation) the candidates are priority-ordered and deliberately span providers: resolution picks the FIRST candidate this deployment actually serves (model active + provider configured), so a single-provider box still resolves every tag its provider can cover. Reconciled into meta_model_routing by scripts/reconcile_catalog.py.",
   "updated": "2026-08-11",
   "routes": [
     {
       "meta_model_tag": "mlpal",
       "operation": "chat",
       "candidates": [
-        {"model_tag": "claude-opus-5", "reason": "frontier of record for coding/agentic quality (catalog frontier tier)"},
-        {"model_tag": "gpt-5.6-terra", "reason": "OpenAI flagship — strongest served OpenAI generalist"},
-        {"model_tag": "gemini-3.1-pro-preview", "reason": "Google flagship reasoning tier"},
-        {"model_tag": "zai.glm-5", "reason": "best served open-weight (Bedrock)"}
+        {
+          "model_tag": "claude-opus-5",
+          "reason": "frontier of record for coding/agentic quality (catalog frontier tier)"
+        },
+        {
+          "model_tag": "gpt-5.6-terra",
+          "reason": "OpenAI flagship \u2014 strongest served OpenAI generalist"
+        },
+        {
+          "model_tag": "gemini-3.1-pro-preview",
+          "reason": "Google flagship reasoning tier"
+        },
+        {
+          "model_tag": "zai.glm-5",
+          "reason": "best served open-weight (Bedrock)"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal",
       "operation": "structured_output",
       "candidates": [
-        {"model_tag": "claude-opus-5", "reason": "top schema adherence among served frontier models"},
-        {"model_tag": "gpt-5.6-terra", "reason": "excellent JSON-schema following"},
-        {"model_tag": "gemini-3.1-pro-preview", "reason": "Google flagship structured output"}
+        {
+          "model_tag": "claude-opus-5",
+          "reason": "top schema adherence among served frontier models"
+        },
+        {
+          "model_tag": "gpt-5.6-terra",
+          "reason": "excellent JSON-schema following"
+        },
+        {
+          "model_tag": "gemini-3.1-pro-preview",
+          "reason": "Google flagship structured output"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal",
       "operation": "embedding",
       "candidates": [
-        {"model_tag": "text-embedding-3-large", "reason": "3072 dims — highest semantic fidelity served"},
-        {"model_tag": "gemini-embedding-2", "reason": "Google's current best embedding"},
-        {"model_tag": "amazon.titan-embed-text-v2:0", "reason": "Bedrock fallback (1024 dims)"}
+        {
+          "model_tag": "text-embedding-3-large",
+          "reason": "3072 dims \u2014 highest semantic fidelity served"
+        },
+        {
+          "model_tag": "gemini-embedding-2",
+          "reason": "Google's current best embedding"
+        },
+        {
+          "model_tag": "amazon.titan-embed-text-v2:0",
+          "reason": "Bedrock fallback (1024 dims)"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal",
       "operation": "image_generation",
       "candidates": [
-        {"model_tag": "gemini-3-pro-image-preview", "reason": "best quality; supports 14 reference images"},
-        {"model_tag": "gpt-image-2", "reason": "OpenAI's current best image model"}
+        {
+          "model_tag": "gemini-3-pro-image-preview",
+          "reason": "best quality; supports 14 reference images"
+        },
+        {
+          "model_tag": "gpt-image-2",
+          "reason": "OpenAI's current best image model"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal",
       "operation": "tts",
       "candidates": [
-        {"model_tag": "tts-1-hd", "reason": "most natural voice quality served"},
-        {"model_tag": "gpt-4o-mini-tts", "reason": "modern fallback with prompt-steerable style"}
+        {
+          "model_tag": "tts-1-hd",
+          "reason": "most natural voice quality served"
+        },
+        {
+          "model_tag": "gpt-4o-mini-tts",
+          "reason": "modern fallback with prompt-steerable style"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal",
       "operation": "transcription",
       "candidates": [
-        {"model_tag": "gpt-4o-transcribe", "reason": "highest transcription accuracy served"},
-        {"model_tag": "whisper-1", "reason": "battle-tested fallback"}
+        {
+          "model_tag": "gpt-4o-transcribe",
+          "reason": "highest transcription accuracy served"
+        },
+        {
+          "model_tag": "whisper-1",
+          "reason": "battle-tested fallback"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-flash",
       "operation": "chat",
       "candidates": [
-        {"model_tag": "gemini-3.6-flash", "reason": "newest flash tier — best speed/quality tradeoff"},
-        {"model_tag": "claude-haiku-4-5-20251001", "reason": "Anthropic's fast tier"},
-        {"model_tag": "gpt-5.4-mini", "reason": "OpenAI's fast mid tier"},
-        {"model_tag": "us.meta.llama4-maverick-17b-instruct", "reason": "fast open-weight MoE (17B active)"}
+        {
+          "model_tag": "gemini-3.7-flash",
+          "reason": "newest flash tier \u2014 best speed/quality tradeoff (supersedes 3.6)"
+        },
+        {
+          "model_tag": "gemini-3.6-flash",
+          "reason": "newest flash tier \u2014 best speed/quality tradeoff"
+        },
+        {
+          "model_tag": "claude-haiku-4-5-20251001",
+          "reason": "Anthropic's fast tier"
+        },
+        {
+          "model_tag": "gpt-5.4-mini",
+          "reason": "OpenAI's fast mid tier"
+        },
+        {
+          "model_tag": "us.meta.llama4-maverick-17b-instruct",
+          "reason": "fast open-weight MoE (17B active)"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-flash",
       "operation": "structured_output",
       "candidates": [
-        {"model_tag": "gemini-3.6-flash", "reason": "fast structured output, low latency"},
-        {"model_tag": "claude-haiku-4-5-20251001", "reason": "Anthropic fast tier"},
-        {"model_tag": "gpt-5.4-mini", "reason": "OpenAI fast tier"}
+        {
+          "model_tag": "gemini-3.6-flash",
+          "reason": "fast structured output, low latency"
+        },
+        {
+          "model_tag": "claude-haiku-4-5-20251001",
+          "reason": "Anthropic fast tier"
+        },
+        {
+          "model_tag": "gpt-5.4-mini",
+          "reason": "OpenAI fast tier"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-flash",
       "operation": "embedding",
       "candidates": [
-        {"model_tag": "text-embedding-3-small", "reason": "1536 dims, fastest OpenAI embedding"},
-        {"model_tag": "gemini-embedding-001", "reason": "fast Google embedding"},
-        {"model_tag": "amazon.titan-embed-text-v2:0", "reason": "Bedrock fallback"}
+        {
+          "model_tag": "text-embedding-3-small",
+          "reason": "1536 dims, fastest OpenAI embedding"
+        },
+        {
+          "model_tag": "gemini-embedding-001",
+          "reason": "fast Google embedding"
+        },
+        {
+          "model_tag": "amazon.titan-embed-text-v2:0",
+          "reason": "Bedrock fallback"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-flash",
       "operation": "image_generation",
       "candidates": [
-        {"model_tag": "gpt-image-1", "reason": "fast, reliable generation"},
-        {"model_tag": "gemini-3.1-flash-image", "reason": "Google's fast image tier"}
+        {
+          "model_tag": "gpt-image-1",
+          "reason": "fast, reliable generation"
+        },
+        {
+          "model_tag": "gemini-3.1-flash-image",
+          "reason": "Google's fast image tier"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-flash",
       "operation": "tts",
       "candidates": [
-        {"model_tag": "tts-1", "reason": "standard fast TTS"},
-        {"model_tag": "gpt-4o-mini-tts", "reason": "fast modern fallback"}
+        {
+          "model_tag": "tts-1",
+          "reason": "standard fast TTS"
+        },
+        {
+          "model_tag": "gpt-4o-mini-tts",
+          "reason": "fast modern fallback"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-flash",
       "operation": "transcription",
       "candidates": [
-        {"model_tag": "gpt-4o-mini-transcribe", "reason": "2x faster than the full model"},
-        {"model_tag": "whisper-1", "reason": "fallback"}
+        {
+          "model_tag": "gpt-4o-mini-transcribe",
+          "reason": "2x faster than the full model"
+        },
+        {
+          "model_tag": "whisper-1",
+          "reason": "fallback"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-lite",
       "operation": "chat",
       "candidates": [
-        {"model_tag": "gpt-5-nano", "reason": "cheapest capable OpenAI tier"},
-        {"model_tag": "gemini-3.5-flash-lite", "reason": "Google's cost tier"},
-        {"model_tag": "claude-haiku-4-5-20251001", "reason": "Anthropic's cost tier"},
-        {"model_tag": "openai.gpt-oss-120b", "reason": "open-weight value king ($0.15/$0.60 per 1M)"}
+        {
+          "model_tag": "gpt-5-nano",
+          "reason": "cheapest capable OpenAI tier"
+        },
+        {
+          "model_tag": "gemini-3.5-flash-lite",
+          "reason": "Google's cost tier"
+        },
+        {
+          "model_tag": "claude-haiku-4-5-20251001",
+          "reason": "Anthropic's cost tier"
+        },
+        {
+          "model_tag": "openai.gpt-oss-120b",
+          "reason": "open-weight value king ($0.15/$0.60 per 1M)"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-lite",
       "operation": "structured_output",
       "candidates": [
-        {"model_tag": "gpt-5-nano", "reason": "cheap structured output"},
-        {"model_tag": "gemini-3.5-flash-lite", "reason": "Google cost tier"},
-        {"model_tag": "claude-haiku-4-5-20251001", "reason": "Anthropic cost tier"}
+        {
+          "model_tag": "gpt-5-nano",
+          "reason": "cheap structured output"
+        },
+        {
+          "model_tag": "gemini-3.5-flash-lite",
+          "reason": "Google cost tier"
+        },
+        {
+          "model_tag": "claude-haiku-4-5-20251001",
+          "reason": "Anthropic cost tier"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-lite",
       "operation": "embedding",
       "candidates": [
-        {"model_tag": "gemini-embedding-001", "reason": "cheapest served embedding"},
-        {"model_tag": "text-embedding-3-small", "reason": "OpenAI cost tier"},
-        {"model_tag": "amazon.titan-embed-text-v2:0", "reason": "Bedrock fallback"}
+        {
+          "model_tag": "gemini-embedding-001",
+          "reason": "cheapest served embedding"
+        },
+        {
+          "model_tag": "text-embedding-3-small",
+          "reason": "OpenAI cost tier"
+        },
+        {
+          "model_tag": "amazon.titan-embed-text-v2:0",
+          "reason": "Bedrock fallback"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-lite",
       "operation": "image_generation",
       "candidates": [
-        {"model_tag": "gpt-image-1-mini", "reason": "cheapest image generation served"},
-        {"model_tag": "gemini-3.1-flash-image", "reason": "Google fallback"}
+        {
+          "model_tag": "gpt-image-1-mini",
+          "reason": "cheapest image generation served"
+        },
+        {
+          "model_tag": "gemini-3.1-flash-image",
+          "reason": "Google fallback"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-lite",
       "operation": "tts",
       "candidates": [
-        {"model_tag": "gpt-4o-mini-tts", "reason": "cheapest TTS served"},
-        {"model_tag": "tts-1", "reason": "fallback"}
+        {
+          "model_tag": "gpt-4o-mini-tts",
+          "reason": "cheapest TTS served"
+        },
+        {
+          "model_tag": "tts-1",
+          "reason": "fallback"
+        }
       ]
     },
     {
       "meta_model_tag": "mlpal-lite",
       "operation": "transcription",
       "candidates": [
-        {"model_tag": "gpt-4o-mini-transcribe", "reason": "cheapest transcription served"},
-        {"model_tag": "whisper-1", "reason": "fallback"}
+        {
+          "model_tag": "gpt-4o-mini-transcribe",
+          "reason": "cheapest transcription served"
+        },
+        {
+          "model_tag": "whisper-1",
+          "reason": "fallback"
+        }
       ]
     }
   ]

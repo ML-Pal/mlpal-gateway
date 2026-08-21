@@ -156,3 +156,38 @@ async def test_concrete_tags_bypass_routing():
     router = _router([], {}, enabled=set())
     resolved, meta = await router.resolve_meta_model("claude-opus-5", "chat")
     assert resolved == "claude-opus-5" and meta is None
+
+
+@pytest.mark.asyncio
+async def test_retired_model_is_404_even_when_redis_cached(monkeypatch):
+    """A retired row must never serve — including from the Redis cache path
+    (regression: the Redis branch skipped the is_active/is_deprecated gate, so
+    retirements only took effect after the cache TTL)."""
+    from types import SimpleNamespace
+
+    from mlpal_assistants_service.core.exceptions import ModelNotFoundError
+    from mlpal_assistants_service.services.router import ModelRouter
+
+    retired = SimpleNamespace(
+        model_tag="dead-model", provider="anthropic", provider_model_id="dead-model",
+        is_active=False, is_deprecated=True, is_paused=False, pause_reason=None,
+        deprecation_message="Retired by provider", fallback_model_tag="live-model",
+    )
+    router = ModelRouter.__new__(ModelRouter)
+    router._local_cache = SimpleNamespace(get=lambda k: None, set=None)
+    router.redis = object()  # truthy: forces the Redis path
+
+    async def fake_redis_get(tag):
+        return retired
+
+    router._get_from_redis = fake_redis_get
+    router._raise_if_paused = lambda tag, m: None
+    router._model_repo = SimpleNamespace()
+
+    async def repo_get(tag):
+        return retired
+
+    router._model_repo.get_by_tag = repo_get
+
+    with pytest.raises(ModelNotFoundError):
+        await router.get_model("dead-model")

@@ -21,7 +21,6 @@ from mlpal_assistants_service.core.security import is_known_api_key_prefix
 from mlpal_assistants_service.core.storage import AssetStorageService
 from mlpal_assistants_service.db.models import APIKey
 from mlpal_assistants_service.db.session import get_session
-from mlpal_assistants_service.repositories import BillingRepository
 from mlpal_assistants_service.repositories.meta_routing_repository import MetaRoutingRepository
 from mlpal_assistants_service.services.api_key import APIKeyService
 from mlpal_assistants_service.services.audio import AudioService

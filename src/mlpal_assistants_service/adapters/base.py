@@ -913,6 +913,57 @@ class BaseAdapter(ABC):
             )
 
     # =========================================================================
+    # Model-specific kwargs (pass-through with loud rejection)
+    # =========================================================================
+
+    # Fields the gateway owns — never overridable via model_kwargs, on any
+    # adapter, even accept_all ones (byom/bedrock).
+    RESERVED_KWARGS: frozenset = frozenset(
+        {
+            "model", "messages", "input", "system", "stream", "tools",
+            "tool_choice", "max_tokens", "max_output_tokens", "temperature",
+            "top_p", "stop", "response_format", "mcp_servers", "api_key",
+            "extra_headers", "extra_body", "base_url", "n_retries", "timeout",
+        }
+    )
+    # Curated provider-native keys this adapter forwards. Empty = none.
+    SUPPORTED_KWARGS: frozenset = frozenset()
+    # byom custom endpoints / bedrock additionalModelRequestFields: the
+    # downstream surface is designed for arbitrary keys — accept everything
+    # non-reserved and let the endpoint validate (still loud, just theirs).
+    accept_all_kwargs: bool = False
+
+    def validate_model_kwargs(self, model_kwargs: dict | None) -> None:
+        """Reject (never drop) kwargs this adapter can't forward.
+
+        Raises UnsupportedModelKwargsError listing the offending keys and the
+        full supported set, before any provider call is made.
+        """
+        if not model_kwargs:
+            return
+        from mlpal_assistants_service.core.exceptions import (
+            UnsupportedModelKwargsError,
+        )
+
+        keys = set(model_kwargs)
+        reserved = keys & self.RESERVED_KWARGS
+        if reserved:
+            raise UnsupportedModelKwargsError(
+                offending=sorted(reserved),
+                allowed=sorted(self.SUPPORTED_KWARGS),
+                provider=self.provider_name,
+            )
+        if self.accept_all_kwargs:
+            return
+        offending = keys - self.SUPPORTED_KWARGS
+        if offending:
+            raise UnsupportedModelKwargsError(
+                offending=sorted(offending),
+                allowed=sorted(self.SUPPORTED_KWARGS),
+                provider=self.provider_name,
+            )
+
+    # =========================================================================
     # Core Chat Methods
     # =========================================================================
 
@@ -929,6 +980,7 @@ class BaseAdapter(ABC):
         tool_choice: str | dict | None = None,
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AdapterResponse:
         """
         Execute a chat completion.
@@ -975,6 +1027,7 @@ class BaseAdapter(ABC):
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
         stream_thinking: bool = False,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AsyncIterator[StreamChunk]:
         """
         Execute a streaming chat completion.

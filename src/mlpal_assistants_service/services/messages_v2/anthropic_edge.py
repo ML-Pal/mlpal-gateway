@@ -74,6 +74,11 @@ class AnthropicEdge:
         # adaptation + auth headers (SigV4 backends sign the exact bytes).
         body = dict(req.body)
         body["model"] = ctx.provider_model_id
+        if req.model_kwargs:
+            # Native wire: the whole body is provider-native already, so
+            # kwargs merge top-level; Anthropic validates unknown fields
+            # loudly itself (a 400 naming the field).
+            body.update(req.model_kwargs)
         return self._backend.prepare(json.dumps(body).encode(), ctx.headers)
 
     async def invoke(self, req: ValidatedRequest, ctx: RequestContext) -> EdgeResult:

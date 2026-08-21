@@ -40,6 +40,17 @@ class RequestContext:
     usage: CanonicalUsage | None = None
     status_code: int = 0
     provider_message_id: str | None = None
+    # Tenant connection serving (byok key or byom endpoint) — wallet debit is
+    # skipped (their tokens, their bill) and provider auth failures get
+    # connection attribution instead of a generic error. conn_kind None means
+    # deployment-served.
+    conn_kind: str | None = None  # "byok" | "byom" | None
+    conn_id: int | None = None
+    # byom only: declared-price USD estimate inputs (set at planning time).
+    byom_prices: tuple[Any, Any] | None = None  # (input_per_m, output_per_m) Decimals
+    # Set by _meter for connection-served requests: the informative estimate
+    # (byok: CU at list price; byom: USD at declared prices) for response headers.
+    conn_estimate: str | None = None
     # Streaming only: ms from request start to the FIRST provider chunk —
     # perceived latency for streaming clients (total latency_ms hides it).
     ttft_ms: int | None = None

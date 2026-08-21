@@ -68,6 +68,24 @@ def _cached_tokens(usage: Any) -> int:
 # =============================================================================
 
 class OpenAIAdapter(BaseAdapter):
+    # Responses-API params we forward via model_kwargs (curated; the adapter
+    # speaks the Responses wire, so chat-completions-only params like
+    # logit_bias/seed are deliberately absent).
+    SUPPORTED_KWARGS = frozenset(
+        {
+            "reasoning", "text", "service_tier", "metadata",
+            "parallel_tool_calls", "store", "truncation", "include", "user",
+            "safety_identifier", "prompt_cache_key", "top_logprobs",
+            "max_tool_calls",
+        }
+    )
+
+    # Wire dialect: "responses" (OpenAI first-party/Azure — the richer API)
+    # or "chat_completions" (the de-facto standard served by vLLM, Ollama,
+    # TGI, Together, …). byom custom endpoints get "chat_completions" —
+    # most OpenAI-compatible servers don't implement /v1/responses.
+    wire: str = "responses"
+
     """
     Production-grade adapter for OpenAI API using native SDK.
 
@@ -485,6 +503,7 @@ class OpenAIAdapter(BaseAdapter):
         tool_choice: str | dict | None = None,
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AdapterResponse:
         """Execute chat completion via OpenAI Responses API."""
         start_time = time.perf_counter()
@@ -496,6 +515,14 @@ class OpenAIAdapter(BaseAdapter):
                 self.validate_file_attachments(model, files)
 
             # Normalize messages and extract system instruction for Responses API
+            if self.wire == "chat_completions":
+                return await self._chat_via_completions(
+                    model=model, messages=messages, temperature=temperature,
+                    max_tokens=max_tokens, top_p=top_p, stop=stop, tools=tools,
+                    tool_choice=tool_choice, response_format=response_format,
+                    model_kwargs=model_kwargs, start_time=start_time,
+                )
+
             instructions, response_input = self._normalize_messages_for_responses(messages)
 
             # Some models (reasoning, nano) don't support temperature/top_p
@@ -544,6 +571,11 @@ class OpenAIAdapter(BaseAdapter):
                     if server.get("auth_token"):
                         mcp_tool["headers"] = {"Authorization": f"Bearer {server['auth_token']}"}
                     params["tools"].append(mcp_tool)
+
+            # Model-specific kwargs, pre-validated by the caller: merged into
+            # the wire body (Responses API) — never silently dropped upstream.
+            if model_kwargs:
+                params["extra_body"] = {**params.get("extra_body", {}), **model_kwargs}
 
             # Make API call via Responses API
             response = await self._client.responses.create(**params)
@@ -631,8 +663,18 @@ class OpenAIAdapter(BaseAdapter):
         response_format: dict[str, Any] | None = None,
         mcp_servers: list[dict[str, Any]] | None = None,
         stream_thinking: bool = False,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> AsyncIterator[StreamChunk]:
         """Execute streaming chat completion via Responses API."""
+        if self.wire == "chat_completions":
+            async for chunk in self._chat_stream_via_completions(
+                model=model, messages=messages, temperature=temperature,
+                max_tokens=max_tokens, top_p=top_p, stop=stop, tools=tools,
+                tool_choice=tool_choice, response_format=response_format,
+                model_kwargs=model_kwargs,
+            ):
+                yield chunk
+            return
         try:
             # Validate file attachments against model capabilities
             files = self.extract_files_from_messages(messages)
@@ -690,6 +732,8 @@ class OpenAIAdapter(BaseAdapter):
                         mcp_tool["headers"] = {"Authorization": f"Bearer {server['auth_token']}"}
                     params["tools"].append(mcp_tool)
 
+            if model_kwargs:
+                params["extra_body"] = {**params.get("extra_body", {}), **model_kwargs}
             stream = await self._client.responses.create(**params)
 
             # The Responses API carries a function call's id+name on the output_item.added
@@ -779,6 +823,180 @@ class OpenAIAdapter(BaseAdapter):
     # =========================================================================
     # Message Normalization
     # =========================================================================
+
+    # =========================================================================
+    # chat_completions wire (byom custom endpoints: vLLM / Ollama / TGI / …)
+    # =========================================================================
+
+    def _completions_params(
+        self, model, messages, temperature, max_tokens, top_p, stop, tools,
+        tool_choice, response_format, model_kwargs,
+    ) -> dict[str, Any]:
+        """Build a /v1/chat/completions body. The gateway's canonical message
+        shape IS chat-completions shape (role/content, OpenAI-style tool_calls,
+        role=tool results), so messages pass through minus gateway-only keys."""
+        wire_messages = []
+        for m in messages:
+            wm = {k: v for k, v in m.items() if k not in ("files", "images", "documents")}
+            wire_messages.append(wm)
+        params: dict[str, Any] = {
+            "model": model,
+            "messages": wire_messages,
+            "temperature": temperature,
+        }
+        if max_tokens is not None:
+            params["max_tokens"] = max_tokens
+        if top_p is not None:
+            params["top_p"] = top_p
+        if stop is not None:
+            params["stop"] = stop
+        if tools:
+            params["tools"] = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": t.name,
+                        "description": t.description,
+                        "parameters": t.parameters,
+                    },
+                }
+                for t in tools
+            ]
+            if tool_choice:
+                params["tool_choice"] = tool_choice
+        if response_format:
+            params["response_format"] = response_format
+        if model_kwargs:
+            params["extra_body"] = {**params.get("extra_body", {}), **model_kwargs}
+        return params
+
+    @staticmethod
+    def _completions_tool_calls(message) -> list[dict[str, Any]] | None:
+        tcs = getattr(message, "tool_calls", None)
+        if not tcs:
+            return None
+        return [
+            {
+                "id": tc.id,
+                "type": "function",
+                "function": {
+                    "name": tc.function.name,
+                    "arguments": tc.function.arguments,
+                },
+            }
+            for tc in tcs
+        ]
+
+    async def _create_completions(self, params: dict[str, Any]):
+        """Create with a bounded compat loop for well-known chat-completions
+        dialect drift. vLLM/Ollama/TGI speak `max_tokens` + free sampling;
+        OpenAI's reasoning models demand `max_completion_tokens` and pin
+        temperature/top_p. Each retry is triggered ONLY by the provider's own
+        explicit param complaint (its `param` field) — never a heuristic —
+        and anything else re-raises untouched."""
+        params = dict(params)
+        for _ in range(3):
+            try:
+                return await self._client.chat.completions.create(**params)
+            except Exception as e:  # noqa: BLE001 — classified below, else re-raised
+                msg = str(e)
+                offender = getattr(getattr(e, "body", None), "get", lambda *_: None)("param") \
+                    if hasattr(e, "body") and isinstance(e.body, dict) else None
+                if offender is None and hasattr(e, "body") and isinstance(e.body, dict):
+                    offender = (e.body.get("error") or {}).get("param")
+                if (
+                    "max_tokens" in params
+                    and (offender == "max_tokens" or "max_completion_tokens" in msg)
+                ):
+                    params["max_completion_tokens"] = params.pop("max_tokens")
+                    continue
+                if offender in ("temperature", "top_p") and offender in params:
+                    params.pop(offender)
+                    continue
+                raise
+        return await self._client.chat.completions.create(**params)
+
+    async def _chat_via_completions(
+        self, *, model, messages, temperature, max_tokens, top_p, stop, tools,
+        tool_choice, response_format, model_kwargs, start_time,
+    ) -> AdapterResponse:
+        params = self._completions_params(
+            model, messages, temperature, max_tokens, top_p, stop, tools,
+            tool_choice, response_format, model_kwargs,
+        )
+        response = await self._create_completions(params)
+        choice = response.choices[0]
+        usage = response.usage
+        return AdapterResponse(
+            content=choice.message.content or "",
+            model=model,
+            provider=self.provider_name,
+            usage=TokenUsage(
+                input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+                output_tokens=getattr(usage, "completion_tokens", 0) or 0,
+            ),
+            finish_reason=choice.finish_reason or "stop",
+            latency_ms=int((time.perf_counter() - start_time) * 1000),
+            tool_calls=self._completions_tool_calls(choice.message),
+        )
+
+    async def _chat_stream_via_completions(
+        self, *, model, messages, temperature, max_tokens, top_p, stop, tools,
+        tool_choice, response_format, model_kwargs,
+    ) -> AsyncIterator[StreamChunk]:
+        params = self._completions_params(
+            model, messages, temperature, max_tokens, top_p, stop, tools,
+            tool_choice, response_format, model_kwargs,
+        )
+        params["stream"] = True
+        # Ask for usage on the final chunk; some servers (older vLLM/Ollama)
+        # ignore stream_options — usage then reports 0s, which is factual
+        # ("unknown"), never estimated.
+        params["stream_options"] = {"include_usage": True}
+        stream = await self._create_completions(params)
+        final_usage = None
+        finish_reason = None
+        # tool-call deltas accumulate per index across chunks
+        pending_tools: dict[int, dict[str, Any]] = {}
+        async for chunk in stream:
+            if getattr(chunk, "usage", None):
+                final_usage = chunk.usage
+            if not chunk.choices:
+                continue
+            choice = chunk.choices[0]
+            delta = choice.delta
+            if choice.finish_reason:
+                finish_reason = choice.finish_reason
+            for tc in getattr(delta, "tool_calls", None) or []:
+                slot = pending_tools.setdefault(
+                    tc.index, {"id": None, "name": "", "arguments": ""}
+                )
+                if tc.id:
+                    slot["id"] = tc.id
+                if tc.function and tc.function.name:
+                    slot["name"] += tc.function.name
+                if tc.function and tc.function.arguments:
+                    slot["arguments"] += tc.function.arguments
+            if delta.content:
+                yield StreamChunk(content=delta.content)
+        tool_calls = [
+            {
+                "id": t["id"] or f"call_{i}",
+                "type": "function",
+                "function": {"name": t["name"], "arguments": t["arguments"]},
+            }
+            for i, t in sorted(pending_tools.items())
+        ] or None
+        yield StreamChunk(
+            content="",
+            done=True,
+            finish_reason=finish_reason or "stop",
+            tool_calls=tool_calls,
+            usage=TokenUsage(
+                input_tokens=getattr(final_usage, "prompt_tokens", 0) or 0,
+                output_tokens=getattr(final_usage, "completion_tokens", 0) or 0,
+            ),
+        )
 
     def _normalize_messages_for_responses(
         self,

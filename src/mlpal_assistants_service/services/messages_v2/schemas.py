@@ -25,6 +25,15 @@ class ValidatedRequest:
     model: str
     stream: bool
     metadata: dict[str, Any] = field(default_factory=dict)
+    # Gateway extension: provider-native params. Popped from the body (it is
+    # not an Anthropic-wire field); merged into the native body for anthropic
+    # passthrough, validated + forwarded by the translating edge otherwise.
+    model_kwargs: dict[str, Any] | None = None
+    # Gateway extension: up to 3 fallback model tags tried in order on
+    # retriable serving failures (5xx). Popped from the body like
+    # model_kwargs. Billed as-served; X-MLPal-Fallback-From names the
+    # original model when a fallback answered.
+    fallback_models: list[str] | None = None
 
 
 def validate(raw_body: bytes) -> ValidatedRequest:
@@ -42,10 +51,24 @@ def validate(raw_body: bytes) -> ValidatedRequest:
         raise InvalidMessagesRequest("`messages` is required")
 
     md = body.get("metadata")
+    mk = body.pop("model_kwargs", None)
+    if mk is not None and not isinstance(mk, dict):
+        raise InvalidMessagesRequest("`model_kwargs` must be an object")
+    fb = body.pop("fallback_models", None)
+    if fb is not None and (
+        not isinstance(fb, list)
+        or len(fb) > 3
+        or not all(isinstance(t, str) and t for t in fb)
+    ):
+        raise InvalidMessagesRequest(
+            "`fallback_models` must be a list of at most 3 model tags"
+        )
     return ValidatedRequest(
         raw_body=raw_body,
         body=body,
         model=model,
         stream=bool(body.get("stream")),
         metadata=md if isinstance(md, dict) else {},
+        model_kwargs=mk,
+        fallback_models=fb,
     )

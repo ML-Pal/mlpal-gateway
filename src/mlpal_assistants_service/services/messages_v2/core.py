@@ -70,6 +70,20 @@ def is_served_chat_model(model: Any) -> bool:
     return caps.get("operation", "chat") == "chat"
 
 
+from dataclasses import dataclass as _dataclass
+
+
+@_dataclass(frozen=True)
+class _ByomModel:
+    """Stand-in for a ModelRegistry row when a tenant model serves the
+    request — carries exactly the fields the request path reads. Tenant
+    models never touch the registry or its caches."""
+
+    model_tag: str
+    provider: str
+    provider_model_id: str
+
+
 class ModelNotAllowed(Exception):
     """Model isn't on the v2 dev allowlist."""
 
@@ -161,23 +175,50 @@ class MessagesV2Core:
         surface: str = "v1_messages",
     ) -> Response:
         self._surface = surface
-        try:
-            # Resolve mlpal meta-models (mlpal / mlpal-turbo / mlpal-lite) to the
-            # concrete chat model before admission + routing, exactly as /v1/chat
-            # does — otherwise get_model(meta) 404s.
-            resolved_tag, _routing = await self._router.resolve_meta_model(req.model, OPERATION)
-            model = await self._router.get_model(resolved_tag)
-        except ModelNotFoundError:
-            return Response(error_body(404, f"model '{req.model}' not found"), 404, media_type="application/json")
-        except ModelNotAvailableError as e:
-            return Response(error_body(503, str(e)), 503, media_type="application/json")
-
-        if not self._model_allowed(model):
-            return Response(
-                content=error_body(404, f"model '{req.model}' is not available on /v2/messages"),
-                status_code=404,
-                media_type="application/json",
+        if req.fallback_models:
+            return await self._handle_with_fallback(
+                req, api_key, headers, trace_id, surface=surface
             )
+        # byom: `user/…` tags are tenant models — resolved through the
+        # per-user overlay, never the shared model caches or the catalog.
+        # Unknown / inactive / feature-off reads as model-not-found, exactly
+        # like an unknown catalog tag.
+        byom = None  # (adapter, wire_model_id, TenantModelRef)
+        if req.model.startswith("user/"):
+            from mlpal_assistants_service.services import connections as conn_svc
+
+            byom = await conn_svc.resolve_tenant_model(
+                api_key.user_id, self._router.session, req.model
+            )
+            if byom is None:
+                return Response(
+                    error_body(404, f"model '{req.model}' not found"),
+                    404,
+                    media_type="application/json",
+                )
+            model = _ByomModel(
+                model_tag=req.model,
+                provider=byom[2].conn.family,
+                provider_model_id=byom[1],
+            )
+        else:
+            try:
+                # Resolve mlpal meta-models (mlpal / mlpal-turbo / mlpal-lite) to the
+                # concrete chat model before admission + routing, exactly as /v1/chat
+                # does — otherwise get_model(meta) 404s.
+                resolved_tag, _routing = await self._router.resolve_meta_model(req.model, OPERATION)
+                model = await self._router.get_model(resolved_tag)
+            except ModelNotFoundError:
+                return Response(error_body(404, f"model '{req.model}' not found"), 404, media_type="application/json")
+            except ModelNotAvailableError as e:
+                return Response(error_body(503, str(e)), 503, media_type="application/json")
+
+            if not self._model_allowed(model):
+                return Response(
+                    content=error_body(404, f"model '{req.model}' is not available on /v2/messages"),
+                    status_code=404,
+                    media_type="application/json",
+                )
 
         # Admission — the SAME pipeline as /v1/chat (rate limit → billing gate →
         # per-key policy), mapped to the Anthropic error envelope. This surface
@@ -235,20 +276,60 @@ class MessagesV2Core:
         cc_metadata["stream"] = bool(req.stream)
         if model.model_tag != req.model:  # served via a meta-model alias
             cc_metadata["requested_model"] = req.model
+        # byok: tenant credentials (if any) outrank deployment credentials for
+        # this model's family. Never raises — a broken tenant credential
+        # degrades to the deployment path. Skipped for byom-served requests
+        # (already on a tenant connection).
+        tenant_plan = None
+        if byom is None and getattr(self._settings, "connections_enabled", False):
+            from mlpal_assistants_service.services import connections as conn_svc
+
+            try:
+                tenant_plan = await conn_svc.plan_tenant_serving(
+                    api_key.user_id, self._router.session, model
+                )
+            except conn_svc.ConnectionBlocked as e:
+                # Their key is invalid and they opted out of billed fallback.
+                return Response(
+                    error_body(502, str(e)), 502, media_type="application/json"
+                )
+
         ctx = RequestContext(
             # Resolved concrete tag drives pricing, usage_logs, and the response
             # `model` field (what actually served the request).
             model_tag=model.model_tag,
             provider=model.provider,
             provider_model_id=model.provider_model_id,
-            backend=self._backend_label(model),
+            backend=(
+                "byom:custom"
+                if byom is not None
+                else f"byok:{tenant_plan[3].backend}"
+                if tenant_plan
+                else self._backend_label(model)
+            ),
             trace_id=trace_id,
             api_key=api_key,
             headers=headers,
             cc_metadata=cc_metadata,
+            conn_kind=("byom" if byom else "byok" if tenant_plan else None),
+            conn_id=(
+                byom[2].conn.id if byom else tenant_plan[3].id if tenant_plan else None
+            ),
+            byom_prices=(
+                (byom[2].input_price_per_m, byom[2].output_price_per_m) if byom else None
+            ),
         )
         try:
-            edge = self._edge_for(model)
+            if byom is not None:
+                edge = TranslatingEdge(byom[0], wire_model_id=byom[1])
+            elif tenant_plan is not None:
+                kind, obj, wire_id, _cred = tenant_plan
+                if kind == "native":
+                    edge = AnthropicEdge(obj)
+                else:
+                    edge = TranslatingEdge(obj, wire_model_id=wire_id)
+            else:
+                edge = self._edge_for(model)
         except ModelNotAllowed as e:
             return Response(error_body(400, str(e)), 400, media_type="application/json")
 
@@ -270,12 +351,89 @@ class MessagesV2Core:
         # Surface CU on the Anthropic-wire response via headers (the body stays a
         # faithful Anthropic Messages object). Streaming can't do this — headers
         # are sent before the CU is known — so streamed requests are billing-only.
+        if ctx.conn_kind and result.status_code in (401, 403):
+            # THEIR credential was rejected — say so (a raw provider 401
+            # reads as "my MLPal key is broken") and flip the connection so
+            # the console shows it and serving falls back where possible.
+            self._flag_conn_rejected(ctx)
+            return Response(
+                error_body(
+                    502,
+                    "Your provider credential was rejected by the provider "
+                    "(connection_rejected). Update it in Settings → "
+                    "Connections; catalog models fall back to MLPal's keys "
+                    "meanwhile.",
+                ),
+                status_code=502,
+                media_type="application/json",
+            )
         return Response(
             content=result.body,
             status_code=result.status_code,
             media_type=result.media_type,
-            headers=_cu_headers(compute_units),
+            headers={**_cu_headers(compute_units), **_conn_headers(ctx)},
         )
+
+    # Serving failures worth advancing to the next fallback candidate for.
+    # Deliberately excludes 4xx: client errors (bad request, kwargs rejection,
+    # policy/billing denials, our own rate limits) repeat identically on every
+    # candidate — retrying them just burns admission checks.
+    _FALLBACK_STATUSES = frozenset({500, 502, 503, 504, 529})
+
+    async def _handle_with_fallback(
+        self,
+        req: ValidatedRequest,
+        api_key: Any,
+        headers: Mapping[str, str],
+        trace_id: str,
+        *,
+        surface: str,
+    ) -> Response:
+        """Client-controlled model failover: candidates run the FULL pipeline
+        (admission, policy, metering) and are billed as-served. Non-streaming
+        failures (and streaming failures that die BEFORE the stream opens —
+        those return plain error Responses) advance the chain; an open stream
+        is committed. Each attempt is metered under its own model with its
+        own error status, so failovers are visible in usage_logs."""
+        candidates = [req.model]
+        for tag in req.fallback_models or []:
+            if tag not in candidates:
+                candidates.append(tag)
+        last: Response | None = None
+        for i, tag in enumerate(candidates):
+            attempt = ValidatedRequest(
+                raw_body=req.raw_body,
+                body={**req.body, "model": tag},
+                model=tag,
+                stream=req.stream,
+                metadata=req.metadata,
+                model_kwargs=req.model_kwargs,
+                fallback_models=None,
+            )
+            resp = await self.handle(
+                attempt, api_key, headers, trace_id, surface=surface
+            )
+            if isinstance(resp, StreamingResponse):
+                # the stream opened — committed to this candidate
+                if i > 0:
+                    resp.headers["X-MLPal-Fallback-From"] = req.model
+                return resp
+            # 404 on a candidate = misspelled/retired fallback tag — skip it
+            # (the PRIMARY's 404 is only skippable when fallbacks exist, which
+            # is exactly this loop).
+            if resp.status_code in self._FALLBACK_STATUSES or (
+                resp.status_code == 404 and i < len(candidates) - 1
+            ):
+                logger.warning(
+                    f"[v2.messages] fallback: {tag} -> HTTP {resp.status_code}, "
+                    f"trying next (trace={trace_id})"
+                )
+                last = resp
+                continue
+            if i > 0:
+                resp.headers["X-MLPal-Fallback-From"] = req.model
+            return resp
+        return last  # every candidate failed — surface the final failure
 
     # -- streaming transport (heartbeat) ------------------------------------
     async def _stream_with_heartbeat(
@@ -352,16 +510,41 @@ class MessagesV2Core:
                 )
             )
 
+    def _flag_conn_rejected(self, ctx: RequestContext) -> None:
+        if ctx.conn_id is None:
+            return
+
+        async def _mark() -> None:
+            from mlpal_assistants_service.db.session import async_session_factory
+            from mlpal_assistants_service.services import connections as conn_svc
+
+            async with async_session_factory() as session:
+                await conn_svc.mark_invalid(
+                    session, ctx.conn_id, "provider rejected the credential (401/403)"
+                )
+
+        _spawn(_mark())
+
     # -- telemetry + billing (never raises) ---------------------------------
     async def _meter(self, ctx: RequestContext, latency_ms: int) -> Decimal:
         is_success = ctx.status_code == 200 and ctx.usage is not None
+        if ctx.conn_kind and ctx.status_code in (401, 403):
+            self._flag_conn_rejected(ctx)
         input_tokens = ctx.usage.input if is_success else 0
         output_tokens = ctx.usage.output if is_success else 0
         # Billed CU = the model's pass-through cost, no markup (locked pricing:
         # flat tier fee is the revenue; tokens at cost). Stored rates carry the
         # legacy markup column, so divide it back out.
         compute_units = Decimal("0")
-        if is_success:
+        byom_usd = None
+        if is_success and ctx.conn_kind == "byom":
+            # user/ models have no catalog pricing — estimate at the user's
+            # declared per-1M prices (their visibility only, never billed).
+            inp, outp = ctx.byom_prices or (Decimal("0"), Decimal("0"))
+            byom_usd = (
+                Decimal(input_tokens) * inp + Decimal(output_tokens) * outp
+            ) / Decimal(1_000_000)
+        elif is_success:
             rates = await self._resolve_cu_rates(ctx.model_tag)
             if rates is None:
                 logger.warning(f"[v2.messages] no pricing for {ctx.model_tag}; CU=0 trace={ctx.trace_id}")
@@ -399,7 +582,11 @@ class MessagesV2Core:
                 operation=OPERATION,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
-                compute_units=compute_units,
+                # Connection-served: billable CU is ZERO — the metered
+                # estimate goes to metadata only. Every downstream aggregator
+                # (cu aggregates, effective balance, invoicing) sums this
+                # column, and their tokens are already paid on their bill.
+                compute_units=Decimal("0") if ctx.conn_kind else compute_units,
                 latency_ms=latency_ms,
                 status="success" if is_success else "error",
                 error_code=None if is_success else f"http_{ctx.status_code}",
@@ -407,7 +594,12 @@ class MessagesV2Core:
                 # not_applicable) — same lifecycle as /v1/chat, so DebitRetryWorker
                 # and reconciliation see this surface identically.
                 wallet_debit_status=(
-                    "pending" if (is_success and compute_units > 0) else "not_applicable"
+                    "pending"
+                    if (is_success and compute_units > 0 and not ctx.conn_kind)
+                    # Connection-served: their tokens, their bill — the wallet
+                    # is never touched. Token metering above still runs (tier
+                    # thresholds count tokens routed, not tokens paid).
+                    else "not_applicable"
                 ),
                 # `api` tags which mount served the call (v1_messages vs the
                 # deprecated v2_messages alias) — drives the alias-drain query.
@@ -418,6 +610,21 @@ class MessagesV2Core:
                     # bedrock / azure / vertex / adapter) — queryable per
                     # trace and shown in the console trace detail.
                     "serving_backend": ctx.backend,
+                    **(
+                        {
+                            "serving_credentials": ctx.conn_kind,
+                            # Informative cost estimate (never billed by
+                            # MLPal): byok = catalog list price in CU,
+                            # byom = user-declared prices in USD.
+                            **(
+                                {"connection_usd_estimate": str(byom_usd)}
+                                if ctx.conn_kind == "byom"
+                                else {"connection_cu_estimate": str(compute_units)}
+                            ),
+                        }
+                        if ctx.conn_kind
+                        else {}
+                    ),
                     "provider_message_id": ctx.provider_message_id,
                     # Cache observability: input_tokens above CONTAINS the cached
                     # portion; these make prompt-cache effectiveness queryable
@@ -437,9 +644,15 @@ class MessagesV2Core:
         except Exception:  # pragma: no cover - telemetry must never 500 the request
             logger.exception(f"[v2.messages] record_usage failed trace={ctx.trace_id}")
 
-        if is_success and compute_units > 0:
+        if is_success and compute_units > 0 and not ctx.conn_kind:
             _spawn(self._post_billing(ctx, compute_units, input_tokens + output_tokens))
 
+        # The caller-facing cost is the BILLED truth: zero for connection-
+        # served requests (their key, their bill). The informative estimate
+        # travels separately (ctx.conn_estimate → response headers).
+        if ctx.conn_kind:
+            ctx.conn_estimate = str(byom_usd) if ctx.conn_kind == "byom" else str(compute_units)
+            return Decimal("0")
         return compute_units
 
     async def _resolve_cu_rates(self, model_tag: str) -> tuple[Decimal, Decimal] | None:
@@ -534,6 +747,23 @@ async def _capture_v2(
 def _cu_headers(compute_units: Decimal) -> dict[str, str]:
     """CU envelope for the Anthropic-wire response (body stays untouched)."""
     return {"X-MLPal-Compute-Units": str(compute_units)}
+
+
+def _conn_headers(ctx: RequestContext) -> dict[str, str]:
+    """Connection-served responses: billed CU is 0 (in X-MLPal-Compute-Units);
+    these headers say WHY and what the tokens were worth — byok in CU at
+    catalog list price, byom in USD at the user's declared prices."""
+    if not ctx.conn_kind:
+        return {}
+    out = {"X-MLPal-Serving-Credentials": ctx.conn_kind}
+    if ctx.conn_estimate is not None:
+        key = (
+            "X-MLPal-Connection-Usd-Estimate"
+            if ctx.conn_kind == "byom"
+            else "X-MLPal-Connection-Cu-Estimate"
+        )
+        out[key] = ctx.conn_estimate
+    return out
 
 
 def _cc_metadata(headers: Mapping[str, str], metadata: dict[str, Any]) -> dict[str, Any]:

@@ -543,6 +543,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         invalidator.register("api_keys", _clear_api_key_cache)
         invalidator.register("settings", _reload_runtime_settings)
 
+        async def _invalidate_connections():
+            from mlpal_assistants_service.services.connections import invalidate_overlay
+
+            invalidate_overlay()
+            logger.info("BYOK overlay invalidated via pub/sub")
+
+        invalidator.register("connections", _invalidate_connections)
+
         await invalidator.start_listener()
         logger.info("Cache invalidation listener started")
 
